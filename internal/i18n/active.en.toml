@@ -1,0 +1,188 @@
+[app.title]
+other = "btyper · touch typing"
+[language.english]
+other = "English (QWERTY)"
+[language.russian]
+other = "Russian (ЙЦУКЕН)"
+[menu.learn]
+other = "Learn letters"
+[menu.improve]
+other = "Improve skill"
+[menu.text]
+other = "Custom text"
+[menu.history]
+other = "History & stats"
+[menu.settings]
+other = "Settings"
+[menu.help]
+other = "Finger guide"
+[menu.quit]
+other = "Quit"
+[menu.learn_desc]
+other = "Adaptive guided lessons"
+[menu.improve_desc]
+other = "Calibration and weakest-key practice"
+[menu.text_desc]
+other = "Paste text or open a file"
+[menu.history_desc]
+other = "Sessions and per-key confidence"
+[menu.settings_desc]
+other = "Goals, language and appearance"
+[menu.help_desc]
+other = "Keyboard zones and shortcuts"
+[menu.quit_desc]
+other = "Ctrl+C also quits"
+[onboard.title]
+other = "Welcome to btyper"
+[onboard.language]
+other = "Training language: {{.Language}}  ←/→"
+[onboard.learn]
+other = "[1] Learn from scratch"
+[onboard.improve]
+other = "[2] Improve existing skill"
+[practice.paused]
+other = "Paused"
+[practice.paste_disabled]
+other = "Paste is disabled during a lesson"
+[practice.header]
+other = "{{.Language}}  {{.Mode}}   WPM {{.WPM}}   {{.Accuracy}}%   {{.Duration}}"
+[practice.finger]
+other = "Finger: {{.Finger}}  ·  LP/LR/LM/LI | RI/RM/RR/RP"
+[result.title]
+other = "Lesson complete"
+[result.target]
+other = " · {{.Key}} confidence {{.Confidence}}%"
+[result.stats]
+other = "WPM       {{.WPM}}\nCPM       {{.CPM}}\nAccuracy  {{.Accuracy}}%\nErrors    {{.Errors}}\nTime      {{.Duration}}"
+[text.empty]
+other = "Paste or enter some text"
+[text.choose]
+other = "Choose a UTF-8 text file"
+[error.invalid_utf8]
+other = "The text is not valid UTF-8"
+[error.file]
+other = "Could not read file: {{.Error}}"
+[error.store]
+other = "Storage error: {{.Error}}"
+[history.sessions]
+other = "Sessions"
+[history.keys]
+other = "Keys"
+[history.empty]
+other = "No completed lessons yet"
+[column.date]
+other = "Date"
+[column.mode]
+other = "Mode"
+[column.language]
+other = "Lang"
+[column.wpm]
+other = "WPM"
+[column.accuracy]
+other = "Accuracy"
+[column.errors]
+other = "Errors"
+[column.key]
+other = "Key"
+[column.samples]
+other = "Samples"
+[column.latency]
+other = "Latency"
+[column.confidence]
+other = "Confidence"
+[mode.learn]
+other = "Learn"
+[mode.improve]
+other = "Improve"
+[mode.text]
+other = "Text"
+[mode.calibration]
+other = "Calibration"
+[settings.ui_language]
+other = "UI language: {{.Value}}"
+[settings.training_language]
+other = "Training language: {{.Value}}"
+[settings.speed]
+other = "Target speed: {{.Value}} WPM"
+[settings.accuracy]
+other = "Target accuracy: {{.Value}}%"
+[settings.length]
+other = "Lesson length: {{.Value}}"
+[settings.keyboard]
+other = "Virtual keyboard: {{.Value}}"
+[settings.reset]
+other = "Reset progress"
+[settings.confirm_reset]
+other = "Press y to erase all progress"
+[settings.reset_done]
+other = "Progress reset"
+[boolean.yes]
+other = "yes"
+[boolean.no]
+other = "no"
+[help.body]
+other = "Place your index fingers on F/J or А/О. Keep wrists relaxed and look at the screen.\nAccuracy comes before speed. Each finger owns its vertical zone."
+[help.fingers]
+other = "LP pinky · LR ring · LM middle · LI index\nRI index · RM middle · RR ring · RP pinky"
+[finger.lp]
+other = "left pinky"
+[finger.lr]
+other = "left ring"
+[finger.lm]
+other = "left middle"
+[finger.li]
+other = "left index"
+[finger.ri]
+other = "right index"
+[finger.rm]
+other = "right middle"
+[finger.rr]
+other = "right ring"
+[finger.rp]
+other = "right pinky"
+[hotkey.quit]
+other = "Esc · quit"
+[hotkey.back]
+other = "Esc · back"
+[hotkey.continue]
+other = "Esc · continue"
+[hotkey.practice]
+other = "Esc pause · Ctrl+R restart · Ctrl+C quit"
+[hotkey.result]
+other = "Enter · next lesson   Esc · menu"
+[hotkey.text]
+other = "Ctrl+S · start   Ctrl+O · open file   Esc · back"
+[hotkey.history]
+other = "Tab · switch   ↑/↓ · select   Esc · back"
+[hotkey.settings]
+other = "↑/↓ select · ←/→ change · Esc save & back"
+[terminal.small]
+other = "Terminal is too small\nMinimum: 60 × 16\nCurrent: {{.Width}} × {{.Height}}"
+[cli.lang]
+other = "training language: en or ru"
+[cli.mode]
+other = "mode: learn, improve or text"
+[cli.text]
+other = "UTF-8 text file (opens custom text mode)"
+[cli.data_dir]
+other = "directory for btyper.db"
+[cli.version]
+other = "print version"
+[cli.invalid_lang]
+other = "invalid --lang {{.Value}}"
+[cli.invalid_mode]
+other = "invalid --mode {{.Value}}"
+[cli.error]
+other = "btyper: {{.Error}}"
+[count.lessons]
+one = "{{.Count}} lesson"
+other = "{{.Count}} lessons"
+[count.errors]
+one = "{{.Count}} error"
+other = "{{.Count}} errors"
+[count.characters]
+one = "{{.Count}} character"
+other = "{{.Count}} characters"
+[count.samples]
+one = "{{.Count}} sample"
+other = "{{.Count}} samples"

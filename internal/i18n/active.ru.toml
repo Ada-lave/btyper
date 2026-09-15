@@ -1,0 +1,196 @@
+[app.title]
+other = "btyper · слепая печать"
+[language.english]
+other = "Английский (QWERTY)"
+[language.russian]
+other = "Русский (ЙЦУКЕН)"
+[menu.learn]
+other = "Учить буквы"
+[menu.improve]
+other = "Улучшать навык"
+[menu.text]
+other = "Свой текст"
+[menu.history]
+other = "История и статистика"
+[menu.settings]
+other = "Настройки"
+[menu.help]
+other = "Постановка пальцев"
+[menu.quit]
+other = "Выход"
+[menu.learn_desc]
+other = "Адаптивные уроки с открытием букв"
+[menu.improve_desc]
+other = "Калибровка и тренировка слабых клавиш"
+[menu.text_desc]
+other = "Вставить текст или открыть файл"
+[menu.history_desc]
+other = "Сессии и прогресс по клавишам"
+[menu.settings_desc]
+other = "Цели, язык и отображение"
+[menu.help_desc]
+other = "Зоны клавиатуры и горячие клавиши"
+[menu.quit_desc]
+other = "Также можно нажать Ctrl+C"
+[onboard.title]
+other = "Добро пожаловать в btyper"
+[onboard.language]
+other = "Язык тренировки: {{.Language}}  ←/→"
+[onboard.learn]
+other = "[1] Учиться с нуля"
+[onboard.improve]
+other = "[2] Улучшать существующий навык"
+[practice.paused]
+other = "Пауза"
+[practice.paste_disabled]
+other = "Вставка во время урока отключена"
+[practice.header]
+other = "{{.Language}}  {{.Mode}}   зн/мин {{.CPM}}   {{.Accuracy}}%   {{.Duration}}"
+[practice.finger]
+other = "Палец: {{.Finger}}  ·  ЛМ/ЛБ/ЛС/ЛУ | ПУ/ПС/ПБ/ПМ"
+[result.title]
+other = "Урок завершён"
+[result.target]
+other = " · {{.Key}}, уверенность {{.Confidence}}%"
+[result.stats]
+other = "Слов/мин  {{.WPM}}\nЗнак/мин  {{.CPM}}\nТочность  {{.Accuracy}}%\nОшибки    {{.Errors}}\nВремя     {{.Duration}}"
+[text.empty]
+other = "Вставьте или введите текст"
+[text.choose]
+other = "Выберите текстовый файл UTF-8"
+[error.invalid_utf8]
+other = "Текст имеет неверную кодировку UTF-8"
+[error.file]
+other = "Не удалось прочитать файл: {{.Error}}"
+[error.store]
+other = "Ошибка хранилища: {{.Error}}"
+[history.sessions]
+other = "Сессии"
+[history.keys]
+other = "Клавиши"
+[history.empty]
+other = "Завершённых уроков пока нет"
+[column.date]
+other = "Дата"
+[column.mode]
+other = "Режим"
+[column.language]
+other = "Язык"
+[column.wpm]
+other = "Сл/мин"
+[column.accuracy]
+other = "Точность"
+[column.errors]
+other = "Ошибки"
+[column.key]
+other = "Клавиша"
+[column.samples]
+other = "Попытки"
+[column.latency]
+other = "Задержка"
+[column.confidence]
+other = "Уверенность"
+[mode.learn]
+other = "Обучение"
+[mode.improve]
+other = "Тренировка"
+[mode.text]
+other = "Текст"
+[mode.calibration]
+other = "Калибровка"
+[settings.ui_language]
+other = "Язык интерфейса: {{.Value}}"
+[settings.training_language]
+other = "Язык тренировки: {{.Value}}"
+[settings.speed]
+other = "Целевая скорость: {{.Value}} слов/мин"
+[settings.accuracy]
+other = "Целевая точность: {{.Value}}%"
+[settings.length]
+other = "Длина урока: {{.Value}}"
+[settings.keyboard]
+other = "Виртуальная клавиатура: {{.Value}}"
+[settings.reset]
+other = "Сбросить прогресс"
+[settings.confirm_reset]
+other = "Нажмите y, чтобы удалить весь прогресс"
+[settings.reset_done]
+other = "Прогресс сброшен"
+[boolean.yes]
+other = "да"
+[boolean.no]
+other = "нет"
+[help.body]
+other = "Положите указательные пальцы на F/J или А/О. Расслабьте запястья и смотрите на экран.\nТочность важнее скорости. У каждого пальца своя вертикальная зона."
+[help.fingers]
+other = "ЛМ мизинец · ЛБ безымянный · ЛС средний · ЛУ указательный\nПУ указательный · ПС средний · ПБ безымянный · ПМ мизинец"
+[finger.lp]
+other = "левый мизинец"
+[finger.lr]
+other = "левый безымянный"
+[finger.lm]
+other = "левый средний"
+[finger.li]
+other = "левый указательный"
+[finger.ri]
+other = "правый указательный"
+[finger.rm]
+other = "правый средний"
+[finger.rr]
+other = "правый безымянный"
+[finger.rp]
+other = "правый мизинец"
+[hotkey.quit]
+other = "Esc · выход"
+[hotkey.back]
+other = "Esc · назад"
+[hotkey.continue]
+other = "Esc · продолжить"
+[hotkey.practice]
+other = "Esc пауза · Ctrl+R заново · Ctrl+C выход"
+[hotkey.result]
+other = "Enter · следующий урок   Esc · меню"
+[hotkey.text]
+other = "Ctrl+S · начать   Ctrl+O · открыть файл   Esc · назад"
+[hotkey.history]
+other = "Tab · вкладка   ↑/↓ · выбор   Esc · назад"
+[hotkey.settings]
+other = "↑/↓ выбор · ←/→ изменить · Esc сохранить и назад"
+[terminal.small]
+other = "Терминал слишком мал\nМинимум: 60 × 16\nСейчас: {{.Width}} × {{.Height}}"
+[cli.lang]
+other = "язык тренировки: en или ru"
+[cli.mode]
+other = "режим: learn, improve или text"
+[cli.text]
+other = "текстовый файл UTF-8 (открывает режим своего текста)"
+[cli.data_dir]
+other = "каталог для btyper.db"
+[cli.version]
+other = "вывести версию"
+[cli.invalid_lang]
+other = "неверный --lang {{.Value}}"
+[cli.invalid_mode]
+other = "неверный --mode {{.Value}}"
+[cli.error]
+other = "btyper: {{.Error}}"
+[count.lessons]
+one = "{{.Count}} урок"
+few = "{{.Count}} урока"
+many = "{{.Count}} уроков"
+other = "{{.Count}} урока"
+[count.errors]
+one = "{{.Count}} ошибка"
+few = "{{.Count}} ошибки"
+many = "{{.Count}} ошибок"
+other = "{{.Count}} ошибки"
+[count.characters]
+one = "{{.Count}} символ"
+few = "{{.Count}} символа"
+many = "{{.Count}} символов"
+other = "{{.Count}} символа"
+[count.samples]
+one = "{{.Count}} попытка"
+few = "{{.Count}} попытки"
+many = "{{.Count}} попыток"
+other = "{{.Count}} попытки"

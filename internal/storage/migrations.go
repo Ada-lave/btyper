@@ -1,0 +1,6 @@
+package storage
+
+func (s *SQLite) migrate() error {
+	_, err := s.db.Exec(`CREATE TABLE IF NOT EXISTS schema_migrations(version INTEGER PRIMARY KEY); INSERT OR IGNORE INTO schema_migrations(version) VALUES(1); CREATE TABLE IF NOT EXISTS settings(id INTEGER PRIMARY KEY CHECK(id=1), value TEXT NOT NULL); CREATE TABLE IF NOT EXISTS progress(language TEXT NOT NULL, rune TEXT NOT NULL, samples INTEGER NOT NULL, errors INTEGER NOT NULL, latency_ms REAL NOT NULL, accuracy REAL NOT NULL, confidence REAL NOT NULL, mastery_streak INTEGER NOT NULL, PRIMARY KEY(language,rune)); CREATE TABLE IF NOT EXISTS sessions(id INTEGER PRIMARY KEY AUTOINCREMENT, started_at TEXT NOT NULL, mode TEXT NOT NULL, language TEXT NOT NULL, target_rune TEXT NOT NULL, text TEXT NOT NULL, duration_ms INTEGER NOT NULL, correct INTEGER NOT NULL, attempts INTEGER NOT NULL, errors INTEGER NOT NULL, corrections INTEGER NOT NULL, wpm REAL NOT NULL, cpm REAL NOT NULL, accuracy REAL NOT NULL); CREATE TABLE IF NOT EXISTS character_stats(session_id INTEGER NOT NULL REFERENCES sessions(id) ON DELETE CASCADE, rune TEXT NOT NULL, samples INTEGER NOT NULL, errors INTEGER NOT NULL, latency_ms REAL NOT NULL, PRIMARY KEY(session_id,rune));`)
+	return err
+}

@@ -1,0 +1,101 @@
+package ui
+
+import (
+	"errors"
+	"os"
+
+	"btyper/internal/application"
+	"btyper/internal/i18n"
+	"charm.land/bubbles/v2/filepicker"
+	"charm.land/bubbles/v2/textarea"
+	tea "charm.land/bubbletea/v2"
+)
+
+type textScreen struct {
+	c    *Context
+	area textarea.Model
+}
+
+func newTextScreen(c *Context, payload any) Screen {
+	a := textarea.New()
+	a.Placeholder = c.t(i18n.TextEmpty, nil)
+	a.ShowLineNumbers = false
+	a.SetWidth(70)
+	a.SetHeight(10)
+	if v, ok := payload.(string); ok {
+		a.SetValue(v)
+	}
+	return &textScreen{c: c, area: a}
+}
+func (s *textScreen) Activate() tea.Cmd { return s.area.Focus() }
+func (s *textScreen) Resize(w, h int) {
+	s.area.SetWidth(min(90, max(40, w-8)))
+	s.area.SetHeight(max(5, min(14, h-10)))
+}
+func (s *textScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
+	if k, ok := msg.(tea.KeyPressMsg); ok {
+		switch k.String() {
+		case "esc":
+			s.area.Blur()
+			return Action{Kind: ActionNavigate, Route: RouteMenu}, nil
+		case "ctrl+o":
+			s.area.Blur()
+			return Action{Kind: ActionNavigate, Route: RoutePicker, Payload: s.area.Value()}, nil
+		case "ctrl+s":
+			err := s.c.service.SetCustomText(s.area.Value())
+			if err != nil {
+				if errors.Is(err, application.ErrInvalidUTF8) {
+					s.c.status.Set(s.c.t(i18n.InvalidUTF8, nil))
+				} else {
+					s.c.status.Set(s.c.t(i18n.TextEmpty, nil))
+				}
+				return Action{}, nil
+			}
+			s.c.engine, _ = s.c.service.NextCustomLesson()
+			s.c.status.Clear()
+			return Action{Kind: ActionNavigate, Route: RoutePractice}, nil
+		}
+	}
+	var cmd tea.Cmd
+	s.area, cmd = s.area.Update(msg)
+	return Action{}, cmd
+}
+func (s *textScreen) View() string {
+	return s.c.theme.Title.Render(s.c.t(i18n.CustomText, nil)) + "\n\n" + s.area.View() + "\n\n" + Hotkeys(s.c, i18n.HotkeyText)
+}
+
+type pickerScreen struct {
+	c        *Context
+	picker   filepicker.Model
+	previous string
+}
+
+func newPickerScreen(c *Context, payload any) Screen {
+	p := filepicker.New()
+	p.FileAllowed = true
+	p.DirAllowed = false
+	p.SetHeight(14)
+	previous, _ := payload.(string)
+	return &pickerScreen{c: c, picker: p, previous: previous}
+}
+func (s *pickerScreen) Activate() tea.Cmd { return s.picker.Init() }
+func (s *pickerScreen) Resize(w, h int)   { s.picker.SetHeight(max(5, h-8)) }
+func (s *pickerScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
+	if k, ok := msg.(tea.KeyPressMsg); ok && k.String() == "esc" {
+		return Action{Kind: ActionNavigate, Route: RouteText, Payload: s.previous}, nil
+	}
+	var cmd tea.Cmd
+	s.picker, cmd = s.picker.Update(msg)
+	if ok, path := s.picker.DidSelectFile(msg); ok {
+		b, err := os.ReadFile(path)
+		if err != nil {
+			s.c.status.Set(s.c.t(i18n.FileError, map[string]any{"Error": err}))
+			return Action{}, cmd
+		}
+		return Action{Kind: ActionNavigate, Route: RouteText, Payload: string(b)}, cmd
+	}
+	return Action{}, cmd
+}
+func (s *pickerScreen) View() string {
+	return s.c.theme.Title.Render(s.c.t(i18n.TextChoose, nil)) + "\n\n" + s.picker.View() + "\n\n" + Hotkeys(s.c, i18n.HotkeyBack)
+}

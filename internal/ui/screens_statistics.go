@@ -1,0 +1,89 @@
+package ui
+
+import (
+	"fmt"
+	"strings"
+
+	"btyper/internal/i18n"
+	"charm.land/bubbles/v2/table"
+	tea "charm.land/bubbletea/v2"
+)
+
+type statisticsScreen struct {
+	c     *Context
+	tab   int
+	table StatisticsTable
+}
+
+func newStatisticsScreen(c *Context) Screen {
+	s := &statisticsScreen{c: c}
+	s.rebuildHistory()
+	return s
+}
+func (s *statisticsScreen) Activate() tea.Cmd { return nil }
+func (s *statisticsScreen) Resize(w, h int) {
+	s.table.Model.SetWidth(max(40, w-8))
+	s.table.Model.SetHeight(max(5, h-9))
+}
+func (s *statisticsScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
+	if k, ok := msg.(tea.KeyPressMsg); ok && (k.String() == "tab" || k.String() == "1" || k.String() == "2") {
+		if k.String() == "1" {
+			s.tab = 0
+		} else if k.String() == "2" {
+			s.tab = 1
+		} else {
+			s.tab = (s.tab + 1) % 2
+		}
+		if s.tab == 0 {
+			s.rebuildHistory()
+		} else {
+			s.rebuildKeys()
+		}
+		return Action{}, nil
+	}
+	if isBack(msg) {
+		return Action{Kind: ActionNavigate, Route: RouteMenu}, nil
+	}
+	var cmd tea.Cmd
+	s.table.Model, cmd = s.table.Model.Update(msg)
+	return Action{}, cmd
+}
+func (s *statisticsScreen) rebuildHistory() {
+	h, err := s.c.service.History(100)
+	s.c.setStoreError(err)
+	rows := make([]table.Row, 0, len(h))
+	for _, v := range h {
+		rows = append(rows, table.Row{v.StartedAt.Format("2006-01-02 15:04"), s.c.modeName(v.Mode), strings.ToUpper(v.Language), fmt.Sprintf("%.1f", v.WPM), fmt.Sprintf("%.1f%%", v.Accuracy*100), fmt.Sprint(v.Errors)})
+	}
+	s.table.Model = table.New(table.WithColumns([]table.Column{{Title: s.c.t(i18n.ColDate, nil), Width: 17}, {Title: s.c.t(i18n.ColMode, nil), Width: 11}, {Title: s.c.t(i18n.ColLang, nil), Width: 6}, {Title: s.c.t(i18n.ColWPM, nil), Width: 8}, {Title: s.c.t(i18n.ColAccuracy, nil), Width: 11}, {Title: s.c.t(i18n.ColErrors, nil), Width: 8}}), table.WithRows(rows), table.WithHeight(12), table.WithFocused(true))
+}
+func (s *statisticsScreen) rebuildKeys() {
+	p := s.c.service.Profile()
+	progress := s.c.service.Progress()
+	rows := make([]table.Row, 0, len(p.UnlockOrder))
+	for _, r := range p.UnlockOrder {
+		v := progress[r]
+		latency, accuracy := "—", "—"
+		if v.Samples > 0 {
+			latency = fmt.Sprintf("%.0f ms", v.LatencyMS)
+			accuracy = fmt.Sprintf("%.1f%%", v.Accuracy*100)
+		}
+		rows = append(rows, table.Row{string(r), fmt.Sprint(v.Samples), fmt.Sprint(v.Errors), latency, accuracy, fmt.Sprintf("%.0f%%", v.Confidence*100)})
+	}
+	s.table.Model = table.New(table.WithColumns([]table.Column{{Title: s.c.t(i18n.ColKey, nil), Width: 8}, {Title: s.c.t(i18n.ColSamples, nil), Width: 10}, {Title: s.c.t(i18n.ColErrors, nil), Width: 9}, {Title: s.c.t(i18n.ColLatency, nil), Width: 12}, {Title: s.c.t(i18n.ColAccuracy, nil), Width: 12}, {Title: s.c.t(i18n.ColConfidence, nil), Width: 13}}), table.WithRows(rows), table.WithHeight(12), table.WithFocused(true))
+}
+func (s *statisticsScreen) View() string {
+	a, b := "[1] "+s.c.t(i18n.HistorySessions, nil), "[2] "+s.c.t(i18n.HistoryKeys, nil)
+	if s.tab == 0 {
+		a = s.c.theme.Title.Render(a)
+	} else {
+		b = s.c.theme.Title.Render(b)
+	}
+	out := s.c.theme.Title.Render(s.c.t(i18n.History, nil)) + "\n" + a + "   " + b + "\n\n"
+	if len(s.table.Model.Rows()) == 0 {
+		out += s.c.t(i18n.NoHistory, nil)
+	} else {
+		out += s.table.View(s.c.theme, s.c.height)
+	}
+	return out + "\n\n" + Hotkeys(s.c, i18n.HotkeyHistory)
+}
