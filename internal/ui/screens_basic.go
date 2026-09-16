@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"strings"
 	"time"
 
 	"btyper/internal/domain"
@@ -12,7 +11,7 @@ import (
 
 func isBack(msg tea.Msg) bool {
 	k, ok := msg.(tea.KeyPressMsg)
-	return ok && (k.String() == "esc" || k.String() == "q")
+	return ok && (k.Key().Code == tea.KeyEsc || isPlainKey(k, 'q'))
 }
 
 type menuItem struct {
@@ -24,44 +23,6 @@ type menuItem struct {
 func (i menuItem) Title() string       { return i.title }
 func (i menuItem) Description() string { return i.desc }
 func (i menuItem) FilterValue() string { return i.title }
-
-type onboardingScreen struct{ c *Context }
-
-func newOnboardingScreen(c *Context) Screen   { return &onboardingScreen{c} }
-func (s *onboardingScreen) Activate() tea.Cmd { return nil }
-func (s *onboardingScreen) Resize(w, h int)   {}
-func (s *onboardingScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
-	k, ok := msg.(tea.KeyPressMsg)
-	if !ok {
-		return Action{}, nil
-	}
-	settings := s.c.settings()
-	switch k.String() {
-	case "left", "right", "tab":
-		if settings.Language == "en" {
-			settings.Language = "ru"
-		} else {
-			settings.Language = "en"
-		}
-		s.c.setStoreError(s.c.service.SaveSettings(settings))
-	case "1":
-		settings.Mode = domain.ModeLearn
-		s.c.setStoreError(s.c.service.SaveSettings(settings))
-		return Action{Kind: ActionNavigate, Route: RouteMenu}, nil
-	case "2":
-		settings.Mode = domain.ModeImprove
-		s.c.setStoreError(s.c.service.SaveSettings(settings))
-		return Action{Kind: ActionNavigate, Route: RouteMenu}, nil
-	case "esc":
-		return Action{Kind: ActionQuit}, nil
-	}
-	return Action{}, nil
-}
-func (s *onboardingScreen) View() string {
-	p := s.c.service.Profile()
-	name := s.c.t(i18n.MessageID(p.NameID), nil)
-	return s.c.theme.Title.Render(s.c.t(i18n.OnboardTitle, nil)) + "\n\n" + s.c.t(i18n.OnboardLanguage, map[string]any{"Language": s.c.theme.Title.Render(name)}) + "\n\n" + s.c.t(i18n.OnboardLearn, nil) + "\n" + s.c.t(i18n.OnboardImprove, nil) + "\n\n" + Hotkeys(s.c, i18n.HotkeyQuit)
-}
 
 type menuScreen struct {
 	c    *Context
@@ -80,6 +41,16 @@ func (s *menuScreen) rebuild() {
 func (s *menuScreen) Activate() tea.Cmd { return nil }
 func (s *menuScreen) Resize(w, h int)   { s.menu.SetSize(min(76, max(40, w-8)), max(10, h-6)) }
 func (s *menuScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
+	if k, ok := msg.(tea.KeyPressMsg); ok {
+		if isUp(k) {
+			s.menu.CursorUp()
+			return Action{}, nil
+		}
+		if isDown(k) {
+			s.menu.CursorDown()
+			return Action{}, nil
+		}
+	}
 	var cmd tea.Cmd
 	s.menu, cmd = s.menu.Update(msg)
 	if k, ok := msg.(tea.KeyPressMsg); ok && k.String() == "enter" {
@@ -116,5 +87,7 @@ func (s *helpScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 }
 func (s *helpScreen) View() string {
 	p := s.c.service.Profile()
-	return s.c.theme.Title.Render(s.c.t(i18n.Help, nil)) + "\n\n" + s.c.t(i18n.HelpBody, nil) + "\n\n" + strings.Join(p.Rows, "\n") + "\n\n" + s.c.t(i18n.HelpFingers, nil) + "\n\n" + Hotkeys(s.c, i18n.HotkeyPractice) + "\n" + Hotkeys(s.c, i18n.HotkeyBack)
+	home := map[string][]string{"en": {"F", "J"}, "ru": {"А", "О"}}[p.ID]
+	guide := FingerGuide{}.View(p, s.c)
+	return s.c.theme.Title.Render(s.c.t(i18n.Help, nil)) + "\n\n" + s.c.t(i18n.HelpBody, map[string]any{"Left": home[0], "Right": home[1]}) + "\n\n" + s.c.theme.Border.Render(guide) + "\n\n" + s.c.t(i18n.HelpFingers, nil) + "\n\n" + Hotkeys(s.c, i18n.HotkeyBack)
 }

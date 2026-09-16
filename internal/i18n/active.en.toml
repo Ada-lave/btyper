@@ -19,9 +19,9 @@ other = "Finger guide"
 [menu.quit]
 other = "Quit"
 [menu.learn_desc]
-other = "Adaptive guided lessons"
+other = "Unlocks new letters gradually as you master them"
 [menu.improve_desc]
-other = "Calibration and weakest-key practice"
+other = "Measures your skill, then practices the weakest keys"
 [menu.text_desc]
 other = "Paste text or open a file"
 [menu.history_desc]
@@ -32,16 +32,14 @@ other = "Goals, language and appearance"
 other = "Keyboard zones and shortcuts"
 [menu.quit_desc]
 other = "Ctrl+C also quits"
-[onboard.title]
-other = "Welcome to btyper"
-[onboard.language]
-other = "Training language: {{.Language}}  ←/→"
-[onboard.learn]
-other = "[1] Learn from scratch"
-[onboard.improve]
-other = "[2] Improve existing skill"
 [practice.paused]
 other = "Paused"
+[practice.pause_continue]
+other = "Continue"
+[practice.pause_restart]
+other = "Restart lesson"
+[practice.pause_exit]
+other = "Exit to menu"
 [practice.paste_disabled]
 other = "Paste is disabled during a lesson"
 [practice.header]
@@ -121,9 +119,9 @@ other = "yes"
 [boolean.no]
 other = "no"
 [help.body]
-other = "Place your index fingers on F/J or А/О. Keep wrists relaxed and look at the screen.\nAccuracy comes before speed. Each finger owns its vertical zone."
+other = "Place your index fingers on {{.Left}} and {{.Right}} — they are highlighted in the diagram. Return each finger to its home position after every key press.\nKeep your wrists relaxed and look at the screen. Accuracy comes before speed."
 [help.fingers]
-other = "LP pinky · LR ring · LM middle · LI index\nRI index · RM middle · RR ring · RP pinky"
+other = "Each key and its assigned finger share a color. Press Space with either thumb."
 [finger.lp]
 other = "left pinky"
 [finger.lr]
@@ -144,18 +142,18 @@ other = "right pinky"
 other = "Esc · quit"
 [hotkey.back]
 other = "Esc · back"
-[hotkey.continue]
-other = "Esc · continue"
+[hotkey.pause]
+other = "↑/↓ or j/k · select   Enter · apply   Esc · continue"
 [hotkey.practice]
-other = "Esc pause · Ctrl+R restart · Ctrl+C quit"
+other = "Esc pause menu · Ctrl+R restart · Ctrl+C quit"
 [hotkey.result]
 other = "Enter · next lesson   Esc · menu"
 [hotkey.text]
 other = "Ctrl+S · start   Ctrl+O · open file   Esc · back"
 [hotkey.history]
-other = "Tab · switch   ↑/↓ · select   Esc · back"
+other = "Tab · switch   ↑/↓ or j/k · select   Esc · back"
 [hotkey.settings]
-other = "↑/↓ select · ←/→ change · Esc save & back"
+other = "↑/↓ or j/k · select   ←/→ or h/l · change   Esc · back"
 [terminal.small]
 other = "Terminal is too small\nMinimum: 60 × 16\nCurrent: {{.Width}} × {{.Height}}"
 [cli.lang]

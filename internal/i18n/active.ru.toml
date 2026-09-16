@@ -19,9 +19,9 @@ other = "Постановка пальцев"
 [menu.quit]
 other = "Выход"
 [menu.learn_desc]
-other = "Адаптивные уроки с открытием букв"
+other = "Постепенно открывает новые буквы по мере освоения"
 [menu.improve_desc]
-other = "Калибровка и тренировка слабых клавиш"
+other = "Сначала оценивает навык, затем тренирует слабые клавиши"
 [menu.text_desc]
 other = "Вставить текст или открыть файл"
 [menu.history_desc]
@@ -32,16 +32,14 @@ other = "Цели, язык и отображение"
 other = "Зоны клавиатуры и горячие клавиши"
 [menu.quit_desc]
 other = "Также можно нажать Ctrl+C"
-[onboard.title]
-other = "Добро пожаловать в btyper"
-[onboard.language]
-other = "Язык тренировки: {{.Language}}  ←/→"
-[onboard.learn]
-other = "[1] Учиться с нуля"
-[onboard.improve]
-other = "[2] Улучшать существующий навык"
 [practice.paused]
 other = "Пауза"
+[practice.pause_continue]
+other = "Продолжить"
+[practice.pause_restart]
+other = "Начать заново"
+[practice.pause_exit]
+other = "Выйти в меню"
 [practice.paste_disabled]
 other = "Вставка во время урока отключена"
 [practice.header]
@@ -121,9 +119,9 @@ other = "да"
 [boolean.no]
 other = "нет"
 [help.body]
-other = "Положите указательные пальцы на F/J или А/О. Расслабьте запястья и смотрите на экран.\nТочность важнее скорости. У каждого пальца своя вертикальная зона."
+other = "Положите указательные пальцы на {{.Left}} и {{.Right}} — они выделены на схеме. После каждого нажатия возвращайте палец в исходную позицию.\nДержите запястья расслабленными и смотрите на экран. Точность важнее скорости."
 [help.fingers]
-other = "ЛМ мизинец · ЛБ безымянный · ЛС средний · ЛУ указательный\nПУ указательный · ПС средний · ПБ безымянный · ПМ мизинец"
+other = "Цвет клавиши совпадает с цветом нужного пальца. Пробел нажимайте любым большим пальцем."
 [finger.lp]
 other = "левый мизинец"
 [finger.lr]
@@ -144,18 +142,18 @@ other = "правый мизинец"
 other = "Esc · выход"
 [hotkey.back]
 other = "Esc · назад"
-[hotkey.continue]
-other = "Esc · продолжить"
+[hotkey.pause]
+other = "↑/↓ или j/k · выбор   Enter · выполнить   Esc · продолжить"
 [hotkey.practice]
-other = "Esc пауза · Ctrl+R заново · Ctrl+C выход"
+other = "Esc меню паузы · Ctrl+R заново · Ctrl+C выход"
 [hotkey.result]
 other = "Enter · следующий урок   Esc · меню"
 [hotkey.text]
 other = "Ctrl+S · начать   Ctrl+O · открыть файл   Esc · назад"
 [hotkey.history]
-other = "Tab · вкладка   ↑/↓ · выбор   Esc · назад"
+other = "Tab · вкладка   ↑/↓ или j/k · выбор   Esc · назад"
 [hotkey.settings]
-other = "↑/↓ выбор · ←/→ изменить · Esc сохранить и назад"
+other = "↑/↓ или j/k · выбор   ←/→ или h/l · изменить   Esc · назад"
 [terminal.small]
 other = "Терминал слишком мал\nМинимум: 60 × 16\nСейчас: {{.Width}} × {{.Height}}"
 [cli.lang]

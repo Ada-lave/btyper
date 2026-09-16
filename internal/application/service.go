@@ -123,11 +123,6 @@ func (s *LessonService) Reset() error {
 	return nil
 }
 
-func (s *LessonService) HasActivity() (bool, error) {
-	h, err := s.store.History(1)
-	return len(h) > 0 || len(s.progress) > 0, err
-}
-
 func NormalizeCustomText(raw string) ([]rune, error) {
 	if !utf8.ValidString(raw) {
 		return nil, ErrInvalidUTF8

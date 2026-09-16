@@ -34,14 +34,14 @@ func (s *textScreen) Resize(w, h int) {
 }
 func (s *textScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 	if k, ok := msg.(tea.KeyPressMsg); ok {
-		switch k.String() {
-		case "esc":
+		switch {
+		case k.Key().Code == tea.KeyEsc:
 			s.area.Blur()
 			return Action{Kind: ActionNavigate, Route: RouteMenu}, nil
-		case "ctrl+o":
+		case isCtrlKey(k, 'o'):
 			s.area.Blur()
 			return Action{Kind: ActionNavigate, Route: RoutePicker, Payload: s.area.Value()}, nil
-		case "ctrl+s":
+		case isCtrlKey(k, 's'):
 			err := s.c.service.SetCustomText(s.area.Value())
 			if err != nil {
 				if errors.Is(err, application.ErrInvalidUTF8) {
@@ -75,13 +75,17 @@ func newPickerScreen(c *Context, payload any) Screen {
 	p.FileAllowed = true
 	p.DirAllowed = false
 	p.SetHeight(14)
+	p.KeyMap.Down.SetKeys("j", "о", "down", "ctrl+n")
+	p.KeyMap.Up.SetKeys("k", "л", "up", "ctrl+p")
+	p.KeyMap.Back.SetKeys("h", "р", "backspace", "left", "esc")
+	p.KeyMap.Open.SetKeys("l", "д", "right", "enter")
 	previous, _ := payload.(string)
 	return &pickerScreen{c: c, picker: p, previous: previous}
 }
 func (s *pickerScreen) Activate() tea.Cmd { return s.picker.Init() }
 func (s *pickerScreen) Resize(w, h int)   { s.picker.SetHeight(max(5, h-8)) }
 func (s *pickerScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
-	if k, ok := msg.(tea.KeyPressMsg); ok && k.String() == "esc" {
+	if k, ok := msg.(tea.KeyPressMsg); ok && k.Key().Code == tea.KeyEsc {
 		return Action{Kind: ActionNavigate, Route: RouteText, Payload: s.previous}, nil
 	}
 	var cmd tea.Cmd

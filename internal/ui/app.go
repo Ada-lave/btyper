@@ -16,8 +16,7 @@ import (
 type Route int
 
 const (
-	RouteOnboarding Route = iota
-	RouteMenu
+	RouteMenu Route = iota
 	RoutePractice
 	RouteResult
 	RouteText
@@ -90,15 +89,8 @@ func New(store domain.Store, initial domain.Settings) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	active, err := service.HasActivity()
-	if err != nil {
-		return nil, err
-	}
 	ctx := &Context{service: service, localizer: loc, theme: NewTheme(true), now: time.Now()}
 	a := &App{ctx: ctx, route: RouteMenu}
-	if !active {
-		a.route = RouteOnboarding
-	}
 	a.screen = a.newScreen(a.route, nil)
 	return a, nil
 }
@@ -122,9 +114,10 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case tickMsg:
 		a.ctx.now = time.Time(x)
+		a.ctx.status.ClearExpired(a.ctx.now)
 		return a, tick()
 	case tea.KeyPressMsg:
-		if x.String() == "ctrl+c" {
+		if isCtrlKey(x, 'c') {
 			return a, tea.Quit
 		}
 	}
@@ -145,8 +138,6 @@ func (a *App) navigate(route Route, payload any) tea.Cmd {
 }
 func (a *App) newScreen(route Route, payload any) Screen {
 	switch route {
-	case RouteOnboarding:
-		return newOnboardingScreen(a.ctx)
 	case RouteMenu:
 		return newMenuScreen(a.ctx)
 	case RoutePractice:
@@ -173,12 +164,13 @@ func (a *App) View() tea.View {
 	} else {
 		body = a.screen.View()
 	}
-	if s := a.ctx.status.View(a.ctx.theme); s != "" {
+	if s := a.ctx.status.View(a.ctx.theme, a.ctx.now); s != "" {
 		body += "\n\n" + s
 	}
 	v := tea.NewView(lipgloss.NewStyle().Padding(1, 2).Render(body))
 	v.AltScreen = true
 	v.ReportFocus = true
+	v.KeyboardEnhancements.ReportAlternateKeys = true
 	v.WindowTitle = "btyper"
 	return v
 }

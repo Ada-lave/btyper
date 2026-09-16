@@ -44,6 +44,16 @@ func (s *statisticsScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 	if isBack(msg) {
 		return Action{Kind: ActionNavigate, Route: RouteMenu}, nil
 	}
+	if k, ok := msg.(tea.KeyPressMsg); ok {
+		if isUp(k) {
+			s.table.Model.MoveUp(1)
+			return Action{}, nil
+		}
+		if isDown(k) {
+			s.table.Model.MoveDown(1)
+			return Action{}, nil
+		}
+	}
 	var cmd tea.Cmd
 	s.table.Model, cmd = s.table.Model.Update(msg)
 	return Action{}, cmd

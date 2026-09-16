@@ -2,6 +2,7 @@ package ui
 
 import (
 	"strings"
+	"time"
 	"unicode"
 
 	"btyper/internal/domain"
@@ -11,12 +12,21 @@ import (
 	"charm.land/lipgloss/v2"
 )
 
-type Status struct{ text string }
+type Status struct {
+	text      string
+	expiresAt time.Time
+}
 
-func (s *Status) Set(v string) { s.text = v }
-func (s *Status) Clear()       { s.text = "" }
-func (s Status) View(t Theme) string {
-	if s.text == "" {
+func (s *Status) Set(v string)                     { s.text, s.expiresAt = v, time.Time{} }
+func (s *Status) SetFor(v string, until time.Time) { s.text, s.expiresAt = v, until }
+func (s *Status) Clear()                           { s.text, s.expiresAt = "", time.Time{} }
+func (s *Status) ClearExpired(now time.Time) {
+	if !s.expiresAt.IsZero() && !now.Before(s.expiresAt) {
+		s.Clear()
+	}
+}
+func (s Status) View(t Theme, now time.Time) string {
+	if s.text == "" || (!s.expiresAt.IsZero() && !now.Before(s.expiresAt)) {
 		return ""
 	}
 	return t.Error.Render(s.text)
@@ -79,6 +89,44 @@ func (Keyboard) View(p domain.LanguageProfile, e *trainer.Engine, c *Context) st
 		lines = append(lines, "", c.theme.Title.Render(c.t(i18n.FingerHint, map[string]any{"Finger": c.t(ids[finger], nil)})))
 	}
 	return strings.Join(lines, "\n")
+}
+
+type FingerGuide struct{}
+
+func (FingerGuide) View(p domain.LanguageProfile, c *Context) string {
+	home := map[string]map[rune]bool{
+		"en": {'f': true, 'j': true},
+		"ru": {'а': true, 'о': true},
+	}[p.ID]
+	var lines []string
+	for i, row := range p.Rows {
+		var b strings.Builder
+		b.WriteString(strings.Repeat(" ", i*2))
+		for _, r := range row {
+			style := c.theme.Finger[p.Finger[r]]
+			if home[r] {
+				style = style.Bold(true).Underline(true)
+			}
+			b.WriteString(style.Render("[" + strings.ToUpper(string(r)) + "]"))
+		}
+		lines = append(lines, b.String())
+	}
+	keyboard := strings.Join(lines, "\n")
+	order := []string{"LP", "LR", "LM", "LI", "RI", "RM", "RR", "RP"}
+	ids := fingerMessageIDs()
+	legend := make(map[string]string, len(order))
+	for _, finger := range order {
+		legend[finger] = c.theme.Finger[finger].Render(c.t(ids[finger], nil))
+	}
+	legendLines := make([]string, 0, 4)
+	for i := 0; i < 4; i++ {
+		legendLines = append(legendLines, legend[order[i]]+"  ·  "+legend[order[7-i]])
+	}
+	return keyboard + "\n\n" + strings.Join(legendLines, "\n")
+}
+
+func fingerMessageIDs() map[string]i18n.MessageID {
+	return map[string]i18n.MessageID{"LP": i18n.FingerLP, "LR": i18n.FingerLR, "LM": i18n.FingerLM, "LI": i18n.FingerLI, "RI": i18n.FingerRI, "RM": i18n.FingerRM, "RR": i18n.FingerRR, "RP": i18n.FingerRP}
 }
 
 type StatisticsTable struct{ Model table.Model }

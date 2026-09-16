@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"btyper/internal/i18n"
 	tea "charm.land/bubbletea/v2"
@@ -23,26 +24,26 @@ func (s *settingsScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 		return Action{}, nil
 	}
 	if s.confirm {
-		if k.String() == "y" {
+		if isPlainKey(k, 'y') {
 			if err := s.c.service.Reset(); err != nil {
 				s.c.setStoreError(err)
 			} else {
-				s.c.status.Set(s.c.t(i18n.SettingsResetDone, nil))
+				s.c.status.SetFor(s.c.t(i18n.SettingsResetDone, nil), time.Now().Add(2*time.Second))
 			}
 		}
 		s.confirm = false
 		return Action{}, nil
 	}
-	switch k.String() {
-	case "esc":
+	switch {
+	case k.Key().Code == tea.KeyEsc:
 		return Action{Kind: ActionNavigate, Route: RouteMenu}, nil
-	case "up":
+	case isUp(k):
 		s.cursor = (s.cursor + 6) % 7
-	case "down", "tab":
+	case isDown(k) || k.Key().Code == tea.KeyTab:
 		s.cursor = (s.cursor + 1) % 7
-	case "left":
+	case isLeft(k):
 		s.change(-1)
-	case "right", "enter":
+	case isRight(k) || k.Key().Code == tea.KeyEnter:
 		if s.cursor == 6 {
 			s.confirm = true
 		} else {

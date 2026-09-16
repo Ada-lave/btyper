@@ -13,10 +13,12 @@ import (
 )
 
 type practiceScreen struct {
-	c        *Context
-	bar      progress.Model
-	lesson   LessonRenderer
-	keyboard Keyboard
+	c           *Context
+	bar         progress.Model
+	lesson      LessonRenderer
+	keyboard    Keyboard
+	pauseCursor int
+	manualPause bool
 }
 
 func newPracticeScreen(c *Context) Screen {
@@ -32,24 +34,25 @@ func (s *practiceScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 	now := time.Now()
 	switch x := msg.(type) {
 	case tea.FocusMsg:
-		if e.IsPaused() {
+		if e.IsPaused() && !s.manualPause {
 			e.Resume(now)
 		}
 	case tea.KeyPressMsg:
 		s.c.now = now
-		switch x.String() {
-		case "esc":
-			if e.IsPaused() {
-				e.Resume(now)
-			} else {
-				e.Pause(now)
-			}
+		if s.manualPause {
+			return s.updatePause(x, now)
+		}
+		switch {
+		case x.Key().Code == tea.KeyEsc:
+			e.Pause(now)
+			s.manualPause = true
+			s.pauseCursor = 0
 			return Action{}, nil
-		case "ctrl+r":
+		case isCtrlKey(x, 'r'):
 			s.c.engine = trainer.NewEngine(string(e.Text), e.Result.Mode, e.Result.Language, e.Result.TargetRune, time.Time{})
 			s.c.status.Clear()
 			return Action{}, nil
-		case "backspace":
+		case x.Key().Code == tea.KeyBackspace:
 			e.Backspace()
 			return Action{}, nil
 		}
@@ -73,13 +76,56 @@ func (s *practiceScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 	}
 	return Action{}, nil
 }
+
+func (s *practiceScreen) updatePause(k tea.KeyPressMsg, now time.Time) (Action, tea.Cmd) {
+	if k.Key().Code == tea.KeyEsc {
+		s.c.engine.Resume(now)
+		s.manualPause = false
+		return Action{}, nil
+	}
+	if isUp(k) {
+		s.pauseCursor = (s.pauseCursor + 2) % 3
+		return Action{}, nil
+	}
+	if isDown(k) {
+		s.pauseCursor = (s.pauseCursor + 1) % 3
+		return Action{}, nil
+	}
+	if k.Key().Code != tea.KeyEnter {
+		return Action{}, nil
+	}
+	switch s.pauseCursor {
+	case 0:
+		s.c.engine.Resume(now)
+		s.manualPause = false
+	case 1:
+		e := s.c.engine
+		s.c.engine = trainer.NewEngine(string(e.Text), e.Result.Mode, e.Result.Language, e.Result.TargetRune, time.Time{})
+		s.manualPause = false
+		s.c.status.Clear()
+	case 2:
+		s.c.engine = nil
+		s.manualPause = false
+		return Action{Kind: ActionNavigate, Route: RouteMenu}, nil
+	}
+	return Action{}, nil
+}
 func (s *practiceScreen) View() string {
 	e := s.c.engine
 	if e == nil {
 		return ""
 	}
-	if e.IsPaused() {
-		return s.c.theme.Border.Render(s.c.theme.Title.Render(s.c.t(i18n.Paused, nil)) + "\n\n" + Hotkeys(s.c, i18n.HotkeyContinue))
+	if s.manualPause {
+		items := []string{s.c.t(i18n.PauseContinue, nil), s.c.t(i18n.PauseRestart, nil), s.c.t(i18n.PauseExit, nil)}
+		var lines []string
+		for i, item := range items {
+			prefix := "  "
+			if i == s.pauseCursor {
+				prefix, item = "› ", s.c.theme.Title.Render(item)
+			}
+			lines = append(lines, prefix+item)
+		}
+		return s.c.theme.Border.Render(s.c.theme.Title.Render(s.c.t(i18n.Paused, nil)) + "\n\n" + strings.Join(lines, "\n") + "\n\n" + Hotkeys(s.c, i18n.HotkeyPause))
 	}
 	wpm, acc, d := e.Live(s.c.now)
 	data := map[string]any{"Language": strings.ToUpper(e.Result.Language), "Mode": s.c.modeName(e.Result.Mode), "WPM": fmt.Sprintf("%.1f", wpm), "CPM": fmt.Sprintf("%.0f", wpm*5), "Accuracy": fmt.Sprintf("%.1f", acc*100), "Duration": formatDuration(d)}
@@ -103,8 +149,8 @@ func (s *resultScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 	if !ok {
 		return Action{}, nil
 	}
-	switch k.String() {
-	case "enter", "n":
+	switch {
+	case k.Key().Code == tea.KeyEnter || isPlainKey(k, 'n'):
 		if s.c.result.Mode == domain.ModeText {
 			if s.c.service.HasMoreCustomText() {
 				s.c.engine, _ = s.c.service.NextCustomLesson()
@@ -114,7 +160,7 @@ func (s *resultScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 		}
 		s.c.engine = s.c.service.StartAdaptive(s.c.result.Mode, time.Now())
 		return Action{Kind: ActionNavigate, Route: RoutePractice}, nil
-	case "esc", "q":
+	case k.Key().Code == tea.KeyEsc || isPlainKey(k, 'q'):
 		return Action{Kind: ActionNavigate, Route: RouteMenu}, nil
 	}
 	return Action{}, nil

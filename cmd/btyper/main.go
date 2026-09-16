@@ -40,9 +40,7 @@ func main() {
 	if err != nil {
 		fatal(loc, err)
 	}
-	if settings.UILanguage == "" {
-		settings.UILanguage = i18n.Detect()
-	}
+	settings = applyLocaleDefaults(settings, i18n.Detect(), *lang)
 	_ = loc.SetLanguage(settings.UILanguage)
 	if *lang != "" {
 		if *lang != "en" && *lang != "ru" {
@@ -81,6 +79,16 @@ func main() {
 	if _, err := tea.NewProgram(model).Run(); err != nil {
 		fatal(loc, err)
 	}
+}
+
+func applyLocaleDefaults(settings domain.Settings, detected, cliLanguage string) domain.Settings {
+	if settings.UILanguage == "" {
+		settings.UILanguage = detected
+		if cliLanguage == "" {
+			settings.Language = detected
+		}
+	}
+	return settings
 }
 
 func fatal(loc *i18n.Localizer, err error) {
