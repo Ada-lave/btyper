@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"strings"
 	"time"
 	"unicode"
@@ -59,6 +60,40 @@ func (LessonRenderer) View(e *trainer.Engine, t Theme, width int) string {
 		b.WriteString(t.Muted.Render("…"))
 	}
 	return lipgloss.NewStyle().Width(max(44, min(94, width-16))).Render(b.String())
+}
+
+type LearningProgress struct{}
+
+func (LearningProgress) View(profile domain.LanguageProfile, progress map[rune]domain.CharacterProgress, c *Context, width int) string {
+	unlocked, current := trainer.LearningState(profile, progress, false)
+	learned := 0
+	letters := make([]string, 0, len(profile.UnlockOrder))
+	for _, r := range profile.UnlockOrder {
+		state := progress[r]
+		if state.MasteryStreak >= 2 {
+			learned++
+		}
+		label := strings.ToUpper(string(r))
+		switch {
+		case r == current:
+			label = c.theme.Selection.Render("[" + label + "]")
+		case state.MasteryStreak >= 2:
+			label = c.theme.Success.Render(label)
+		case unlocked[r]:
+			label = c.theme.Title.Render(label)
+		default:
+			label = c.theme.Muted.Render(label)
+		}
+		letters = append(letters, label)
+	}
+	summary := c.t(i18n.LearnProgress, map[string]any{
+		"Learned":    learned,
+		"Total":      len(profile.UnlockOrder),
+		"Current":    strings.ToUpper(string(current)),
+		"Confidence": fmt.Sprintf("%.0f", progress[current].Confidence*100),
+	})
+	sequence := lipgloss.NewStyle().Width(max(40, width)).Render(strings.Join(letters, " "))
+	return summary + "\n" + sequence + "\n" + c.theme.Muted.Render(c.t(i18n.LearnProgressHelp, nil))
 }
 
 type Keyboard struct{}

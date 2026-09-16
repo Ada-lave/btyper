@@ -46,6 +46,10 @@ other = "Вставка во время урока отключена"
 other = "{{.Language}}  {{.Mode}}   зн/мин {{.CPM}}   {{.Accuracy}}%   {{.Duration}}"
 [practice.finger]
 other = "Палец: {{.Finger}}  ·  ЛМ/ЛБ/ЛС/ЛУ | ПУ/ПС/ПБ/ПМ"
+[practice.learn_progress]
+other = "Освоено букв: {{.Learned}}/{{.Total}}  ·  текущая: {{.Current}}  ·  уверенность {{.Confidence}}%"
+[practice.learn_progress_help]
+other = "зелёные — освоены  ·  [буква] — текущая  ·  яркие — открыты  ·  тусклые — позже"
 [result.title]
 other = "Урок завершён"
 [result.target]

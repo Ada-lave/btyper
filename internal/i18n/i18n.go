@@ -40,6 +40,8 @@ const (
 	PasteDisabled     MessageID = "practice.paste_disabled"
 	PracticeHeader    MessageID = "practice.header"
 	FingerHint        MessageID = "practice.finger"
+	LearnProgress     MessageID = "practice.learn_progress"
+	LearnProgressHelp MessageID = "practice.learn_progress_help"
 	ResultTitle       MessageID = "result.title"
 	ResultTarget      MessageID = "result.target"
 	ResultStats       MessageID = "result.stats"

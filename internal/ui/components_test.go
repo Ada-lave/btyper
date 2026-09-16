@@ -4,9 +4,12 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"unicode"
 
+	"btyper/internal/domain"
 	"btyper/internal/i18n"
 	"btyper/internal/trainer"
+	"github.com/charmbracelet/x/ansi"
 )
 
 func TestStatusExpires(t *testing.T) {
@@ -32,6 +35,34 @@ func TestFingerGuideUsesSelectedLayout(t *testing.T) {
 	for _, want := range []string{"А", "О", "левый мизинец", "правый мизинец"} {
 		if !strings.Contains(view, want) {
 			t.Fatalf("finger guide does not contain %q", want)
+		}
+	}
+}
+
+func TestLearningProgressShowsEveryLetterAndCurrentState(t *testing.T) {
+	loc, err := i18n.New("en")
+	if err != nil {
+		t.Fatal(err)
+	}
+	profile := trainer.Profiles()["en"]
+	progress := map[rune]domain.CharacterProgress{
+		'e': {Rune: 'e', Confidence: 1, MasteryStreak: 2},
+		'n': {Rune: 'n', Confidence: .5},
+		'i': {Rune: 'i', Confidence: .75},
+		't': {Rune: 't', Confidence: .75},
+		'r': {Rune: 'r', Confidence: .75},
+		'l': {Rune: 'l', Confidence: .75},
+	}
+	c := &Context{localizer: loc, theme: NewTheme(true)}
+	view := ansi.Strip(LearningProgress{}.View(profile, progress, c, 70))
+	for _, want := range []string{"Letters mastered: 1/26", "current: N", "confidence 50%"} {
+		if !strings.Contains(view, want) {
+			t.Fatalf("progress view does not contain %q:\n%s", want, view)
+		}
+	}
+	for _, r := range profile.UnlockOrder {
+		if !strings.ContainsRune(view, unicode.ToUpper(r)) {
+			t.Fatalf("progress view does not contain letter %q", r)
 		}
 	}
 }

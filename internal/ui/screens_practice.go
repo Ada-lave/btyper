@@ -132,8 +132,12 @@ func (s *practiceScreen) View() string {
 	head := s.c.t(i18n.PracticeHeader, data)
 	pct := float64(e.Pos) / float64(max(1, len(e.Text)))
 	footer := fmt.Sprintf("%s  %s   %s", s.bar.ViewAs(pct), s.c.theme.Title.Render(fmt.Sprintf("%d/%d", e.Pos, len(e.Text))), Hotkeys(s.c, i18n.HotkeyPractice))
-	out := s.c.theme.Title.Render(head) + "\n\n" + s.c.theme.Border.Width(max(48, min(100, s.c.width-10))).Render(s.lesson.View(e, s.c.theme, s.c.width)) + "\n\n" + footer
-	if s.c.settings().ShowKeyboard && s.c.width >= 80 {
+	out := s.c.theme.Title.Render(head)
+	if e.Result.Mode == domain.ModeLearn {
+		out += "\n\n" + LearningProgress{}.View(s.c.service.Profile(), s.c.service.Progress(), s.c, min(100, s.c.width-8))
+	}
+	out += "\n\n" + s.c.theme.Border.Width(max(48, min(100, s.c.width-10))).Render(s.lesson.View(e, s.c.theme, s.c.width)) + "\n\n" + footer
+	if s.c.settings().ShowKeyboard && s.c.width >= 80 && s.c.height >= 24 {
 		out += "\n\n" + s.keyboard.View(s.c.service.Profile(), e, s.c)
 	}
 	return out
@@ -172,7 +176,11 @@ func (s *resultScreen) View() string {
 		target = s.c.t(i18n.ResultTarget, map[string]any{"Key": string(r.TargetRune), "Confidence": fmt.Sprintf("%.0f", s.c.service.Progress()[r.TargetRune].Confidence*100)})
 	}
 	stats := s.c.t(i18n.ResultStats, map[string]any{"WPM": fmt.Sprintf("%6.1f", r.WPM), "CPM": fmt.Sprintf("%6.1f", r.CPM), "Accuracy": fmt.Sprintf("%6.1f", r.Accuracy*100), "Errors": fmt.Sprintf("%6d", r.Errors), "Duration": formatDuration(r.Duration)})
-	return s.c.theme.Title.Render(s.c.t(i18n.ResultTitle, nil)) + target + "\n\n" + s.c.theme.Border.Render(stats) + "\n\n" + Hotkeys(s.c, i18n.HotkeyResult)
+	out := s.c.theme.Title.Render(s.c.t(i18n.ResultTitle, nil)) + target
+	if r.Mode == domain.ModeLearn {
+		out += "\n\n" + LearningProgress{}.View(s.c.service.Profile(), s.c.service.Progress(), s.c, min(100, s.c.width-8))
+	}
+	return out + "\n\n" + s.c.theme.Border.Render(stats) + "\n\n" + Hotkeys(s.c, i18n.HotkeyResult)
 }
 func formatDuration(d time.Duration) string {
 	return fmt.Sprintf("%02d:%02d", int(d.Minutes()), int(d.Seconds())%60)
