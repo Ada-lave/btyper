@@ -74,7 +74,7 @@ func (s *LessonService) StartAdaptive(mode domain.Mode, now time.Time) *trainer.
 	if improve && s.needsCalibration(p) {
 		text = s.calibrationText(p)
 	} else {
-		text = trainer.NewGenerator(now.UnixNano()).Lesson(p, unlocked, target, weak, s.settings.LessonRunes)
+		text = trainer.NewGenerator(now.UnixNano()).Lesson(p, unlocked, target, weak, s.settings.LessonRunes, mode)
 	}
 	return trainer.NewEngine(text, mode, s.settings.Language, target, time.Time{})
 }

@@ -5,6 +5,8 @@ import (
 	"testing"
 	"unicode"
 	"unicode/utf8"
+
+	"btyper/internal/domain"
 )
 
 func TestLessonVarietyAndFocus(t *testing.T) {
@@ -13,7 +15,7 @@ func TestLessonVarietyAndFocus(t *testing.T) {
 		unlocked := InitialUnlocked(profile)
 		target := profile.UnlockOrder[0]
 		for seed := int64(0); seed < 20; seed++ {
-			lesson := NewGenerator(seed).Lesson(profile, unlocked, target, map[rune]float64{}, 140)
+			lesson := NewGenerator(seed).Lesson(profile, unlocked, target, map[rune]float64{}, 140, domain.ModeLearn)
 			words := strings.Fields(lesson)
 			if len(words) < 15 {
 				t.Fatalf("%s seed %d: lesson has only %d words", language, seed, len(words))
@@ -37,7 +39,7 @@ func TestLessonVarietyAndFocus(t *testing.T) {
 			}
 
 			variety := float64(len(unique)) / float64(len(words))
-			if variety < .55 {
+			if variety < .95 {
 				t.Fatalf("%s seed %d: unique-word ratio %.2f is too low: %q", language, seed, variety, lesson)
 			}
 			focusRatio := float64(focused) / float64(len(words))
@@ -54,9 +56,26 @@ func TestLessonVarietyAndFocus(t *testing.T) {
 func TestLessonIsDeterministicForSeed(t *testing.T) {
 	profile := Profiles()["en"]
 	unlocked := InitialUnlocked(profile)
-	one := NewGenerator(42).Lesson(profile, unlocked, 'e', map[rune]float64{}, 140)
-	two := NewGenerator(42).Lesson(profile, unlocked, 'e', map[rune]float64{}, 140)
+	one := NewGenerator(42).Lesson(profile, unlocked, 'e', map[rune]float64{}, 140, domain.ModeLearn)
+	two := NewGenerator(42).Lesson(profile, unlocked, 'e', map[rune]float64{}, 140, domain.ModeLearn)
 	if one != two {
 		t.Fatal("same seed produced different lessons")
+	}
+}
+
+func TestSyntheticLearningWordsAlternateLetterClasses(t *testing.T) {
+	for _, language := range []string{"en", "ru"} {
+		profile := Profiles()[language]
+		allowed := profile.UnlockOrder[:6]
+		vowels := vowelRunes(language, allowed)
+		generator := NewGenerator(7)
+		for i := 0; i < 100; i++ {
+			word := []rune(generator.syntheticWord(profile, allowed, allowed[0], map[rune]float64{}))
+			for j := 1; j < len(word); j++ {
+				if contains(vowels, word[j]) == contains(vowels, word[j-1]) {
+					t.Fatalf("%s: %q does not alternate vowels and consonants", language, string(word))
+				}
+			}
+		}
 	}
 }

@@ -9,28 +9,14 @@ func Profiles() map[string]domain.LanguageProfile {
 			UnlockOrder: []rune("enitrlsaudcyghpmobwfvkxzqj"),
 			Rows:        []string{"qwertyuiop", "asdfghjkl", "zxcvbnm"},
 			Finger:      fingers([]string{"qaz", "wsx", "edc", "rfvtgb", "yhnujm", "ik", "ol", "p"}),
-			Words: []string{
-				"in", "it", "is", "on", "to", "an", "at", "no", "or", "be", "we", "he", "me", "do", "go", "up",
-				"ten", "net", "tie", "let", "lie", "tin", "one", "not", "note", "tone", "into", "line", "tile", "tree", "enter", "entire", "little",
-				"the", "there", "their", "learn", "letter", "time", "train", "read", "write", "speed", "skill", "type", "quick", "brown", "fox", "jump", "over",
-				"keyboard", "practice", "screen", "focus", "better", "daily", "simple", "word", "sound", "hand", "finger", "home", "work", "world", "light", "right",
-				"start", "close", "open", "place", "point", "again", "under", "after", "before", "small", "large", "first", "last", "next", "every", "other", "same",
-				"make", "take", "give", "keep", "move", "look", "think", "know", "good", "new", "long", "great", "clear", "correct", "steady", "relax", "repeat",
-			},
+			Words:       []string{"the", "there", "their", "learn", "letter", "line", "time", "train", "read", "write", "speed", "skill", "type", "quick", "brown", "fox", "jump", "over", "keyboard", "practice", "screen", "focus", "better", "daily", "simple", "word", "sound", "hand", "finger", "home"},
 		},
 		"ru": {
 			ID: "ru", NameID: "language.russian",
 			UnlockOrder: []rune("оеаинтсрвлкмдпуяызьбгчйхжюшцщэфъё"),
 			Rows:        []string{"йцукенгшщзхъ", "фывапролджэ", "ячсмитьбю"},
 			Finger:      fingers([]string{"йфя", "цыч", "увс", "камепи", "нртьго", "шлб", "щдю", "зхъэ"}),
-			Words: []string{
-				"он", "но", "на", "не", "и", "а", "то", "её", "мы", "вы", "да", "из", "за", "по", "до", "уже",
-				"она", "они", "оно", "иной", "нет", "тон", "нота", "енот", "тени", "неон", "иена", "тина", "тент", "нетто", "тонна", "тема", "имя", "имена", "тайна", "монета", "именно", "момент",
-				"это", "как", "его", "для", "слово", "время", "рука", "палец", "строка", "текст", "урок", "скорость", "точность", "навык",
-				"экран", "клавиша", "практика", "работа", "читать", "писать", "лучше", "каждый", "день", "просто", "новый", "звук", "дом", "мир",
-				"место", "точка", "начало", "конец", "первый", "после", "снова", "рядом", "малый", "большой", "делать", "знать", "думать", "смотреть",
-				"держать", "идти", "стоять", "хорошо", "быстро", "ровно", "точно", "спокойно", "повтор", "буква", "пальцы", "клавиши", "печать",
-			},
+			Words:       []string{"это", "как", "она", "они", "его", "для", "слово", "время", "рука", "палец", "строка", "текст", "урок", "скорость", "точность", "навык", "экран", "клавиша", "практика", "работа", "читать", "писать", "лучше", "каждый", "день", "просто", "новый", "звук", "дом", "мир"},
 		},
 	}
 }
