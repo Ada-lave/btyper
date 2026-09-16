@@ -14,6 +14,11 @@ Settings. "Learn letters" unlocks keys gradually; "Improve skill" first
 calibrates your current ability and then focuses on weak keys. Progress is
 stored locally in an SQLite database under the XDG data directory.
 
+Learning lessons show the state of every letter, the current target, and its
+confidence. Their practice words are generated from the unlocked vowels and
+consonants, so the lesson stays pronounceable and varied without depending on
+a large hardcoded dictionary.
+
 Useful options:
 
 ```text
