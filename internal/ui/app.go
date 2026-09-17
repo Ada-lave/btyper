@@ -73,9 +73,10 @@ func (c *Context) modeName(mode domain.Mode) string {
 }
 
 type App struct {
-	ctx    *Context
-	route  Route
-	screen Screen
+	ctx                           *Context
+	route                         Route
+	screen                        Screen
+	terminalWidth, terminalHeight int
 }
 
 func New(store domain.Store, initial domain.Settings) (*App, error) {
@@ -107,8 +108,9 @@ func tick() tea.Cmd {
 func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch x := msg.(type) {
 	case tea.WindowSizeMsg:
-		a.ctx.width, a.ctx.height = x.Width, x.Height
-		a.screen.Resize(x.Width, x.Height)
+		a.terminalWidth, a.terminalHeight = x.Width, x.Height
+		a.ctx.width, a.ctx.height = layoutSize(x.Width, x.Height)
+		a.screen.Resize(a.ctx.width, a.ctx.height)
 	case tea.BackgroundColorMsg:
 		a.ctx.dark = x.IsDark()
 		a.ctx.applyTheme(a.ctx.settings().ColorTheme)
@@ -163,20 +165,34 @@ func (a *App) newScreen(route Route, payload any) Screen {
 }
 func (a *App) View() tea.View {
 	body := ""
-	if a.ctx.width > 0 && (a.ctx.width < 60 || a.ctx.height < 16) {
-		body = a.ctx.theme.Border.Render(a.ctx.t(i18n.TerminalSmall, map[string]any{"Width": a.ctx.width, "Height": a.ctx.height}))
+	if a.terminalWidth > 0 && (a.terminalWidth < 60 || a.terminalHeight < 16) {
+		body = a.ctx.theme.Border.Render(a.ctx.t(i18n.TerminalSmall, map[string]any{"Width": a.terminalWidth, "Height": a.terminalHeight}))
 	} else {
 		body = a.screen.View()
 	}
 	if s := a.ctx.status.View(a.ctx.theme, a.ctx.now); s != "" {
 		body += "\n\n" + s
 	}
-	v := tea.NewView(lipgloss.NewStyle().Padding(1, 2).Render(body))
+	if a.terminalWidth > 0 && a.terminalHeight > 0 {
+		body = lipgloss.Place(
+			a.terminalWidth,
+			a.terminalHeight,
+			lipgloss.Center,
+			lipgloss.Center,
+			body,
+			lipgloss.WithWhitespaceChars(" "),
+		)
+	}
+	v := tea.NewView(body)
 	v.AltScreen = true
 	v.ReportFocus = true
 	v.KeyboardEnhancements.ReportAlternateKeys = true
 	v.WindowTitle = "btyper"
 	return v
+}
+
+func layoutSize(terminalWidth, terminalHeight int) (int, int) {
+	return max(1, min(104, terminalWidth-4)), max(1, min(36, terminalHeight-2))
 }
 
 func (a *App) Start(mode domain.Mode) {

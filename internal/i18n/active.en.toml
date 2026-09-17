@@ -46,6 +46,8 @@ other = "Paste is disabled during a lesson"
 other = "{{.Language}}  {{.Mode}}   WPM {{.WPM}}   {{.Accuracy}}%   {{.Duration}}"
 [practice.finger]
 other = "Finger: {{.Finger}}  ·  LP/LR/LM/LI | RI/RM/RR/RP"
+[practice.space_finger]
+other = "Space: press with either thumb"
 [practice.learn_progress]
 other = "Letters mastered: {{.Learned}}/{{.Total}}  ·  current: {{.Current}}  ·  confidence {{.Confidence}}%"
 [practice.learn_progress_help]

@@ -128,10 +128,14 @@ func (Keyboard) View(p domain.LanguageProfile, e *trainer.Engine, c *Context) st
 		lines = append(lines, b.String())
 	}
 	finger := p.Finger[expected]
+	hint := " "
 	if finger != "" {
 		ids := map[string]i18n.MessageID{"LP": i18n.FingerLP, "LR": i18n.FingerLR, "LM": i18n.FingerLM, "LI": i18n.FingerLI, "RI": i18n.FingerRI, "RM": i18n.FingerRM, "RR": i18n.FingerRR, "RP": i18n.FingerRP}
-		lines = append(lines, "", c.theme.Title.Render(c.t(i18n.FingerHint, map[string]any{"Finger": c.t(ids[finger], nil)})))
+		hint = c.t(i18n.FingerHint, map[string]any{"Finger": c.t(ids[finger], nil)})
+	} else if unicode.IsSpace(expected) {
+		hint = c.t(i18n.SpaceFingerHint, nil)
 	}
+	lines = append(lines, "", c.theme.Title.Render(hint))
 	return strings.Join(lines, "\n")
 }
 

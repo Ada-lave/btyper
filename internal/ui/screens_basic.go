@@ -47,7 +47,9 @@ func (s *menuScreen) rebuild() {
 	s.menu.SetFilteringEnabled(false)
 }
 func (s *menuScreen) Activate() tea.Cmd { return nil }
-func (s *menuScreen) Resize(w, h int)   { s.menu.SetSize(min(76, max(40, w-8)), max(10, h-6)) }
+func (s *menuScreen) Resize(w, h int) {
+	s.menu.SetSize(min(76, max(40, w)), max(10, min(22, h-4)))
+}
 func (s *menuScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 	if k, ok := msg.(tea.KeyPressMsg); ok {
 		if isUp(k) {

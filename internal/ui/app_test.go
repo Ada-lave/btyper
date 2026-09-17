@@ -40,6 +40,22 @@ func TestNewStartsAtMainMenuWithoutReadingHistory(t *testing.T) {
 	}
 }
 
+func TestLayoutUsesBoundedCenteredWorkspace(t *testing.T) {
+	for _, tc := range []struct {
+		terminalWidth, terminalHeight int
+		wantWidth, wantHeight         int
+	}{
+		{80, 24, 76, 22},
+		{160, 50, 104, 36},
+		{64, 18, 60, 16},
+	} {
+		width, height := layoutSize(tc.terminalWidth, tc.terminalHeight)
+		if width != tc.wantWidth || height != tc.wantHeight {
+			t.Fatalf("layoutSize(%d, %d) = %dx%d, want %dx%d", tc.terminalWidth, tc.terminalHeight, width, height, tc.wantWidth, tc.wantHeight)
+		}
+	}
+}
+
 func TestSettingsVimKeysInRussianLayout(t *testing.T) {
 	store := &testStore{settings: domain.DefaultSettings()}
 	app, err := New(store, store.settings)

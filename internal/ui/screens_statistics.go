@@ -22,8 +22,8 @@ func newStatisticsScreen(c *Context) Screen {
 }
 func (s *statisticsScreen) Activate() tea.Cmd { return nil }
 func (s *statisticsScreen) Resize(w, h int) {
-	s.table.Model.SetWidth(max(40, w-8))
-	s.table.Model.SetHeight(max(5, h-9))
+	s.table.Model.SetWidth(max(40, w))
+	s.table.Model.SetHeight(max(5, min(16, h-9)))
 }
 func (s *statisticsScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 	if k, ok := msg.(tea.KeyPressMsg); ok && (k.String() == "tab" || k.String() == "1" || k.String() == "2") {

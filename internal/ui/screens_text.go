@@ -29,7 +29,7 @@ func newTextScreen(c *Context, payload any) Screen {
 }
 func (s *textScreen) Activate() tea.Cmd { return s.area.Focus() }
 func (s *textScreen) Resize(w, h int) {
-	s.area.SetWidth(min(90, max(40, w-8)))
+	s.area.SetWidth(min(90, max(40, w)))
 	s.area.SetHeight(max(5, min(14, h-10)))
 }
 func (s *textScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
@@ -83,7 +83,7 @@ func newPickerScreen(c *Context, payload any) Screen {
 	return &pickerScreen{c: c, picker: p, previous: previous}
 }
 func (s *pickerScreen) Activate() tea.Cmd { return s.picker.Init() }
-func (s *pickerScreen) Resize(w, h int)   { s.picker.SetHeight(max(5, h-8)) }
+func (s *pickerScreen) Resize(w, h int)   { s.picker.SetHeight(max(5, min(14, h-8))) }
 func (s *pickerScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 	if k, ok := msg.(tea.KeyPressMsg); ok && k.Key().Code == tea.KeyEsc {
 		return Action{Kind: ActionNavigate, Route: RouteText, Payload: s.previous}, nil

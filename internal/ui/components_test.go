@@ -66,3 +66,22 @@ func TestLearningProgressShowsEveryLetterAndCurrentState(t *testing.T) {
 		}
 	}
 }
+
+func TestKeyboardKeepsHeightAndShowsThumbHintForSpace(t *testing.T) {
+	settings := domain.DefaultSettings()
+	settings.UILanguage = "en"
+	store := &testStore{settings: settings}
+	app, err := New(store, settings)
+	if err != nil {
+		t.Fatal(err)
+	}
+	profile := trainer.Profiles()["en"]
+	letter := Keyboard{}.View(profile, trainer.NewEngine("e", domain.ModeLearn, "en", 'e', time.Time{}), app.ctx)
+	space := Keyboard{}.View(profile, trainer.NewEngine(" ", domain.ModeLearn, "en", 'e', time.Time{}), app.ctx)
+	if strings.Count(letter, "\n") != strings.Count(space, "\n") {
+		t.Fatalf("keyboard height changed for space: letter=%d lines, space=%d lines", strings.Count(letter, "\n")+1, strings.Count(space, "\n")+1)
+	}
+	if plain := ansi.Strip(space); !strings.Contains(plain, "press with either thumb") {
+		t.Fatalf("space hint is missing: %q", plain)
+	}
+}
