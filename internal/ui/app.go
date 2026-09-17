@@ -92,6 +92,9 @@ func New(store domain.Store, initial domain.Settings) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
+	if err := service.SaveSettings(service.Settings()); err != nil {
+		return nil, err
+	}
 	ctx := &Context{service: service, localizer: loc, dark: true, now: time.Now()}
 	ctx.applyTheme(service.Settings().ColorTheme)
 	a := &App{ctx: ctx, route: RouteMenu}
@@ -124,11 +127,13 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return a, tick()
 	case tea.KeyPressMsg:
 		if isCtrlKey(x, 'c') {
+			a.ctx.setStoreError(a.ctx.service.SaveSettings(a.ctx.settings()))
 			return a, tea.Quit
 		}
 	}
 	action, cmd := a.screen.Update(msg)
 	if action.Kind == ActionQuit {
+		a.ctx.setStoreError(a.ctx.service.SaveSettings(a.ctx.settings()))
 		return a, tea.Quit
 	}
 	if action.Kind == ActionNavigate {

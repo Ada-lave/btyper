@@ -113,4 +113,25 @@ func TestThemeSettingAppliesAndPersists(t *testing.T) {
 	}
 }
 
+func TestTrainingLanguagePersistsAcrossRestart(t *testing.T) {
+	store := &testStore{settings: domain.DefaultSettings()}
+	app, err := New(store, store.settings)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := newSettingsScreen(app.ctx).(*settingsScreen)
+	s.cursor = 1
+	s.Update(key('l', 0, 0))
+	if got := store.settings.Language; got != "ru" {
+		t.Fatalf("saved training language is %q, want ru", got)
+	}
+	restarted, err := New(store, store.settings)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := restarted.ctx.settings().Language; got != "ru" {
+		t.Fatalf("training language after restart is %q, want ru", got)
+	}
+}
+
 var _ domain.Store = (*testStore)(nil)

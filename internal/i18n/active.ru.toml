@@ -179,7 +179,7 @@ other = "режим: learn, improve или text"
 [cli.text]
 other = "текстовый файл UTF-8 (открывает режим своего текста)"
 [cli.data_dir]
-other = "каталог для btyper.db"
+other = "каталог для btyper.db (по умолчанию: $XDG_DATA_HOME/btyper или ~/.local/share/btyper)"
 [cli.version]
 other = "вывести версию"
 [cli.invalid_lang]

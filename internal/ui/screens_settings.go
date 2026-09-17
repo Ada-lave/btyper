@@ -37,6 +37,7 @@ func (s *settingsScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 	}
 	switch {
 	case k.Key().Code == tea.KeyEsc:
+		s.c.setStoreError(s.c.service.SaveSettings(s.c.settings()))
 		return Action{Kind: ActionNavigate, Route: RouteMenu}, nil
 	case isUp(k):
 		s.cursor = (s.cursor + 7) % 8

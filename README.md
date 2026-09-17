@@ -14,6 +14,10 @@ Settings. "Learn letters" unlocks keys gradually; "Improve skill" first
 calibrates your current ability and then focuses on weak keys. Progress is
 stored locally in an SQLite database under the XDG data directory.
 
+By default, the database is stored at `$XDG_DATA_HOME/btyper/btyper.db`, or
+`~/.local/share/btyper/btyper.db` when `XDG_DATA_HOME` is not set. Passing
+`--data-dir` selects a different database directory.
+
 Learning lessons show the state of every letter, the current target, and its
 confidence. Their practice words are generated from the unlocked vowels and
 consonants, so the lesson stays pronounceable and varied without depending on

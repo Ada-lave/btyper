@@ -179,7 +179,7 @@ other = "mode: learn, improve or text"
 [cli.text]
 other = "UTF-8 text file (opens custom text mode)"
 [cli.data_dir]
-other = "directory for btyper.db"
+other = "directory for btyper.db (default: $XDG_DATA_HOME/btyper or ~/.local/share/btyper)"
 [cli.version]
 other = "print version"
 [cli.invalid_lang]
