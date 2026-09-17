@@ -49,7 +49,7 @@ other = "Палец: {{.Finger}}  ·  ЛМ/ЛБ/ЛС/ЛУ | ПУ/ПС/ПБ/ПМ"
 [practice.learn_progress]
 other = "Освоено букв: {{.Learned}}/{{.Total}}  ·  текущая: {{.Current}}  ·  уверенность {{.Confidence}}%"
 [practice.learn_progress_help]
-other = "зелёные — освоены  ·  [буква] — текущая  ·  яркие — открыты  ·  тусклые — позже"
+other = "красный → жёлтый → зелёный — уверенность  ·  [буква] — текущая  ·  тусклые — позже"
 [result.title]
 other = "Урок завершён"
 [result.target]

@@ -49,7 +49,7 @@ other = "Finger: {{.Finger}}  ·  LP/LR/LM/LI | RI/RM/RR/RP"
 [practice.learn_progress]
 other = "Letters mastered: {{.Learned}}/{{.Total}}  ·  current: {{.Current}}  ·  confidence {{.Confidence}}%"
 [practice.learn_progress_help]
-other = "green — mastered  ·  [letter] — current  ·  bright — unlocked  ·  muted — later"
+other = "red → yellow → green — confidence  ·  [letter] — current  ·  muted — later"
 [result.title]
 other = "Lesson complete"
 [result.target]

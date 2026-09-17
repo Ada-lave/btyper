@@ -76,11 +76,9 @@ func (LearningProgress) View(profile domain.LanguageProfile, progress map[rune]d
 		label := strings.ToUpper(string(r))
 		switch {
 		case r == current:
-			label = c.theme.Selection.Render("[" + label + "]")
-		case state.MasteryStreak >= 2:
-			label = c.theme.Success.Render(label)
+			label = c.theme.Progress(state.Confidence).Bold(true).Underline(true).Render("[" + label + "]")
 		case unlocked[r]:
-			label = c.theme.Title.Render(label)
+			label = c.theme.Progress(state.Confidence).Render(label)
 		default:
 			label = c.theme.Muted.Render(label)
 		}
@@ -103,15 +101,26 @@ func (Keyboard) View(p domain.LanguageProfile, e *trainer.Engine, c *Context) st
 	if e.Pos < len(e.Text) {
 		expected = unicode.ToLower(e.Text[e.Pos])
 	}
+	progress := c.service.Progress()
+	unlocked := map[rune]bool{}
+	target := rune(0)
+	if e.Result.Mode == domain.ModeLearn || e.Result.Mode == domain.ModeImprove {
+		unlocked, target = trainer.LearningState(p, progress, e.Result.Mode == domain.ModeImprove)
+	}
 	var lines []string
 	for i, row := range p.Rows {
 		var b strings.Builder
 		b.WriteString(strings.Repeat(" ", i*2))
 		for _, r := range row {
 			s := " " + string(r) + " "
-			if r == expected {
+			switch {
+			case r == expected:
 				s = c.theme.Selection.Render("[" + string(r) + "]")
-			} else {
+			case r == target:
+				s = c.theme.Progress(progress[r].Confidence).Bold(true).Underline(true).Render("[" + string(r) + "]")
+			case unlocked[r]:
+				s = c.theme.Progress(progress[r].Confidence).Render(s)
+			default:
 				s = c.theme.Muted.Render(s)
 			}
 			b.WriteString(s)
