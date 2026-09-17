@@ -7,6 +7,7 @@ import (
 	"btyper/internal/i18n"
 	"charm.land/bubbles/v2/list"
 	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 func isBack(msg tea.Msg) bool {
@@ -33,8 +34,15 @@ func newMenuScreen(c *Context) Screen { s := &menuScreen{c: c}; s.rebuild(); ret
 func (s *menuScreen) rebuild() {
 	c := s.c
 	items := []list.Item{menuItem{RoutePractice, domain.ModeLearn, c.t(i18n.Learn, nil), c.t(i18n.LearnDesc, nil)}, menuItem{RoutePractice, domain.ModeImprove, c.t(i18n.Improve, nil), c.t(i18n.ImproveDesc, nil)}, menuItem{RouteText, domain.ModeText, c.t(i18n.CustomText, nil), c.t(i18n.TextDesc, nil)}, menuItem{RouteStatistics, "", c.t(i18n.History, nil), c.t(i18n.HistoryDesc, nil)}, menuItem{RouteSettings, "", c.t(i18n.Settings, nil), c.t(i18n.SettingsDesc, nil)}, menuItem{RouteHelp, "", c.t(i18n.Help, nil), c.t(i18n.HelpDesc, nil)}, menuItem{-1, "", c.t(i18n.Quit, nil), c.t(i18n.QuitDesc, nil)}}
-	s.menu = list.New(items, list.NewDefaultDelegate(), 72, 22)
+	delegate := list.NewDefaultDelegate()
+	delegate.Styles.NormalTitle = c.theme.Text.PaddingLeft(2)
+	delegate.Styles.NormalDesc = c.theme.Muted.PaddingLeft(2)
+	delegate.Styles.SelectedTitle = c.theme.Title.Border(lipgloss.NormalBorder(), false, false, false, true).PaddingLeft(1)
+	delegate.Styles.SelectedDesc = c.theme.Title.Border(lipgloss.NormalBorder(), false, false, false, true).PaddingLeft(1)
+	s.menu = list.New(items, delegate, 72, 22)
 	s.menu.Title = c.t(i18n.Title, nil)
+	s.menu.Styles.Title = c.theme.Title
+	s.menu.Styles.HelpStyle = c.theme.Muted
 	s.menu.SetShowStatusBar(false)
 	s.menu.SetFilteringEnabled(false)
 }

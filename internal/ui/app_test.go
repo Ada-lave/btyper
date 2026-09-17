@@ -63,4 +63,38 @@ func TestSettingsVimKeysInRussianLayout(t *testing.T) {
 	}
 }
 
+func TestLegacySettingsDefaultToVioletTheme(t *testing.T) {
+	settings := domain.DefaultSettings()
+	settings.ColorTheme = ""
+	store := &testStore{settings: settings}
+	app, err := New(store, settings)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := app.ctx.settings().ColorTheme; got != domain.ThemeViolet {
+		t.Fatalf("legacy theme normalized to %q, want %q", got, domain.ThemeViolet)
+	}
+}
+
+func TestThemeSettingAppliesAndPersists(t *testing.T) {
+	store := &testStore{settings: domain.DefaultSettings()}
+	app, err := New(store, store.settings)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := newSettingsScreen(app.ctx).(*settingsScreen)
+	s.cursor = 6
+	before := app.ctx.theme.Progress(.5).Render("x")
+	s.Update(key('l', 0, 0))
+	if got := app.ctx.settings().ColorTheme; got != domain.ThemeOcean {
+		t.Fatalf("active theme is %q, want %q", got, domain.ThemeOcean)
+	}
+	if got := store.settings.ColorTheme; got != domain.ThemeOcean {
+		t.Fatalf("saved theme is %q, want %q", got, domain.ThemeOcean)
+	}
+	if after := app.ctx.theme.Progress(.5).Render("x"); after == before {
+		t.Fatal("theme change did not rebuild progress palette")
+	}
+}
+
 var _ domain.Store = (*testStore)(nil)

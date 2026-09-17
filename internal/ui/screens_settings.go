@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"btyper/internal/domain"
 	"btyper/internal/i18n"
 	tea "charm.land/bubbletea/v2"
 )
@@ -38,13 +39,13 @@ func (s *settingsScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 	case k.Key().Code == tea.KeyEsc:
 		return Action{Kind: ActionNavigate, Route: RouteMenu}, nil
 	case isUp(k):
-		s.cursor = (s.cursor + 6) % 7
+		s.cursor = (s.cursor + 7) % 8
 	case isDown(k) || k.Key().Code == tea.KeyTab:
-		s.cursor = (s.cursor + 1) % 7
+		s.cursor = (s.cursor + 1) % 8
 	case isLeft(k):
 		s.change(-1)
 	case isRight(k) || k.Key().Code == tea.KeyEnter:
-		if s.cursor == 6 {
+		if s.cursor == 7 {
 			s.confirm = true
 		} else {
 			s.change(1)
@@ -77,8 +78,33 @@ func (s *settingsScreen) change(d int) {
 		v.LessonRunes = max(50, min(500, v.LessonRunes+d*10))
 	case 5:
 		v.ShowKeyboard = !v.ShowKeyboard
+	case 6:
+		v.ColorTheme = nextColorTheme(v.ColorTheme, d)
 	}
 	s.c.setStoreError(s.c.service.SaveSettings(v))
+	s.c.applyTheme(s.c.settings().ColorTheme)
+}
+
+func nextColorTheme(current domain.ColorTheme, direction int) domain.ColorTheme {
+	themes := []domain.ColorTheme{domain.ThemeViolet, domain.ThemeOcean, domain.ThemeSunset, domain.ThemeMono}
+	index := 0
+	for i, theme := range themes {
+		if theme == current {
+			index = i
+			break
+		}
+	}
+	index = (index + direction + len(themes)) % len(themes)
+	return themes[index]
+}
+
+func (s *settingsScreen) themeName(theme domain.ColorTheme) string {
+	ids := map[domain.ColorTheme]i18n.MessageID{domain.ThemeViolet: i18n.ThemeViolet, domain.ThemeOcean: i18n.ThemeOcean, domain.ThemeSunset: i18n.ThemeSunset, domain.ThemeMono: i18n.ThemeMono}
+	id, ok := ids[theme]
+	if !ok {
+		id = i18n.ThemeViolet
+	}
+	return s.c.t(id, nil)
 }
 func (s *settingsScreen) View() string {
 	v := s.c.settings()
@@ -88,7 +114,7 @@ func (s *settingsScreen) View() string {
 		yesno = s.c.t(i18n.BoolYes, nil)
 	}
 	length := s.c.localizer.Plural(i18n.CountCharacters, v.LessonRunes, map[string]any{"Count": v.LessonRunes})
-	vals := []string{s.c.t(i18n.SettingsUI, map[string]any{"Value": strings.ToUpper(v.UILanguage)}), s.c.t(i18n.SettingsTraining, map[string]any{"Value": s.c.t(i18n.MessageID(profile.NameID), nil)}), s.c.t(i18n.SettingsSpeed, map[string]any{"Value": fmt.Sprintf("%.0f", v.TargetWPM)}), s.c.t(i18n.SettingsAccuracy, map[string]any{"Value": fmt.Sprintf("%.0f", v.Accuracy*100)}), s.c.t(i18n.SettingsLength, map[string]any{"Value": length}), s.c.t(i18n.SettingsKeyboard, map[string]any{"Value": yesno}), s.c.t(i18n.SettingsReset, nil)}
+	vals := []string{s.c.t(i18n.SettingsUI, map[string]any{"Value": strings.ToUpper(v.UILanguage)}), s.c.t(i18n.SettingsTraining, map[string]any{"Value": s.c.t(i18n.MessageID(profile.NameID), nil)}), s.c.t(i18n.SettingsSpeed, map[string]any{"Value": fmt.Sprintf("%.0f", v.TargetWPM)}), s.c.t(i18n.SettingsAccuracy, map[string]any{"Value": fmt.Sprintf("%.0f", v.Accuracy*100)}), s.c.t(i18n.SettingsLength, map[string]any{"Value": length}), s.c.t(i18n.SettingsKeyboard, map[string]any{"Value": yesno}), s.c.t(i18n.SettingsTheme, map[string]any{"Value": s.themeName(v.ColorTheme)}), s.c.t(i18n.SettingsReset, nil)}
 	var b strings.Builder
 	b.WriteString(s.c.theme.Title.Render(s.c.t(i18n.Settings, nil)))
 	b.WriteString("\n\n")

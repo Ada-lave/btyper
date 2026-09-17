@@ -51,6 +51,7 @@ type Context struct {
 	service       *application.LessonService
 	localizer     *i18n.Localizer
 	theme         Theme
+	dark          bool
 	status        Status
 	width, height int
 	now           time.Time
@@ -60,6 +61,7 @@ type Context struct {
 
 func (c *Context) t(id i18n.MessageID, data map[string]any) string { return c.localizer.Text(id, data) }
 func (c *Context) settings() domain.Settings                       { return c.service.Settings() }
+func (c *Context) applyTheme(theme domain.ColorTheme)              { c.theme = NewColorTheme(c.dark, theme) }
 func (c *Context) setStoreError(err error) {
 	if err != nil {
 		c.status.Set(c.t(i18n.StoreError, map[string]any{"Error": err}))
@@ -89,7 +91,8 @@ func New(store domain.Store, initial domain.Settings) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	ctx := &Context{service: service, localizer: loc, theme: NewTheme(true), now: time.Now()}
+	ctx := &Context{service: service, localizer: loc, dark: true, now: time.Now()}
+	ctx.applyTheme(service.Settings().ColorTheme)
 	a := &App{ctx: ctx, route: RouteMenu}
 	a.screen = a.newScreen(a.route, nil)
 	return a, nil
@@ -107,7 +110,8 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		a.ctx.width, a.ctx.height = x.Width, x.Height
 		a.screen.Resize(x.Width, x.Height)
 	case tea.BackgroundColorMsg:
-		a.ctx.theme = NewTheme(x.IsDark())
+		a.ctx.dark = x.IsDark()
+		a.ctx.applyTheme(a.ctx.settings().ColorTheme)
 	case tea.BlurMsg:
 		if a.ctx.engine != nil && a.route == RoutePractice {
 			a.ctx.engine.Pause(time.Now())

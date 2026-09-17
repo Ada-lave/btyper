@@ -33,6 +33,7 @@ func NewLessonService(store domain.Store, settings domain.Settings) (*LessonServ
 	if _, ok := profiles[settings.Language]; !ok {
 		settings.Language = "en"
 	}
+	settings.ColorTheme = normalizeColorTheme(settings.ColorTheme)
 	progress, err := store.LoadProgress(settings.Language)
 	if err != nil {
 		return nil, err
@@ -49,6 +50,7 @@ func (s *LessonService) SaveSettings(v domain.Settings) error {
 	if _, ok := s.profiles[v.Language]; !ok {
 		v.Language = "en"
 	}
+	v.ColorTheme = normalizeColorTheme(v.ColorTheme)
 	changed := v.Language != s.settings.Language
 	s.settings = v
 	if changed {
@@ -59,6 +61,15 @@ func (s *LessonService) SaveSettings(v domain.Settings) error {
 		s.progress = p
 	}
 	return s.store.SaveSettings(v)
+}
+
+func normalizeColorTheme(theme domain.ColorTheme) domain.ColorTheme {
+	switch theme {
+	case domain.ThemeViolet, domain.ThemeOcean, domain.ThemeSunset, domain.ThemeMono:
+		return theme
+	default:
+		return domain.ThemeViolet
+	}
 }
 
 func (s *LessonService) StartAdaptive(mode domain.Mode, now time.Time) *trainer.Engine {

@@ -112,6 +112,16 @@ other = "Целевая точность: {{.Value}}%"
 other = "Длина урока: {{.Value}}"
 [settings.keyboard]
 other = "Виртуальная клавиатура: {{.Value}}"
+[settings.theme]
+other = "Цветовая тема: {{.Value}}"
+[theme.violet]
+other = "Фиолетовая"
+[theme.ocean]
+other = "Океан"
+[theme.sunset]
+other = "Закат"
+[theme.mono]
+other = "Монохромная"
 [settings.reset]
 other = "Сбросить прогресс"
 [settings.confirm_reset]

@@ -112,6 +112,16 @@ other = "Target accuracy: {{.Value}}%"
 other = "Lesson length: {{.Value}}"
 [settings.keyboard]
 other = "Virtual keyboard: {{.Value}}"
+[settings.theme]
+other = "Color theme: {{.Value}}"
+[theme.violet]
+other = "Violet"
+[theme.ocean]
+other = "Ocean"
+[theme.sunset]
+other = "Sunset"
+[theme.mono]
+other = "Monochrome"
 [settings.reset]
 other = "Reset progress"
 [settings.confirm_reset]

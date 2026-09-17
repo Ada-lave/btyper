@@ -3,11 +3,19 @@ package domain
 import "time"
 
 type Mode string
+type ColorTheme string
 
 const (
 	ModeLearn   Mode = "learn"
 	ModeImprove Mode = "improve"
 	ModeText    Mode = "text"
+)
+
+const (
+	ThemeViolet ColorTheme = "violet"
+	ThemeOcean  ColorTheme = "ocean"
+	ThemeSunset ColorTheme = "sunset"
+	ThemeMono   ColorTheme = "mono"
 )
 
 type Settings struct {
@@ -18,10 +26,11 @@ type Settings struct {
 	Accuracy     float64
 	LessonRunes  int
 	ShowKeyboard bool
+	ColorTheme   ColorTheme
 }
 
 func DefaultSettings() Settings {
-	return Settings{UILanguage: "", Language: "en", Mode: ModeLearn, TargetWPM: 35, Accuracy: 0.95, LessonRunes: 140, ShowKeyboard: true}
+	return Settings{UILanguage: "", Language: "en", Mode: ModeLearn, TargetWPM: 35, Accuracy: 0.95, LessonRunes: 140, ShowKeyboard: true, ColorTheme: ThemeViolet}
 }
 
 type LanguageProfile struct {
