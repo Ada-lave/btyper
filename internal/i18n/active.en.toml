@@ -200,3 +200,39 @@ other = "{{.Count}} characters"
 [count.samples]
 one = "{{.Count}} sample"
 other = "{{.Count}} samples"
+[work.wait]
+other = "Please wait…"
+[settings.repaired]
+other = "Invalid settings were restored to defaults."
+[text.too_large]
+other = "Text must be no larger than 1 MiB."
+[today.time]
+other = "Practice today: {{.Time}}"
+[result.unsaved]
+other = "Not saved. Enter · retry saving   Esc · leave without saving"
+[lesson.custom]
+other = "Practice your text. Accuracy = correct attempts / all attempts."
+[lesson.calibration]
+other = "Calibration: {{.Remaining}} attempts remaining."
+[lesson.repeat]
+other = "Review «{{.Key}}»: restore confidence to 100% before opening new letters."
+[lesson.learn]
+other = "Learn «{{.Key}}»: 100% confidence in two target lessons ({{.Streak}}/2)."
+[result.weak]
+other = "Practice these keys: {{.Keys}}"
+[result.change]
+other = "«{{.Key}}» confidence: {{.Before}}% → {{.After}}%"
+[result.next]
+other = "Next:"
+[filter.all]
+other = "All"
+[history.filters]
+other = "L: {{.Language}} · M: {{.Mode}} · P: {{.Period}}"
+[history.summary]
+other = "{{.Count}} lessons · {{.Time}} · {{.WPM}} WPM · {{.Accuracy}}%"
+[history.page]
+other = "←/→ page {{.Page}}/{{.Pages}}"
+[help.metrics]
+other = "WPM = correct characters / 5 / active minutes. Accuracy = correct attempts / all attempts. Pauses are excluded; correction time is included. Letters are mastered after two target lessons at 100% confidence and stay open."
+[view.scroll]
+other = "PgUp/PgDn · scroll"

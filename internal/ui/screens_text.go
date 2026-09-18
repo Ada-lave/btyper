@@ -2,7 +2,6 @@ package ui
 
 import (
 	"errors"
-	"os"
 
 	"btyper/internal/application"
 	"btyper/internal/i18n"
@@ -20,6 +19,7 @@ func newTextScreen(c *Context, payload any) Screen {
 	a := textarea.New()
 	a.Placeholder = c.t(i18n.TextEmpty, nil)
 	a.ShowLineNumbers = false
+	a.CharLimit = application.MaxTextBytes
 	a.SetWidth(70)
 	a.SetHeight(10)
 	if v, ok := payload.(string); ok {
@@ -46,6 +46,8 @@ func (s *textScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 			if err != nil {
 				if errors.Is(err, application.ErrInvalidUTF8) {
 					s.c.status.Set(s.c.t(i18n.InvalidUTF8, nil))
+				} else if errors.Is(err, application.ErrTextTooLarge) {
+					s.c.status.Set(s.c.t("text.too_large", nil))
 				} else {
 					s.c.status.Set(s.c.t(i18n.TextEmpty, nil))
 				}
@@ -70,6 +72,8 @@ type pickerScreen struct {
 	previous string
 }
 
+type textLoadedMsg struct{ text string }
+
 func newPickerScreen(c *Context, payload any) Screen {
 	p := filepicker.New()
 	p.FileAllowed = true
@@ -91,12 +95,18 @@ func (s *pickerScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 	var cmd tea.Cmd
 	s.picker, cmd = s.picker.Update(msg)
 	if ok, path := s.picker.DidSelectFile(msg); ok {
-		b, err := os.ReadFile(path)
-		if err != nil {
-			s.c.status.Set(s.c.t(i18n.FileError, map[string]any{"Error": err}))
-			return Action{}, cmd
-		}
-		return Action{Kind: ActionNavigate, Route: RouteText, Payload: string(b)}, cmd
+		var text string
+		return Action{}, s.c.work(func() error { var err error; text, err = application.ReadCustomText(path); return err }, func(err error) tea.Cmd {
+			if err != nil {
+				if errors.Is(err, application.ErrTextTooLarge) {
+					s.c.status.Set(s.c.t("text.too_large", nil))
+				} else {
+					s.c.status.Set(s.c.t(i18n.FileError, map[string]any{"Error": err}))
+				}
+				return nil
+			}
+			return func() tea.Msg { return textLoadedMsg{text} }
+		})
 	}
 	return Action{}, cmd
 }

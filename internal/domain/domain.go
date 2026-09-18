@@ -42,6 +42,7 @@ type LanguageProfile struct {
 }
 
 type CharacterProgress struct {
+	Unlocked, Mastered              bool
 	Language                        string
 	Rune                            rune
 	Samples, Errors                 int
@@ -50,12 +51,14 @@ type CharacterProgress struct {
 }
 
 type CharacterStat struct {
+	LatencySamples  int
 	Rune            rune
 	Samples, Errors int
 	LatencyMS       float64
 }
 
 type SessionResult struct {
+	AttemptID                              string
 	ID                                     int64
 	StartedAt                              time.Time
 	Mode                                   Mode
@@ -78,12 +81,33 @@ type HistoryEntry struct {
 	Duration      time.Duration
 }
 
+type HistoryFilter struct {
+	Language      string
+	Mode          Mode
+	Since         time.Time
+	Limit, Offset int
+}
+
+type HistorySummary struct {
+	Sessions      int
+	Duration      time.Duration
+	WPM, Accuracy float64
+}
+
+type PracticeTime struct {
+	AttemptID, Day string
+	Duration       time.Duration
+}
+
 type Store interface {
 	LoadSettings() (Settings, error)
 	SaveSettings(Settings) error
 	LoadProgress(language string) (map[rune]CharacterProgress, error)
 	SaveSession(SessionResult, map[rune]CharacterProgress) error
-	History(limit int) ([]HistoryEntry, error)
+	History(HistoryFilter) ([]HistoryEntry, error)
+	Summary(HistoryFilter) (HistorySummary, error)
+	SavePracticeTime([]PracticeTime) error
+	PracticeTime(day string) (time.Duration, error)
 	Reset() error
 	Close() error
 }

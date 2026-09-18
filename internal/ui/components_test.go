@@ -46,7 +46,7 @@ func TestLearningProgressShowsEveryLetterAndCurrentState(t *testing.T) {
 	}
 	profile := trainer.Profiles()["en"]
 	progress := map[rune]domain.CharacterProgress{
-		'e': {Rune: 'e', Confidence: 1, MasteryStreak: 2},
+		'e': {Rune: 'e', Confidence: 1, MasteryStreak: 2, Mastered: true, Unlocked: true},
 		'n': {Rune: 'n', Confidence: .5},
 		'i': {Rune: 'i', Confidence: .75},
 		't': {Rune: 't', Confidence: .75},

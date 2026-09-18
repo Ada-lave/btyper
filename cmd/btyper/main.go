@@ -55,9 +55,9 @@ func main() {
 		}
 		settings.Mode = m
 	}
-	var initialText []byte
+	var initialText string
 	if *textPath != "" {
-		initialText, err = os.ReadFile(*textPath)
+		initialText, err = application.ReadCustomText(*textPath)
 		if err != nil {
 			fatal(loc, fmt.Errorf("%s", loc.Text(i18n.FileError, map[string]any{"Error": err})))
 		}
@@ -67,15 +67,13 @@ func main() {
 	if err != nil {
 		fatal(loc, err)
 	}
-	if initialText != nil {
-		if err := model.StartCustomText(string(initialText)); err != nil {
+	if initialText != "" {
+		if err := model.StartCustomText(initialText); err != nil {
 			fatal(loc, err)
 		}
 	} else if *mode != "" {
 		model.Start(domain.Mode(*mode))
 	}
-	// File contents are intentionally loaded through the in-app picker in the demo;
-	// --text still validates the path and opens the custom-text workflow.
 	if _, err := tea.NewProgram(model).Run(); err != nil {
 		fatal(loc, err)
 	}

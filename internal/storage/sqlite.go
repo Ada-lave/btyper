@@ -21,6 +21,7 @@ func Open(dir string) (*SQLite, error) {
 		return nil, err
 	}
 	s := &SQLite{db: db}
+	db.SetMaxOpenConns(1)
 	if _, err = db.Exec("PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000;"); err != nil {
 		db.Close()
 		return nil, err

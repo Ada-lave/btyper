@@ -1,8 +1,10 @@
 package ui
 
 import (
+	tea "charm.land/bubbletea/v2"
 	"errors"
 	"testing"
+	"time"
 
 	"btyper/internal/domain"
 )
@@ -23,8 +25,25 @@ func (s *testStore) LoadProgress(string) (map[rune]domain.CharacterProgress, err
 func (*testStore) SaveSession(domain.SessionResult, map[rune]domain.CharacterProgress) error {
 	return nil
 }
-func (*testStore) History(int) ([]domain.HistoryEntry, error) {
+func (*testStore) History(domain.HistoryFilter) ([]domain.HistoryEntry, error) {
 	return nil, errors.New("history must not be read during startup")
+}
+func (*testStore) Summary(domain.HistoryFilter) (domain.HistorySummary, error) {
+	return domain.HistorySummary{}, nil
+}
+func (*testStore) SavePracticeTime([]domain.PracticeTime) error { return nil }
+func (*testStore) PracticeTime(string) (time.Duration, error)   { return 0, nil }
+
+func screenKey(s Screen, k tea.KeyPressMsg) {
+	_, cmd := s.Update(k)
+	for cmd != nil {
+		msg := cmd()
+		if done, ok := msg.(workDone); ok {
+			cmd = done.done(done.err)
+		} else {
+			cmd = nil
+		}
+	}
 }
 func (s *testStore) Reset() error { s.progress = map[rune]domain.CharacterProgress{}; return nil }
 func (*testStore) Close() error   { return nil }
@@ -69,11 +88,11 @@ func TestSettingsVimKeysInRussianLayout(t *testing.T) {
 	}
 	s.Update(key('о', 0, 0))
 	before := app.ctx.settings().TargetWPM
-	s.Update(key('р', 0, 0))
+	screenKey(s, key('р', 0, 0))
 	if got := app.ctx.settings().TargetWPM; got != before-5 {
 		t.Fatalf("Russian physical h changed speed to %v, want %v", got, before-5)
 	}
-	s.Update(key('д', 0, 0))
+	screenKey(s, key('д', 0, 0))
 	if got := app.ctx.settings().TargetWPM; got != before {
 		t.Fatalf("Russian physical l changed speed to %v, want %v", got, before)
 	}
@@ -101,7 +120,7 @@ func TestThemeSettingAppliesAndPersists(t *testing.T) {
 	s := newSettingsScreen(app.ctx).(*settingsScreen)
 	s.cursor = 6
 	before := app.ctx.theme.Progress(.5).Render("x")
-	s.Update(key('l', 0, 0))
+	screenKey(s, key('l', 0, 0))
 	if got := app.ctx.settings().ColorTheme; got != domain.ThemeOcean {
 		t.Fatalf("active theme is %q, want %q", got, domain.ThemeOcean)
 	}
@@ -121,7 +140,7 @@ func TestTrainingLanguagePersistsAcrossRestart(t *testing.T) {
 	}
 	s := newSettingsScreen(app.ctx).(*settingsScreen)
 	s.cursor = 1
-	s.Update(key('l', 0, 0))
+	screenKey(s, key('l', 0, 0))
 	if got := store.settings.Language; got != "ru" {
 		t.Fatalf("saved training language is %q, want ru", got)
 	}

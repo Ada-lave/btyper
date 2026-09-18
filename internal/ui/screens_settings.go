@@ -26,35 +26,42 @@ func (s *settingsScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 	}
 	if s.confirm {
 		if isPlainKey(k, 'y') {
-			if err := s.c.service.Reset(); err != nil {
-				s.c.setStoreError(err)
-			} else {
-				s.c.status.SetFor(s.c.t(i18n.SettingsResetDone, nil), time.Now().Add(2*time.Second))
-			}
+			s.confirm = false
+			return Action{}, s.c.work(s.c.service.Reset, func(err error) tea.Cmd {
+				if err != nil {
+					s.c.setStoreError(err)
+				} else {
+					s.c.engine = nil
+					s.c.dailyTotals = map[string]time.Duration{}
+					s.c.dailySeen = map[string]time.Duration{}
+					s.c.dailyPending = map[string]domain.PracticeTime{}
+					s.c.status.SetFor(s.c.t(i18n.SettingsResetDone, nil), time.Now().Add(2*time.Second))
+				}
+				return nil
+			})
 		}
 		s.confirm = false
 		return Action{}, nil
 	}
 	switch {
 	case k.Key().Code == tea.KeyEsc:
-		s.c.setStoreError(s.c.service.SaveSettings(s.c.settings()))
 		return Action{Kind: ActionNavigate, Route: RouteMenu}, nil
 	case isUp(k):
 		s.cursor = (s.cursor + 7) % 8
 	case isDown(k) || k.Key().Code == tea.KeyTab:
 		s.cursor = (s.cursor + 1) % 8
 	case isLeft(k):
-		s.change(-1)
+		return Action{}, s.change(-1)
 	case isRight(k) || k.Key().Code == tea.KeyEnter:
 		if s.cursor == 7 {
 			s.confirm = true
 		} else {
-			s.change(1)
+			return Action{}, s.change(1)
 		}
 	}
 	return Action{}, nil
 }
-func (s *settingsScreen) change(d int) {
+func (s *settingsScreen) change(d int) tea.Cmd {
 	v := s.c.settings()
 	switch s.cursor {
 	case 0:
@@ -63,8 +70,6 @@ func (s *settingsScreen) change(d int) {
 		} else {
 			v.UILanguage = "en"
 		}
-		_ = s.c.localizer.SetLanguage(v.UILanguage)
-		v.UILanguage = s.c.localizer.Language()
 	case 1:
 		if v.Language == "en" {
 			v.Language = "ru"
@@ -82,8 +87,16 @@ func (s *settingsScreen) change(d int) {
 	case 6:
 		v.ColorTheme = nextColorTheme(v.ColorTheme, d)
 	}
-	s.c.setStoreError(s.c.service.SaveSettings(v))
-	s.c.applyTheme(s.c.settings().ColorTheme)
+	return s.c.work(func() error { return s.c.service.SaveSettings(v) }, func(err error) tea.Cmd {
+		if err != nil {
+			s.c.setStoreError(err)
+			return nil
+		}
+		_ = s.c.localizer.SetLanguage(s.c.settings().UILanguage)
+		s.c.applyTheme(s.c.settings().ColorTheme)
+		s.c.status.Clear()
+		return nil
+	})
 }
 
 func nextColorTheme(current domain.ColorTheme, direction int) domain.ColorTheme {

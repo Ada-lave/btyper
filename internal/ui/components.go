@@ -70,7 +70,7 @@ func (LearningProgress) View(profile domain.LanguageProfile, progress map[rune]d
 	letters := make([]string, 0, len(profile.UnlockOrder))
 	for _, r := range profile.UnlockOrder {
 		state := progress[r]
-		if state.MasteryStreak >= 2 {
+		if state.Mastered {
 			learned++
 		}
 		label := strings.ToUpper(string(r))
@@ -181,6 +181,21 @@ type StatisticsTable struct{ Model table.Model }
 
 func (s StatisticsTable) View(t Theme, height int) string {
 	rows, columns := s.Model.Rows(), s.Model.Columns()
+	width := max(1, s.Model.Width())
+	total := 0
+	for _, col := range columns {
+		total += col.Width
+	}
+	if total > width {
+		remaining := width
+		for i := range columns {
+			columns[i].Width = max(1, columns[i].Width*width/total)
+			remaining -= columns[i].Width
+		}
+		if len(columns) > 0 {
+			columns[0].Width += max(0, remaining)
+		}
+	}
 	var b strings.Builder
 	write := func(row table.Row, header, selected bool) {
 		var cells []string
@@ -207,7 +222,7 @@ func (s StatisticsTable) View(t Theme, height int) string {
 		h[i] = col.Title
 	}
 	write(h, true, false)
-	visible := max(4, height-11)
+	visible := max(1, height-11)
 	start := max(0, s.Model.Cursor()-visible+1)
 	end := min(len(rows), start+visible)
 	for i := start; i < end; i++ {

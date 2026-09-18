@@ -208,3 +208,39 @@ one = "{{.Count}} попытка"
 few = "{{.Count}} попытки"
 many = "{{.Count}} попыток"
 other = "{{.Count}} попытки"
+[work.wait]
+other = "Подождите…"
+[settings.repaired]
+other = "Некорректные настройки восстановлены до значений по умолчанию."
+[text.too_large]
+other = "Размер текста не должен превышать 1 МиБ."
+[today.time]
+other = "Тренировка за сегодня: {{.Time}}"
+[result.unsaved]
+other = "Не сохранено. Enter · повторить запись   Esc · выйти без сохранения"
+[lesson.custom]
+other = "Свой текст. Точность = успешные попытки / все попытки."
+[lesson.calibration]
+other = "Калибровка: осталось {{.Remaining}} попыток."
+[lesson.repeat]
+other = "Повторение «{{.Key}}»: верните уверенность к 100% перед открытием новых букв."
+[lesson.learn]
+other = "Освоение «{{.Key}}»: уверенность 100% в двух целевых уроках ({{.Streak}}/2)."
+[result.weak]
+other = "Стоит повторить: {{.Keys}}"
+[result.change]
+other = "Уверенность «{{.Key}}»: {{.Before}}% → {{.After}}%"
+[result.next]
+other = "Далее:"
+[filter.all]
+other = "Все"
+[history.filters]
+other = "L: {{.Language}} · M: {{.Mode}} · P: {{.Period}}"
+[history.summary]
+other = "{{.Count}} уроков · {{.Time}} · {{.WPM}} WPM · {{.Accuracy}}%"
+[history.page]
+other = "←/→ страница {{.Page}}/{{.Pages}}"
+[help.metrics]
+other = "WPM = верные символы / 5 / активные минуты. Точность = успешные попытки / все попытки. Паузы исключены; исправление ошибок включено. Буква освоена после двух целевых уроков с уверенностью 100% и остаётся открытой."
+[view.scroll]
+other = "PgUp/PgDn · прокрутка"

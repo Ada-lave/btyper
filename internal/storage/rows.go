@@ -12,12 +12,12 @@ func scanProgress(row scanner, language string) (domain.CharacterProgress, error
 	var key string
 	var p domain.CharacterProgress
 	p.Language = language
-	if err := row.Scan(&key, &p.Samples, &p.Errors, &p.LatencyMS, &p.Accuracy, &p.Confidence, &p.MasteryStreak); err != nil {
+	if err := row.Scan(&key, &p.Samples, &p.Errors, &p.LatencyMS, &p.Accuracy, &p.Confidence, &p.MasteryStreak, &p.Unlocked, &p.Mastered); err != nil {
 		return p, err
 	}
 	rs := []rune(key)
-	if len(rs) == 0 {
-		return p, fmt.Errorf("empty rune in progress row")
+	if len(rs) != 1 {
+		return p, fmt.Errorf("invalid rune in progress row")
 	}
 	p.Rune = rs[0]
 	return p, nil

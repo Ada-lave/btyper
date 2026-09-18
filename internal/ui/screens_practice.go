@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 	"btyper/internal/trainer"
 	"charm.land/bubbles/v2/progress"
 	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 type practiceScreen struct {
@@ -68,10 +70,8 @@ func (s *practiceScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 		}
 		e.Input(rs[0], now)
 		if e.Done() {
-			result, err := s.c.service.Complete(e, now)
-			s.c.result = result
-			s.c.setStoreError(err)
-			return Action{Kind: ActionNavigate, Route: RouteResult}, nil
+			s.c.previousConfidence = s.c.service.Progress()[e.Result.TargetRune].Confidence
+			return Action{}, saveResult(s.c, now)
 		}
 	}
 	return Action{}, nil
@@ -131,14 +131,18 @@ func (s *practiceScreen) View() string {
 	data := map[string]any{"Language": strings.ToUpper(e.Result.Language), "Mode": s.c.modeName(e.Result.Mode), "WPM": fmt.Sprintf("%.1f", wpm), "CPM": fmt.Sprintf("%.0f", wpm*5), "Accuracy": fmt.Sprintf("%.1f", acc*100), "Duration": formatDuration(d)}
 	head := s.c.t(i18n.PracticeHeader, data)
 	pct := float64(e.Pos) / float64(max(1, len(e.Text)))
-	footer := fmt.Sprintf("%s  %s   %s", s.bar.ViewAs(pct), s.c.theme.Title.Render(fmt.Sprintf("%d/%d", e.Pos, len(e.Text))), Hotkeys(s.c, i18n.HotkeyPractice))
+	footer := fmt.Sprintf("%s  %s\n%s", s.bar.ViewAs(pct), s.c.theme.Title.Render(fmt.Sprintf("%d/%d", e.Pos, len(e.Text))), Hotkeys(s.c, i18n.HotkeyPractice))
 	out := s.c.theme.Title.Render(head)
-	if e.Result.Mode == domain.ModeLearn {
+	out += "\n" + s.c.todayView(true) + "\n" + lessonPurpose(s.c, e)
+	if e.Result.Mode == domain.ModeLearn && s.c.height >= 22 {
 		out += "\n\n" + LearningProgress{}.View(s.c.service.Profile(), s.c.service.Progress(), s.c, min(100, s.c.width-8))
 	}
 	out += "\n\n" + s.c.theme.Border.Width(max(48, min(100, s.c.width-10))).Render(s.lesson.View(e, s.c.theme, s.c.width)) + "\n\n" + footer
 	if s.c.settings().ShowKeyboard && s.c.width >= 80 && s.c.height >= 24 {
-		out += "\n\n" + s.keyboard.View(s.c.service.Profile(), e, s.c)
+		withKeyboard := out + "\n\n" + s.keyboard.View(s.c.service.Profile(), e, s.c)
+		if lipgloss.Height(lipgloss.NewStyle().Width(s.c.width).Render(withKeyboard)) <= s.c.height {
+			out = withKeyboard
+		}
 	}
 	return out
 }
@@ -151,6 +155,18 @@ func (s *resultScreen) Resize(w, h int)   {}
 func (s *resultScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 	k, ok := msg.(tea.KeyPressMsg)
 	if !ok {
+		return Action{}, nil
+	}
+	if s.c.unsaved {
+		if k.Key().Code == tea.KeyEnter {
+			return Action{}, saveResult(s.c, time.Now())
+		}
+		if k.Key().Code == tea.KeyEsc {
+			s.c.unsaved = false
+			s.c.engine = nil
+			s.c.status.Clear()
+			return Action{Kind: ActionNavigate, Route: RouteMenu}, nil
+		}
 		return Action{}, nil
 	}
 	switch {
@@ -180,7 +196,76 @@ func (s *resultScreen) View() string {
 	if r.Mode == domain.ModeLearn {
 		out += "\n\n" + LearningProgress{}.View(s.c.service.Profile(), s.c.service.Progress(), s.c, min(100, s.c.width-8))
 	}
-	return out + "\n\n" + s.c.theme.Border.Render(stats) + "\n\n" + Hotkeys(s.c, i18n.HotkeyResult)
+	footer := Hotkeys(s.c, i18n.HotkeyResult)
+	if s.c.unsaved {
+		footer = s.c.t("result.unsaved", nil)
+	} else {
+		out += "\n" + resultFeedback(s.c)
+	}
+	return out + "\n\n" + s.c.theme.Border.Render(stats) + "\n" + s.c.todayView(false) + "\n\n" + footer
+}
+
+func saveResult(c *Context, now time.Time) tea.Cmd {
+	var result domain.SessionResult
+	c.engine.Finish(now)
+	c.captureTime(now)
+	return c.work(func() error {
+		var err error
+		result, err = c.service.Complete(c.engine, now)
+		return err
+	}, func(err error) tea.Cmd {
+		c.result, c.unsaved = result, err != nil
+		if err != nil {
+			c.setStoreError(err)
+		} else {
+			c.status.Clear()
+		}
+		return c.flushTime(func(error) tea.Cmd { return func() tea.Msg { return navigateMsg{RouteResult} } })
+	})
+}
+
+func lessonPurpose(c *Context, e *trainer.Engine) string {
+	if e.Result.Mode == domain.ModeText {
+		return c.t("lesson.custom", nil)
+	}
+	if e.Result.Mode == domain.ModeImprove && c.service.CalibrationRemaining() > 0 {
+		return c.t("lesson.calibration", map[string]any{"Remaining": c.service.CalibrationRemaining()})
+	}
+	v := c.service.Progress()[e.Result.TargetRune]
+	id := i18n.MessageID("lesson.repeat")
+	if e.Result.Mode == domain.ModeLearn && !v.Mastered {
+		id = "lesson.learn"
+	}
+	return c.t(id, map[string]any{"Key": string(e.Result.TargetRune), "Streak": v.MasteryStreak})
+}
+
+func resultFeedback(c *Context) string {
+	r := c.result
+	var keys []rune
+	p := c.service.Progress()
+	for _, key := range c.service.Profile().UnlockOrder {
+		if stat := r.Chars[key]; stat != nil && stat.Samples > 0 {
+			keys = append(keys, key)
+		}
+	}
+	sort.SliceStable(keys, func(i, j int) bool { return p[keys[i]].Confidence < p[keys[j]].Confidence })
+	var labels []string
+	for _, key := range keys[:min(3, len(keys))] {
+		labels = append(labels, fmt.Sprintf("%c %.0f%%", key, p[key].Confidence*100))
+	}
+	out := ""
+	if len(labels) > 0 {
+		out = c.t("result.weak", map[string]any{"Keys": strings.Join(labels, ", ")})
+	}
+	if r.TargetRune != 0 {
+		out += "\n" + c.t("result.change", map[string]any{"Key": string(r.TargetRune), "Before": fmt.Sprintf("%.0f", c.previousConfidence*100), "After": fmt.Sprintf("%.0f", p[r.TargetRune].Confidence*100)})
+	}
+	if r.Mode != domain.ModeText {
+		_, target := trainer.LearningState(c.service.Profile(), p, r.Mode == domain.ModeImprove)
+		next := trainer.NewEngine("", r.Mode, r.Language, target, time.Time{})
+		out += "\n" + c.t("result.next", nil) + " " + lessonPurpose(c, next)
+	}
+	return out
 }
 func formatDuration(d time.Duration) string {
 	return fmt.Sprintf("%02d:%02d", int(d.Minutes()), int(d.Seconds())%60)

@@ -2,6 +2,23 @@
 
 Adaptive touch-typing practice in your terminal, inspired by Keybr's learning loop.
 
+## Install and verify
+
+Use the Go version specified in `go.mod`:
+
+```sh
+go build -o /tmp/btyper ./cmd/btyper
+/tmp/btyper --version
+go install ./cmd/btyper
+```
+
+`go install` places the executable in `GOBIN`, or `$(go env GOPATH)/bin` by
+default. Add that directory to your PATH.
+
+Development checks: `go test ./...`, `go test -race ./...`, and `go vet ./...`.
+CI also builds the executable. Coverage can be collected with
+`go test -cover ./...` when the installed Go toolchain includes coverage tools.
+
 ## Run
 
 ```sh
@@ -39,3 +56,60 @@ and Russian keyboard layouts. During lessons, Esc opens a pause menu with
 continue, restart, and exit actions; Backspace clears a mistake, and Ctrl+R
 restarts the generated lesson. Custom text can be pasted into the editor or
 opened with Ctrl+O, then started with Ctrl+S.
+
+Custom text must be valid UTF-8 and at most 1 MiB. Both the CLI and file picker
+normalize text to NFC and collapse whitespace. Files are read in the background
+inside the application. PgUp/PgDn scroll screens that exceed the terminal height.
+Shrinking the terminal below 60×16 pauses the lesson; resume explicitly after
+enlarging it.
+
+## Learning and metrics
+
+WPM is correct characters / 5 / active minutes; CPM is correct characters /
+active minutes. Accuracy is successful attempts / all accepted attempts. Input
+while an error is awaiting Backspace is ignored. Pauses and time in menus are
+excluded; time spent correcting mistakes is included. The first character does
+not contribute a zero-latency measurement.
+
+Confidence is the minimum of speed, accuracy and sample scores: the configured
+speed and accuracy targets, and 30 attempts per letter. A letter is mastered
+after two target lessons with confidence at least 0.999. Opened and mastered
+letters stay open. When confidence falls, weak letters are reviewed before new
+letters are introduced. Improve mode first collects at least 12 attempts per
+letter; it prioritizes letters whose calibration is incomplete.
+
+Results show weak letters, target confidence changes and the next exercise's
+purpose. A failed result save remains on screen: Enter retries the same attempt
+without duplication; Esc explicitly discards the unsaved result. Confirmed
+progress is only changed after a successful save.
+
+## Time today and history
+
+The menu, lesson, result and statistics screens show **active practice time for
+today**, across both languages and all modes. This includes abandoned and
+restarted attempts. The counter starts on the first typed character, excludes
+pauses and menus, and splits active intervals at midnight in the local time zone.
+It refreshes during practice, saves in the background approximately every five
+seconds, and flushes on lesson completion and normal exit. A crash or forced kill
+can lose the latest unsaved seconds. A visible storage error means the pending
+time has not yet been persisted; subsequent saves retry it.
+
+In session history, L cycles language, M cycles mode, P cycles all time / seven
+days / thirty days. Left/right switch pages of 50 sessions. Summary speed and
+accuracy are weighted by active duration and attempts, respectively. History
+filters use the session start time; the daily practice counter uses actual
+active intervals, including those spanning midnight.
+
+## Data and upgrades
+
+Schema upgrades run transactionally at startup. Existing settings and session
+history are preserved. Previously practiced letters restore a contiguous opened
+alphabet; historical latency sample counts remain unknown. Legacy daily totals
+are reconstructed from completed sessions and attributed to their local start
+date because old databases do not contain active intervals or abandoned attempts.
+
+Before upgrading, close btyper and copy the entire data directory to a backup
+location, including any SQLite `-wal` and `-shm` files. Restore with btyper closed.
+Settings → Reset removes progress, history and daily practice time for both
+languages; it preserves preferences. Older binaries must not be used to write
+an upgraded database.

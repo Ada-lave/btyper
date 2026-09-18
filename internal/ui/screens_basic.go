@@ -72,17 +72,23 @@ func (s *menuScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 			return Action{Kind: ActionQuit}, cmd
 		}
 		if item.mode == domain.ModeLearn || item.mode == domain.ModeImprove {
-			s.c.engine = s.c.service.StartAdaptive(item.mode, time.Now())
 			settings := s.c.settings()
 			settings.Mode = item.mode
-			s.c.setStoreError(s.c.service.SaveSettings(settings))
-			s.c.status.Clear()
+			return Action{}, s.c.work(func() error { return s.c.service.SaveSettings(settings) }, func(err error) tea.Cmd {
+				if err != nil {
+					s.c.setStoreError(err)
+					return nil
+				}
+				s.c.engine = s.c.service.StartAdaptive(item.mode, time.Now())
+				s.c.status.Clear()
+				return func() tea.Msg { return navigateMsg{RoutePractice} }
+			})
 		}
 		return Action{Kind: ActionNavigate, Route: item.route}, cmd
 	}
 	return Action{}, cmd
 }
-func (s *menuScreen) View() string { return s.menu.View() }
+func (s *menuScreen) View() string { return s.menu.View() + "\n" + s.c.todayView(false) }
 
 type helpScreen struct{ c *Context }
 
@@ -99,5 +105,5 @@ func (s *helpScreen) View() string {
 	p := s.c.service.Profile()
 	home := map[string][]string{"en": {"F", "J"}, "ru": {"А", "О"}}[p.ID]
 	guide := FingerGuide{}.View(p, s.c)
-	return s.c.theme.Title.Render(s.c.t(i18n.Help, nil)) + "\n\n" + s.c.t(i18n.HelpBody, map[string]any{"Left": home[0], "Right": home[1]}) + "\n\n" + s.c.theme.Border.Render(guide) + "\n\n" + s.c.t(i18n.HelpFingers, nil) + "\n\n" + Hotkeys(s.c, i18n.HotkeyBack)
+	return s.c.theme.Title.Render(s.c.t(i18n.Help, nil)) + "\n\n" + s.c.t(i18n.HelpBody, map[string]any{"Left": home[0], "Right": home[1]}) + "\n\n" + s.c.theme.Border.Render(guide) + "\n\n" + s.c.t(i18n.HelpFingers, nil) + "\n\n" + lipgloss.NewStyle().Width(max(40, s.c.width)).Render(s.c.t("help.metrics", nil)) + "\n\n" + Hotkeys(s.c, i18n.HotkeyBack)
 }
