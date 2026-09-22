@@ -7,7 +7,17 @@ Keybr.
 
 ## Установка и проверка
 
-Используйте версию Go, указанную в `go.mod`:
+Установите последний релиз для Linux или macOS в `~/.local/bin`:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/Ada-lave/btyper/main/install.sh | sh
+```
+
+Перед запуском ознакомьтесь с [`install.sh`](install.sh). Переменная
+`BTYPER_INSTALL_DIR` выбирает другой каталог, а `BTYPER_VERSION` — конкретный
+релиз, например `BTYPER_VERSION=v0.1.0`.
+
+Либо соберите программу из исходного кода с версией Go из `go.mod`:
 
 ```sh
 go build -o /tmp/btyper ./cmd/btyper

@@ -6,7 +6,17 @@ Adaptive touch-typing practice in your terminal, inspired by Keybr's learning lo
 
 ## Install and verify
 
-Use the Go version specified in `go.mod`:
+Install the latest Linux or macOS release into `~/.local/bin`:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/Ada-lave/btyper/main/install.sh | sh
+```
+
+Review [`install.sh`](install.sh) before running it. Set `BTYPER_INSTALL_DIR`
+to choose another destination or `BTYPER_VERSION` to install a specific
+release, for example `BTYPER_VERSION=v0.1.0`.
+
+Alternatively, build from source using the Go version specified in `go.mod`:
 
 ```sh
 go build -o /tmp/btyper ./cmd/btyper
