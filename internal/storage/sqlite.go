@@ -7,7 +7,10 @@ import (
 	"path/filepath"
 )
 
-type SQLite struct{ db *sql.DB }
+type SQLite struct {
+	db  *sql.DB
+	dir string
+}
 
 func Open(dir string) (*SQLite, error) {
 	if dir == "" {
@@ -20,7 +23,7 @@ func Open(dir string) (*SQLite, error) {
 	if err != nil {
 		return nil, err
 	}
-	s := &SQLite{db: db}
+	s := &SQLite{db: db, dir: dir}
 	db.SetMaxOpenConns(1)
 	if _, err = db.Exec("PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000;"); err != nil {
 		db.Close()
@@ -39,4 +42,5 @@ func defaultDataDir() string {
 	h, _ := os.UserHomeDir()
 	return filepath.Join(h, ".local", "share", "btyper")
 }
-func (s *SQLite) Close() error { return s.db.Close() }
+func (s *SQLite) Close() error    { return s.db.Close() }
+func (s *SQLite) DataDir() string { return s.dir }
