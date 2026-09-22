@@ -27,7 +27,8 @@ go run ./cmd/btyper
 
 The application opens directly into the main menu. On the first launch, the
 training layout follows the detected UI language and can be changed later in
-Settings. Adaptive training calibrates keys in order, then schedules weak or
+Settings. The interface can be anchored to any of nine terminal positions from
+the same screen. Adaptive training calibrates keys in order, then schedules weak or
 overdue letters and common letter pairs for spaced review. Progress is
 stored locally in an SQLite database under the XDG data directory.
 
@@ -76,7 +77,9 @@ speed and accuracy targets, and 30 attempts per skill. The adaptive scheduler
 tracks both letters and common two-letter sequences. After calibration, a skill
 moves through review intervals of 1, 3, 7, 14 and 30 days when a lesson meets
 the configured speed and accuracy targets; a failed review shortens the
-interval. Old `learn` and `improve` settings are migrated to `adaptive`, while
+interval. Letter pairs are introduced only after every letter has accumulated
+30 observations; the lesson progress panel always names the actual letter or
+pair selected by the scheduler. Old `learn` and `improve` settings are migrated to `adaptive`, while
 their historical sessions remain available in statistics.
 
 Results show weak letters, target confidence changes and the next exercise's
