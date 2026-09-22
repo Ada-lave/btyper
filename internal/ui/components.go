@@ -104,8 +104,8 @@ func (Keyboard) View(p domain.LanguageProfile, e *trainer.Engine, c *Context) st
 	progress := c.service.Progress()
 	unlocked := map[rune]bool{}
 	target := rune(0)
-	if e.Result.Mode == domain.ModeLearn || e.Result.Mode == domain.ModeImprove {
-		unlocked, target = trainer.LearningState(p, progress, e.Result.Mode == domain.ModeImprove)
+	if e.Result.Mode == domain.ModeLearn || e.Result.Mode == domain.ModeImprove || e.Result.Mode == domain.ModeAdaptive {
+		unlocked, target = trainer.LearningState(p, progress, false)
 	}
 	var lines []string
 	for i, row := range p.Rows {

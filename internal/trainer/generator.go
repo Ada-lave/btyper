@@ -12,6 +12,48 @@ type Generator struct{ Rand *rand.Rand }
 
 func NewGenerator(seed int64) *Generator { return &Generator{Rand: rand.New(rand.NewSource(seed))} }
 
+func (g *Generator) AdaptiveLesson(profile domain.LanguageProfile, unlocked map[rune]bool, target domain.Skill, weak map[rune]float64, limit int) string {
+	rs := []rune(target.Pattern)
+	if target.Kind != domain.SkillBigram || len(rs) != 2 {
+		targetRune := rune(0)
+		if len(rs) == 1 {
+			targetRune = rs[0]
+		}
+		return g.Lesson(profile, unlocked, targetRune, weak, limit, domain.ModeAdaptive)
+	}
+	// Prefer real words containing the target pair. The fallback keeps the pair
+	// intact and remains pronounceable enough for a short focused drill.
+	var focused []string
+	for _, word := range profile.Words {
+		valid := strings.Contains(word, target.Pattern)
+		for _, r := range word {
+			if !unlocked[r] {
+				valid = false
+				break
+			}
+		}
+		if valid {
+			focused = append(focused, word)
+		}
+	}
+	base := g.Lesson(profile, unlocked, 0, weak, limit, domain.ModeAdaptive)
+	words := strings.Fields(base)
+	for i := 0; i < len(words); i += 5 {
+		for _, offset := range []int{0, 2} {
+			at := i + offset
+			if at >= len(words) {
+				continue
+			}
+			if len(focused) > 0 {
+				words[at] = focused[g.Rand.Intn(len(focused))]
+			} else {
+				words[at] = target.Pattern + target.Pattern
+			}
+		}
+	}
+	return strings.Join(words, " ")
+}
+
 func (g *Generator) Lesson(profile domain.LanguageProfile, unlocked map[rune]bool, target rune, weak map[rune]float64, limit int, mode domain.Mode) string {
 	allowed := make([]rune, 0)
 	for _, r := range profile.UnlockOrder {

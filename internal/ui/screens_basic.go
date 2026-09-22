@@ -33,7 +33,7 @@ type menuScreen struct {
 func newMenuScreen(c *Context) Screen { s := &menuScreen{c: c}; s.rebuild(); return s }
 func (s *menuScreen) rebuild() {
 	c := s.c
-	items := []list.Item{menuItem{RoutePractice, domain.ModeLearn, c.t(i18n.Learn, nil), c.t(i18n.LearnDesc, nil)}, menuItem{RoutePractice, domain.ModeImprove, c.t(i18n.Improve, nil), c.t(i18n.ImproveDesc, nil)}, menuItem{RouteText, domain.ModeText, c.t(i18n.CustomText, nil), c.t(i18n.TextDesc, nil)}, menuItem{RouteStatistics, "", c.t(i18n.History, nil), c.t(i18n.HistoryDesc, nil)}, menuItem{RouteSettings, "", c.t(i18n.Settings, nil), c.t(i18n.SettingsDesc, nil)}, menuItem{RouteHelp, "", c.t(i18n.Help, nil), c.t(i18n.HelpDesc, nil)}, menuItem{-1, "", c.t(i18n.Quit, nil), c.t(i18n.QuitDesc, nil)}}
+	items := []list.Item{menuItem{RoutePractice, domain.ModeAdaptive, c.t(i18n.Learn, nil), c.t(i18n.LearnDesc, nil)}, menuItem{RouteText, domain.ModeText, c.t(i18n.CustomText, nil), c.t(i18n.TextDesc, nil)}, menuItem{RouteStatistics, "", c.t(i18n.History, nil), c.t(i18n.HistoryDesc, nil)}, menuItem{RouteSettings, "", c.t(i18n.Settings, nil), c.t(i18n.SettingsDesc, nil)}, menuItem{RouteHelp, "", c.t(i18n.Help, nil), c.t(i18n.HelpDesc, nil)}, menuItem{-1, "", c.t(i18n.Quit, nil), c.t(i18n.QuitDesc, nil)}}
 	delegate := list.NewDefaultDelegate()
 	delegate.Styles.NormalTitle = c.theme.Text.PaddingLeft(2)
 	delegate.Styles.NormalDesc = c.theme.Muted.PaddingLeft(2)
@@ -71,7 +71,7 @@ func (s *menuScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 		if item.route < 0 {
 			return Action{Kind: ActionQuit}, cmd
 		}
-		if item.mode == domain.ModeLearn || item.mode == domain.ModeImprove {
+		if item.mode == domain.ModeAdaptive {
 			settings := s.c.settings()
 			settings.Mode = item.mode
 			return Action{}, s.c.work(func() error { return s.c.service.SaveSettings(settings) }, func(err error) tea.Cmd {

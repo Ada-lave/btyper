@@ -70,7 +70,15 @@ func (s *practiceScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 		}
 		e.Input(rs[0], now)
 		if e.Done() {
-			s.c.previousConfidence = s.c.service.Progress()[e.Result.TargetRune].Confidence
+			if e.Result.TargetSkill != "" {
+				kind := domain.SkillRune
+				if len([]rune(e.Result.TargetSkill)) == 2 {
+					kind = domain.SkillBigram
+				}
+				s.c.previousConfidence = s.c.service.Skills()[trainer.SkillKey(kind, e.Result.TargetSkill)].Confidence
+			} else {
+				s.c.previousConfidence = s.c.service.Progress()[e.Result.TargetRune].Confidence
+			}
 			return Action{}, saveResult(s.c, now)
 		}
 	}
@@ -134,7 +142,7 @@ func (s *practiceScreen) View() string {
 	footer := fmt.Sprintf("%s  %s\n%s", s.bar.ViewAs(pct), s.c.theme.Title.Render(fmt.Sprintf("%d/%d", e.Pos, len(e.Text))), Hotkeys(s.c, i18n.HotkeyPractice))
 	out := s.c.theme.Title.Render(head)
 	out += "\n" + s.c.todayView(true) + "\n" + lessonPurpose(s.c, e)
-	if e.Result.Mode == domain.ModeLearn && s.c.height >= 22 {
+	if e.Result.Mode == domain.ModeAdaptive && s.c.height >= 22 {
 		out += "\n\n" + LearningProgress{}.View(s.c.service.Profile(), s.c.service.Progress(), s.c, min(100, s.c.width-8))
 	}
 	out += "\n\n" + s.c.theme.Border.Width(max(48, min(100, s.c.width-10))).Render(s.lesson.View(e, s.c.theme, s.c.width)) + "\n\n" + footer
@@ -188,12 +196,16 @@ func (s *resultScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 func (s *resultScreen) View() string {
 	r := s.c.result
 	target := ""
-	if r.TargetRune != 0 {
-		target = s.c.t(i18n.ResultTarget, map[string]any{"Key": string(r.TargetRune), "Confidence": fmt.Sprintf("%.0f", s.c.service.Progress()[r.TargetRune].Confidence*100)})
+	if r.TargetSkill != "" {
+		kind := domain.SkillRune
+		if len([]rune(r.TargetSkill)) == 2 {
+			kind = domain.SkillBigram
+		}
+		target = s.c.t(i18n.ResultTarget, map[string]any{"Key": r.TargetSkill, "Confidence": fmt.Sprintf("%.0f", s.c.service.Skills()[trainer.SkillKey(kind, r.TargetSkill)].Confidence*100)})
 	}
 	stats := s.c.t(i18n.ResultStats, map[string]any{"WPM": fmt.Sprintf("%6.1f", r.WPM), "CPM": fmt.Sprintf("%6.1f", r.CPM), "Accuracy": fmt.Sprintf("%6.1f", r.Accuracy*100), "Errors": fmt.Sprintf("%6d", r.Errors), "Duration": formatDuration(r.Duration)})
 	out := s.c.theme.Title.Render(s.c.t(i18n.ResultTitle, nil)) + target
-	if r.Mode == domain.ModeLearn {
+	if r.Mode == domain.ModeAdaptive {
 		out += "\n\n" + LearningProgress{}.View(s.c.service.Profile(), s.c.service.Progress(), s.c, min(100, s.c.width-8))
 	}
 	footer := Hotkeys(s.c, i18n.HotkeyResult)
@@ -228,15 +240,25 @@ func lessonPurpose(c *Context, e *trainer.Engine) string {
 	if e.Result.Mode == domain.ModeText {
 		return c.t("lesson.custom", nil)
 	}
-	if e.Result.Mode == domain.ModeImprove && c.service.CalibrationRemaining() > 0 {
+	if e.Result.Mode == domain.ModeAdaptive && c.service.CalibrationRemaining() > 0 {
 		return c.t("lesson.calibration", map[string]any{"Remaining": c.service.CalibrationRemaining()})
 	}
 	v := c.service.Progress()[e.Result.TargetRune]
 	id := i18n.MessageID("lesson.repeat")
-	if e.Result.Mode == domain.ModeLearn && !v.Mastered {
+	key, streak := string(e.Result.TargetRune), v.MasteryStreak
+	if e.Result.TargetSkill != "" {
+		key = e.Result.TargetSkill
+		kind := domain.SkillRune
+		if len([]rune(key)) == 2 {
+			kind = domain.SkillBigram
+		}
+		skill := c.service.Skills()[trainer.SkillKey(kind, key)]
+		streak = skill.Level
+	}
+	if e.Result.Mode == domain.ModeAdaptive && streak == 0 {
 		id = "lesson.learn"
 	}
-	return c.t(id, map[string]any{"Key": string(e.Result.TargetRune), "Streak": v.MasteryStreak})
+	return c.t(id, map[string]any{"Key": key, "Streak": streak})
 }
 
 func resultFeedback(c *Context) string {
@@ -257,12 +279,22 @@ func resultFeedback(c *Context) string {
 	if len(labels) > 0 {
 		out = c.t("result.weak", map[string]any{"Keys": strings.Join(labels, ", ")})
 	}
-	if r.TargetRune != 0 {
-		out += "\n" + c.t("result.change", map[string]any{"Key": string(r.TargetRune), "Before": fmt.Sprintf("%.0f", c.previousConfidence*100), "After": fmt.Sprintf("%.0f", p[r.TargetRune].Confidence*100)})
+	if r.TargetSkill != "" {
+		kind := domain.SkillRune
+		if len([]rune(r.TargetSkill)) == 2 {
+			kind = domain.SkillBigram
+		}
+		skill := c.service.Skills()[trainer.SkillKey(kind, r.TargetSkill)]
+		after := skill.Confidence
+		out += "\n" + c.t("result.change", map[string]any{"Key": r.TargetSkill, "Before": fmt.Sprintf("%.0f", c.previousConfidence*100), "After": fmt.Sprintf("%.0f", after*100)})
+		due := "—"
+		if !skill.DueAt.IsZero() {
+			due = skill.DueAt.Local().Format("2006-01-02 15:04")
+		}
+		out += "\n" + c.t("result.schedule", map[string]any{"Level": skill.Level, "Due": due})
 	}
 	if r.Mode != domain.ModeText {
-		_, target := trainer.LearningState(c.service.Profile(), p, r.Mode == domain.ModeImprove)
-		next := trainer.NewEngine("", r.Mode, r.Language, target, time.Time{})
+		next := c.service.StartAdaptive(domain.ModeAdaptive, time.Now())
 		out += "\n" + c.t("result.next", nil) + " " + lessonPurpose(c, next)
 	}
 	return out

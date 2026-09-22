@@ -6,6 +6,8 @@ type Mode string
 type ColorTheme string
 
 const (
+	ModeAdaptive Mode = "adaptive"
+	// ModeLearn and ModeImprove are retained for reading historical sessions.
 	ModeLearn   Mode = "learn"
 	ModeImprove Mode = "improve"
 	ModeText    Mode = "text"
@@ -30,7 +32,7 @@ type Settings struct {
 }
 
 func DefaultSettings() Settings {
-	return Settings{UILanguage: "", Language: "en", Mode: ModeLearn, TargetWPM: 35, Accuracy: 0.95, LessonRunes: 140, ShowKeyboard: true, ColorTheme: ThemeViolet}
+	return Settings{UILanguage: "", Language: "en", Mode: ModeAdaptive, TargetWPM: 35, Accuracy: 0.95, LessonRunes: 140, ShowKeyboard: true, ColorTheme: ThemeViolet}
 }
 
 type LanguageProfile struct {
@@ -57,6 +59,31 @@ type CharacterStat struct {
 	LatencyMS       float64
 }
 
+type SkillKind string
+
+const (
+	SkillRune   SkillKind = "rune"
+	SkillBigram SkillKind = "bigram"
+)
+
+// Skill is the durable state used by the adaptive scheduler. Pattern contains
+// one rune for SkillRune and two runes for SkillBigram.
+type Skill struct {
+	Language, Pattern               string
+	Kind                            SkillKind
+	Samples, Errors, LatencySamples int
+	LatencyMS, Accuracy, Confidence float64
+	Level                           int
+	LastPracticed, DueAt            time.Time
+}
+
+type SkillStat struct {
+	Kind                            SkillKind
+	Pattern                         string
+	Samples, Errors, LatencySamples int
+	LatencyMS                       float64
+}
+
 type SessionResult struct {
 	AttemptID                              string
 	ID                                     int64
@@ -64,11 +91,13 @@ type SessionResult struct {
 	Mode                                   Mode
 	Language                               string
 	TargetRune                             rune
+	TargetSkill                            string
 	Text                                   string
 	Duration                               time.Duration
 	Correct, Attempts, Errors, Corrections int
 	WPM, CPM, Accuracy                     float64
 	Chars                                  map[rune]*CharacterStat
+	Skills                                 map[string]*SkillStat
 }
 
 type HistoryEntry struct {
@@ -92,6 +121,19 @@ type HistorySummary struct {
 	Sessions      int
 	Duration      time.Duration
 	WPM, Accuracy float64
+}
+
+type TrendPoint struct {
+	Day                    string
+	Duration               time.Duration
+	Sessions               int
+	WPM, Accuracy, Latency float64
+}
+
+type AdaptiveStore interface {
+	LoadSkills(language string) (map[string]Skill, error)
+	SaveAdaptiveSession(SessionResult, map[rune]CharacterProgress, map[string]Skill) error
+	Trends(language string, since time.Time) ([]TrendPoint, error)
 }
 
 type PracticeTime struct {

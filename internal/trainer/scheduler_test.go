@@ -1,0 +1,73 @@
+package trainer
+
+import (
+	"testing"
+	"time"
+
+	"btyper/internal/domain"
+)
+
+func TestSchedulerCalibratesRunesInOrderThenSelectsOverdue(t *testing.T) {
+	p := Profiles()["en"]
+	now := time.Date(2026, 9, 22, 12, 0, 0, 0, time.UTC)
+	skills := map[string]domain.Skill{}
+	if got := SelectSkill(p, skills, now); got.Pattern != string(p.UnlockOrder[0]) {
+		t.Fatal(got)
+	}
+	for _, r := range p.UnlockOrder {
+		skills[SkillKey(domain.SkillRune, string(r))] = domain.Skill{Language: "en", Kind: domain.SkillRune, Pattern: string(r), Samples: 6, Confidence: 1, DueAt: now.Add(time.Hour)}
+	}
+	candidates := CandidateSkills(p)
+	var bigram domain.Skill
+	for _, skill := range candidates {
+		if skill.Kind == domain.SkillBigram {
+			bigram = skill
+			break
+		}
+	}
+	if got := SelectSkill(p, skills, now); got.Pattern != bigram.Pattern {
+		t.Fatalf("got %v, want first bigram %v", got, bigram)
+	}
+	for _, skill := range candidates {
+		if skill.Kind == domain.SkillBigram {
+			skill.Samples = 10
+			skill.Confidence = 1
+			skill.DueAt = now.Add(time.Hour)
+			skills[SkillKey(skill.Kind, skill.Pattern)] = skill
+		}
+	}
+	weak := skills[SkillKey(domain.SkillRune, string(p.UnlockOrder[3]))]
+	weak.Confidence = .2
+	weak.DueAt = now.Add(-48 * time.Hour)
+	skills[SkillKey(weak.Kind, weak.Pattern)] = weak
+	if got := SelectSkill(p, skills, now); got.Pattern != weak.Pattern {
+		t.Fatalf("overdue weak skill not selected: %v", got)
+	}
+}
+
+func TestUpdateSkillsPromotesAndDemotesReviewLevel(t *testing.T) {
+	now := time.Now().UTC()
+	settings := domain.DefaultSettings()
+	key := SkillKey(domain.SkillRune, "e")
+	result := domain.SessionResult{Language: "en", Skills: map[string]*domain.SkillStat{key: {Kind: domain.SkillRune, Pattern: "e", Samples: 6, LatencySamples: 6, LatencyMS: 600}}}
+	got := UpdateSkills(nil, result, settings, now)[key]
+	if got.Level != 1 || !got.DueAt.Equal(now.Add(24*time.Hour)) {
+		t.Fatal(got)
+	}
+	result.Skills[key].Errors = 6
+	got = UpdateSkills(map[string]domain.Skill{key: got}, result, settings, now.Add(time.Hour))[key]
+	if got.Level != 0 || !got.DueAt.Equal(now.Add(time.Hour)) {
+		t.Fatal(got)
+	}
+}
+
+func TestEngineCollectsBigramStatistics(t *testing.T) {
+	now := time.Now()
+	e := NewAdaptiveEngine("ab", "en", "ab", time.Time{})
+	e.Input('a', now)
+	e.Input('b', now.Add(100*time.Millisecond))
+	stat := e.Result.Skills[SkillKey(domain.SkillBigram, "ab")]
+	if stat == nil || stat.Samples != 1 || stat.LatencySamples != 1 || stat.LatencyMS != 100 {
+		t.Fatal(stat)
+	}
+}

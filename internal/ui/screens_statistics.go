@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"btyper/internal/i18n"
+	"btyper/internal/trainer"
 	"charm.land/bubbles/v2/table"
 	tea "charm.land/bubbletea/v2"
 )
@@ -18,6 +19,7 @@ type statisticsScreen struct {
 	filter                                domain.HistoryFilter
 	languageIndex, modeIndex, periodIndex int
 	summary                               domain.HistorySummary
+	trends                                []domain.TrendPoint
 }
 
 func newStatisticsScreen(c *Context) Screen {
@@ -38,8 +40,8 @@ func (s *statisticsScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 			s.filter.Language = []string{"", "en", "ru"}[s.languageIndex]
 			s.filter.Offset = 0
 		case isPlainKey(k, 'm'):
-			s.modeIndex = (s.modeIndex + 1) % 4
-			s.filter.Mode = []domain.Mode{"", domain.ModeLearn, domain.ModeImprove, domain.ModeText}[s.modeIndex]
+			s.modeIndex = (s.modeIndex + 1) % 5
+			s.filter.Mode = []domain.Mode{"", domain.ModeAdaptive, domain.ModeText, domain.ModeLearn, domain.ModeImprove}[s.modeIndex]
 			s.filter.Offset = 0
 		case isPlainKey(k, 'p'):
 			s.periodIndex = (s.periodIndex + 1) % 3
@@ -62,19 +64,23 @@ func (s *statisticsScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 			return Action{}, s.loadHistory()
 		}
 	}
-	if k, ok := msg.(tea.KeyPressMsg); ok && (k.String() == "tab" || k.String() == "1" || k.String() == "2") {
+	if k, ok := msg.(tea.KeyPressMsg); ok && (k.String() == "tab" || k.String() == "1" || k.String() == "2" || k.String() == "3") {
 		if k.String() == "1" {
 			s.tab = 0
 		} else if k.String() == "2" {
 			s.tab = 1
+		} else if k.String() == "3" {
+			s.tab = 2
 		} else {
-			s.tab = (s.tab + 1) % 2
+			s.tab = (s.tab + 1) % 3
 		}
 		if s.tab == 0 {
 			return Action{}, s.loadHistory()
-		} else {
+		} else if s.tab == 1 {
 			s.rebuildKeys()
 			s.Resize(s.c.width, s.c.height)
+		} else {
+			return Action{}, s.loadTrends()
 		}
 		return Action{}, nil
 	}
@@ -94,6 +100,28 @@ func (s *statisticsScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 	var cmd tea.Cmd
 	s.table.Model, cmd = s.table.Model.Update(msg)
 	return Action{}, cmd
+}
+
+func (s *statisticsScreen) loadTrends() tea.Cmd {
+	var trends []domain.TrendPoint
+	return s.c.work(func() error {
+		var err error
+		trends, err = s.c.service.Trends(dayStart(s.c.now).AddDate(0, 0, -29))
+		return err
+	}, func(err error) tea.Cmd {
+		if err != nil {
+			s.c.setStoreError(err)
+			return nil
+		}
+		s.trends = trends
+		rows := make([]table.Row, 0, len(trends))
+		for _, point := range trends {
+			rows = append(rows, table.Row{point.Day, fmt.Sprint(point.Sessions), fmt.Sprintf("%.1f", point.WPM), fmt.Sprintf("%.1f%%", point.Accuracy*100), fmt.Sprintf("%.0f ms", point.Latency)})
+		}
+		s.table.Model = table.New(table.WithColumns([]table.Column{{Title: s.c.t(i18n.ColDate, nil), Width: 12}, {Title: "#", Width: 5}, {Title: s.c.t(i18n.ColWPM, nil), Width: 9}, {Title: s.c.t(i18n.ColAccuracy, nil), Width: 12}, {Title: s.c.t(i18n.ColLatency, nil), Width: 12}}), table.WithRows(rows), table.WithHeight(12), table.WithFocused(true))
+		s.Resize(s.c.width, s.c.height)
+		return nil
+	})
 }
 func (s *statisticsScreen) loadHistory() tea.Cmd {
 	var history []domain.HistoryEntry
@@ -128,6 +156,24 @@ func (s *statisticsScreen) rebuildHistory(h []domain.HistoryEntry) {
 }
 func (s *statisticsScreen) rebuildKeys() {
 	p := s.c.service.Profile()
+	skills := s.c.service.Skills()
+	if len(skills) > 0 {
+		rows := make([]table.Row, 0, len(skills))
+		for _, candidate := range trainer.CandidateSkills(p) {
+			v, ok := skills[trainer.SkillKey(candidate.Kind, candidate.Pattern)]
+			if !ok {
+				continue
+			}
+			latency, accuracy := "—", "—"
+			if v.Samples > 0 {
+				latency = fmt.Sprintf("%.0f ms", v.LatencyMS)
+				accuracy = fmt.Sprintf("%.1f%%", v.Accuracy*100)
+			}
+			rows = append(rows, table.Row{v.Pattern, fmt.Sprint(v.Samples), fmt.Sprint(v.Errors), latency, accuracy, fmt.Sprintf("%.0f%%", v.Confidence*100)})
+		}
+		s.table.Model = table.New(table.WithColumns([]table.Column{{Title: s.c.t(i18n.ColKey, nil), Width: 8}, {Title: s.c.t(i18n.ColSamples, nil), Width: 10}, {Title: s.c.t(i18n.ColErrors, nil), Width: 9}, {Title: s.c.t(i18n.ColLatency, nil), Width: 12}, {Title: s.c.t(i18n.ColAccuracy, nil), Width: 12}, {Title: s.c.t(i18n.ColConfidence, nil), Width: 13}}), table.WithRows(rows), table.WithHeight(12), table.WithFocused(true))
+		return
+	}
 	progress := s.c.service.Progress()
 	rows := make([]table.Row, 0, len(p.UnlockOrder))
 	for _, r := range p.UnlockOrder {
@@ -142,13 +188,15 @@ func (s *statisticsScreen) rebuildKeys() {
 	s.table.Model = table.New(table.WithColumns([]table.Column{{Title: s.c.t(i18n.ColKey, nil), Width: 8}, {Title: s.c.t(i18n.ColSamples, nil), Width: 10}, {Title: s.c.t(i18n.ColErrors, nil), Width: 9}, {Title: s.c.t(i18n.ColLatency, nil), Width: 12}, {Title: s.c.t(i18n.ColAccuracy, nil), Width: 12}, {Title: s.c.t(i18n.ColConfidence, nil), Width: 13}}), table.WithRows(rows), table.WithHeight(12), table.WithFocused(true))
 }
 func (s *statisticsScreen) View() string {
-	a, b := "[1] "+s.c.t(i18n.HistorySessions, nil), "[2] "+s.c.t(i18n.HistoryKeys, nil)
+	a, b, trend := "[1] "+s.c.t(i18n.HistorySessions, nil), "[2] "+s.c.t(i18n.HistoryKeys, nil), "[3] "+s.c.t(i18n.HistoryTrends, nil)
 	if s.tab == 0 {
 		a = s.c.theme.Title.Render(a)
-	} else {
+	} else if s.tab == 1 {
 		b = s.c.theme.Title.Render(b)
+	} else {
+		trend = s.c.theme.Title.Render(trend)
 	}
-	out := s.c.theme.Title.Render(s.c.t(i18n.History, nil)) + "\n" + a + "   " + b + "\n\n"
+	out := s.c.theme.Title.Render(s.c.t(i18n.History, nil)) + "\n" + a + "   " + b + "   " + trend + "\n\n"
 	if s.tab == 0 {
 		language := strings.ToUpper(s.filter.Language)
 		if language == "" {
@@ -162,6 +210,17 @@ func (s *statisticsScreen) View() string {
 		out += s.c.t("history.filters", map[string]any{"Language": language, "Mode": mode, "Period": period}) + "\n"
 		out += s.c.t("history.summary", map[string]any{"Count": s.summary.Sessions, "Time": formatDuration(s.summary.Duration), "WPM": fmt.Sprintf("%.1f", s.summary.WPM), "Accuracy": fmt.Sprintf("%.1f", s.summary.Accuracy*100)}) + "\n"
 		out += s.c.t("history.page", map[string]any{"Page": s.filter.Offset/50 + 1, "Pages": max(1, (s.summary.Sessions+49)/50)}) + "\n\n"
+	} else if s.tab == 2 {
+		skills, stable, due := s.c.service.Skills(), 0, 0
+		for _, skill := range skills {
+			if skill.Level >= 5 {
+				stable++
+			}
+			if !skill.DueAt.IsZero() && !skill.DueAt.After(s.c.now) {
+				due++
+			}
+		}
+		out += s.c.t("history.skill_summary", map[string]any{"Count": len(skills), "Stable": stable, "Due": due}) + "\n\n"
 	}
 	if len(s.table.Model.Rows()) == 0 {
 		out += s.c.t(i18n.NoHistory, nil)

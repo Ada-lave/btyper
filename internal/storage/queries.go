@@ -57,30 +57,101 @@ func (s *SQLite) SaveSession(r domain.SessionResult, progress map[rune]domain.Ch
 		return err
 	}
 	defer tx.Rollback()
-	res, err := tx.Exec(`INSERT INTO sessions(started_at,mode,language,target_rune,text,duration_ms,correct,attempts,errors,corrections,wpm,cpm,accuracy,attempt_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(attempt_id) DO NOTHING`, r.StartedAt.UTC().Format(time.RFC3339Nano), string(r.Mode), r.Language, string(r.TargetRune), r.Text, r.Duration.Milliseconds(), r.Correct, r.Attempts, r.Errors, r.Corrections, r.WPM, r.CPM, r.Accuracy, r.AttemptID)
+	_, err = saveSession(tx, r, progress)
 	if err != nil {
 		return err
+	}
+	return tx.Commit()
+}
+
+func saveSession(tx *sql.Tx, r domain.SessionResult, progress map[rune]domain.CharacterProgress) (bool, error) {
+	res, err := tx.Exec(`INSERT INTO sessions(started_at,mode,language,target_rune,text,duration_ms,correct,attempts,errors,corrections,wpm,cpm,accuracy,attempt_id,target_skill) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(attempt_id) DO NOTHING`, r.StartedAt.UTC().Format(time.RFC3339Nano), string(r.Mode), r.Language, string(r.TargetRune), r.Text, r.Duration.Milliseconds(), r.Correct, r.Attempts, r.Errors, r.Corrections, r.WPM, r.CPM, r.Accuracy, r.AttemptID, r.TargetSkill)
+	if err != nil {
+		return false, err
 	}
 	inserted, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return false, err
 	}
 	if inserted == 0 {
-		return tx.Commit()
+		return false, nil
 	}
 	id, err := res.LastInsertId()
 	if err != nil {
-		return err
+		return false, err
 	}
 	for key, c := range r.Chars {
 		if _, err = tx.Exec("INSERT INTO character_stats(session_id,rune,samples,errors,latency_ms,latency_samples) VALUES(?,?,?,?,?,?)", id, string(key), c.Samples, c.Errors, c.LatencyMS, c.LatencySamples); err != nil {
-			return err
+			return false, err
 		}
 	}
 	for key, p := range progress {
 		_, err = tx.Exec(`INSERT INTO progress(language,rune,samples,errors,latency_ms,accuracy,confidence,mastery_streak,unlocked,mastered) VALUES(?,?,?,?,?,?,?,?,?,?) ON CONFLICT(language,rune) DO UPDATE SET samples=excluded.samples,errors=excluded.errors,latency_ms=excluded.latency_ms,accuracy=excluded.accuracy,confidence=excluded.confidence,mastery_streak=excluded.mastery_streak,unlocked=MAX(progress.unlocked,excluded.unlocked),mastered=MAX(progress.mastered,excluded.mastered)`, p.Language, string(key), p.Samples, p.Errors, p.LatencyMS, p.Accuracy, p.Confidence, p.MasteryStreak, p.Unlocked, p.Mastered)
 		if err != nil {
-			return err
+			return false, err
+		}
+	}
+	return true, nil
+}
+
+func (s *SQLite) LoadSkills(language string) (map[string]domain.Skill, error) {
+	rows, err := s.db.Query(`SELECT kind,pattern,samples,errors,latency_samples,latency_ms,accuracy,confidence,level,last_practiced,due_at FROM skills WHERE language=?`, language)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := map[string]domain.Skill{}
+	for rows.Next() {
+		var skill domain.Skill
+		var kind, last, due string
+		skill.Language = language
+		if err := rows.Scan(&kind, &skill.Pattern, &skill.Samples, &skill.Errors, &skill.LatencySamples, &skill.LatencyMS, &skill.Accuracy, &skill.Confidence, &skill.Level, &last, &due); err != nil {
+			return nil, err
+		}
+		skill.Kind = domain.SkillKind(kind)
+		if last != "" {
+			skill.LastPracticed, err = time.Parse(time.RFC3339Nano, last)
+			if err != nil {
+				return nil, err
+			}
+		}
+		if due != "" {
+			skill.DueAt, err = time.Parse(time.RFC3339Nano, due)
+			if err != nil {
+				return nil, err
+			}
+		}
+		out[kind+":"+skill.Pattern] = skill
+	}
+	return out, rows.Err()
+}
+
+func (s *SQLite) SaveAdaptiveSession(r domain.SessionResult, progress map[rune]domain.CharacterProgress, skills map[string]domain.Skill) error {
+	if r.AttemptID == "" {
+		return errors.New("missing attempt ID")
+	}
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	inserted, err := saveSession(tx, r, progress)
+	if err != nil {
+		return err
+	}
+	if inserted {
+		for _, skill := range skills {
+			last, due := "", ""
+			if !skill.LastPracticed.IsZero() {
+				last = skill.LastPracticed.UTC().Format(time.RFC3339Nano)
+			}
+			if !skill.DueAt.IsZero() {
+				due = skill.DueAt.UTC().Format(time.RFC3339Nano)
+			}
+			_, err = tx.Exec(`INSERT INTO skills(language,kind,pattern,samples,errors,latency_samples,latency_ms,accuracy,confidence,level,last_practiced,due_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(language,kind,pattern) DO UPDATE SET samples=excluded.samples,errors=excluded.errors,latency_samples=excluded.latency_samples,latency_ms=excluded.latency_ms,accuracy=excluded.accuracy,confidence=excluded.confidence,level=excluded.level,last_practiced=excluded.last_practiced,due_at=excluded.due_at`, skill.Language, string(skill.Kind), skill.Pattern, skill.Samples, skill.Errors, skill.LatencySamples, skill.LatencyMS, skill.Accuracy, skill.Confidence, skill.Level, last, due)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return tx.Commit()
@@ -131,10 +202,36 @@ func (s *SQLite) Reset() error {
 		return err
 	}
 	defer tx.Rollback()
-	if _, err = tx.Exec("DELETE FROM character_stats; DELETE FROM sessions; DELETE FROM progress; DELETE FROM practice_time;"); err != nil {
+	if _, err = tx.Exec("DELETE FROM character_stats; DELETE FROM sessions; DELETE FROM progress; DELETE FROM practice_time; DELETE FROM skills;"); err != nil {
 		return err
 	}
 	return tx.Commit()
+}
+
+func (s *SQLite) Trends(language string, since time.Time) ([]domain.TrendPoint, error) {
+	rows, err := s.db.Query(`WITH latency AS (SELECT session_id,SUM(latency_ms) latency_ms,SUM(latency_samples) latency_samples FROM character_stats GROUP BY session_id)
+SELECT date(s.started_at,'localtime'),COUNT(*),COALESCE(SUM(s.duration_ms),0),
+CASE WHEN SUM(s.duration_ms)>0 THEN SUM(s.correct)*12000.0/SUM(s.duration_ms) ELSE 0 END,
+CASE WHEN SUM(s.attempts)>0 THEN SUM(s.attempts-s.errors)*1.0/SUM(s.attempts) ELSE 0 END,
+COALESCE(SUM(latency.latency_ms)/NULLIF(SUM(latency.latency_samples),0),0)
+FROM sessions s LEFT JOIN latency ON latency.session_id=s.id
+WHERE s.language=? AND julianday(s.started_at)>=julianday(?)
+GROUP BY date(s.started_at,'localtime') ORDER BY date(s.started_at,'localtime')`, language, since.UTC().Format(time.RFC3339Nano))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []domain.TrendPoint
+	for rows.Next() {
+		var p domain.TrendPoint
+		var ms int64
+		if err := rows.Scan(&p.Day, &p.Sessions, &ms, &p.WPM, &p.Accuracy, &p.Latency); err != nil {
+			return nil, err
+		}
+		p.Duration = time.Duration(ms) * time.Millisecond
+		out = append(out, p)
+	}
+	return out, rows.Err()
 }
 
 func (s *SQLite) SavePracticeTime(entries []domain.PracticeTime) error {

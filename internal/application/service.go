@@ -70,7 +70,10 @@ func NormalizeSettings(v domain.Settings) domain.Settings {
 	if v.UILanguage != "" && v.UILanguage != "en" && v.UILanguage != "ru" {
 		v.UILanguage = "en"
 	}
-	if v.Mode != domain.ModeLearn && v.Mode != domain.ModeImprove && v.Mode != domain.ModeText {
+	if v.Mode == domain.ModeLearn || v.Mode == domain.ModeImprove {
+		v.Mode = domain.ModeAdaptive
+	}
+	if v.Mode != domain.ModeAdaptive && v.Mode != domain.ModeText {
 		v.Mode = d.Mode
 	}
 	v.ColorTheme = normalizeColorTheme(v.ColorTheme)
@@ -83,6 +86,7 @@ type LessonService struct {
 	profiles     map[string]domain.LanguageProfile
 	settings     domain.Settings
 	progress     map[rune]domain.CharacterProgress
+	skills       map[string]domain.Skill
 	customText   []rune
 	customOffset int
 	completed    map[string]bool
@@ -93,6 +97,9 @@ func LoadSettings(store domain.Store) (domain.Settings, error) { return store.Lo
 func NewLessonService(store domain.Store, settings domain.Settings) (*LessonService, error) {
 	settings = NormalizeSettings(settings)
 	profiles := trainer.Profiles()
+	if err := trainer.ValidateProfiles(profiles); err != nil {
+		return nil, err
+	}
 	if _, ok := profiles[settings.Language]; !ok {
 		settings.Language = "en"
 	}
@@ -101,7 +108,14 @@ func NewLessonService(store domain.Store, settings domain.Settings) (*LessonServ
 	if err != nil {
 		return nil, err
 	}
-	return &LessonService{store: store, profiles: profiles, settings: settings, progress: progress, completed: map[string]bool{}}, nil
+	skills := map[string]domain.Skill{}
+	if adaptive, ok := store.(domain.AdaptiveStore); ok {
+		skills, err = adaptive.LoadSkills(settings.Language)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return &LessonService{store: store, profiles: profiles, settings: settings, progress: progress, skills: skills, completed: map[string]bool{}}, nil
 }
 
 func (s *LessonService) Settings() domain.Settings {
@@ -120,6 +134,11 @@ func (s *LessonService) Progress() map[rune]domain.CharacterProgress {
 	defer s.mu.Unlock()
 	return maps.Clone(s.progress)
 }
+func (s *LessonService) Skills() map[string]domain.Skill {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return maps.Clone(s.skills)
+}
 
 func (s *LessonService) SaveSettings(v domain.Settings) error {
 	s.mu.Lock()
@@ -131,17 +150,27 @@ func (s *LessonService) SaveSettings(v domain.Settings) error {
 	v.ColorTheme = normalizeColorTheme(v.ColorTheme)
 	changed := v.Language != s.settings.Language
 	progress := s.progress
+	skills := s.skills
 	if changed {
 		p, err := s.store.LoadProgress(v.Language)
 		if err != nil {
 			return err
 		}
 		progress = p
+		if adaptive, ok := s.store.(domain.AdaptiveStore); ok {
+			loaded, loadErr := adaptive.LoadSkills(v.Language)
+			if loadErr != nil {
+				return loadErr
+			}
+			skills = loaded
+		} else {
+			skills = map[string]domain.Skill{}
+		}
 	}
 	if err := s.store.SaveSettings(v); err != nil {
 		return err
 	}
-	s.settings, s.progress = v, progress
+	s.settings, s.progress, s.skills = v, progress, skills
 	return nil
 }
 
@@ -158,22 +187,30 @@ func (s *LessonService) StartAdaptive(mode domain.Mode, now time.Time) *trainer.
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	p := s.profiles[s.settings.Language]
-	improve := mode == domain.ModeImprove
-	unlocked, target := trainer.LearningState(p, s.progress, improve)
+	if mode == domain.ModeImprove && len(s.skills) == 0 && s.needsLegacyCalibration(p) {
+		return trainer.NewEngine(s.legacyCalibrationText(p), mode, s.settings.Language, 0, time.Time{})
+	}
+	unlocked := trainer.InitialUnlocked(p)
+	for _, skill := range s.skills {
+		if skill.Kind == domain.SkillRune && skill.Samples >= 6 {
+			if rs := []rune(skill.Pattern); len(rs) == 1 {
+				unlocked[rs[0]] = true
+			}
+		}
+	}
+	target := trainer.SelectSkill(p, s.skills, now)
+	for _, r := range target.Pattern {
+		unlocked[r] = true
+	}
 	weak := make(map[rune]float64, len(s.progress))
 	for r, v := range s.progress {
 		weak[r] = v.Confidence
 	}
-	text := ""
-	if improve && s.needsCalibration(p) {
-		text = s.calibrationText(p)
-	} else {
-		text = trainer.NewGenerator(now.UnixNano()).Lesson(p, unlocked, target, weak, s.settings.LessonRunes, mode)
-	}
-	return trainer.NewEngine(text, mode, s.settings.Language, target, time.Time{})
+	text := trainer.NewGenerator(now.UnixNano()).AdaptiveLesson(p, unlocked, target, weak, s.settings.LessonRunes)
+	return trainer.NewAdaptiveEngine(text, s.settings.Language, target.Pattern, time.Time{})
 }
 
-func (s *LessonService) needsCalibration(p domain.LanguageProfile) bool {
+func (s *LessonService) needsLegacyCalibration(p domain.LanguageProfile) bool {
 	for _, r := range p.UnlockOrder {
 		if s.progress[r].Samples < 12 {
 			return true
@@ -182,37 +219,14 @@ func (s *LessonService) needsCalibration(p domain.LanguageProfile) bool {
 	return false
 }
 
-func (s *LessonService) calibrationText(p domain.LanguageProfile) string {
+func (s *LessonService) legacyCalibrationText(p domain.LanguageProfile) string {
 	var b strings.Builder
-	remaining := map[rune]int{}
 	for _, r := range p.UnlockOrder {
-		remaining[r] = max(0, 12-s.progress[r].Samples)
-	}
-	count := 0
-	for count < s.settings.LessonRunes {
-		added := false
-		for _, r := range p.UnlockOrder {
-			if remaining[r] == 0 || count >= s.settings.LessonRunes {
-				continue
-			}
+		for range max(0, 12-s.progress[r].Samples) {
 			b.WriteRune(r)
-			count++
-			remaining[r]--
-			added = true
-			if count%7 == 6 {
-				b.WriteByte(' ')
-				count++
-			}
-		}
-		if !added {
-			break
 		}
 	}
-	rs := []rune(b.String())
-	if len(rs) > s.settings.LessonRunes {
-		rs = rs[:s.settings.LessonRunes]
-	}
-	return strings.TrimSpace(string(rs))
+	return b.String()
 }
 
 func (s *LessonService) Complete(engine *trainer.Engine, now time.Time) (domain.SessionResult, error) {
@@ -226,10 +240,17 @@ func (s *LessonService) Complete(engine *trainer.Engine, now time.Time) (domain.
 		return r, nil
 	}
 	progress := trainer.UpdateProgress(s.progress, r, s.settings)
-	if err := s.store.SaveSession(r, progress); err != nil {
+	skills := trainer.UpdateSkills(s.skills, r, s.settings, now)
+	var err error
+	if adaptive, ok := s.store.(domain.AdaptiveStore); ok {
+		err = adaptive.SaveAdaptiveSession(r, progress, skills)
+	} else {
+		err = s.store.SaveSession(r, progress)
+	}
+	if err != nil {
 		return r, err
 	}
-	s.progress = progress
+	s.progress, s.skills = progress, skills
 	s.completed[r.AttemptID] = true
 	return r, nil
 }
@@ -240,6 +261,13 @@ func (s *LessonService) History(filter domain.HistoryFilter) ([]domain.HistoryEn
 
 func (s *LessonService) Summary(filter domain.HistoryFilter) (domain.HistorySummary, error) {
 	return s.store.Summary(filter)
+}
+func (s *LessonService) Trends(since time.Time) ([]domain.TrendPoint, error) {
+	adaptive, ok := s.store.(domain.AdaptiveStore)
+	if !ok {
+		return nil, nil
+	}
+	return adaptive.Trends(s.Settings().Language, since)
 }
 
 func (s *LessonService) SavePracticeTime(entries []domain.PracticeTime) error {
@@ -253,8 +281,14 @@ func (s *LessonService) CalibrationRemaining() int {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	n := 0
+	if len(s.skills) == 0 {
+		for _, r := range s.profiles[s.settings.Language].UnlockOrder {
+			n += max(0, 12-s.progress[r].Samples)
+		}
+		return n
+	}
 	for _, r := range s.profiles[s.settings.Language].UnlockOrder {
-		n += max(0, 12-s.progress[r].Samples)
+		n += max(0, 6-s.skills[trainer.SkillKey(domain.SkillRune, string(r))].Samples)
 	}
 	return n
 }
@@ -266,6 +300,7 @@ func (s *LessonService) Reset() error {
 		return err
 	}
 	s.progress = map[rune]domain.CharacterProgress{}
+	s.skills = map[string]domain.Skill{}
 	s.completed = map[string]bool{}
 	return nil
 }

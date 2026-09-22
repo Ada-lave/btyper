@@ -5,7 +5,7 @@ other = "English (QWERTY)"
 [language.russian]
 other = "Russian (ЙЦУКЕН)"
 [menu.learn]
-other = "Learn letters"
+other = "Adaptive training"
 [menu.improve]
 other = "Improve skill"
 [menu.text]
@@ -19,13 +19,13 @@ other = "Finger guide"
 [menu.quit]
 other = "Quit"
 [menu.learn_desc]
-other = "Unlocks new letters gradually as you master them"
+other = "Calibrates, teaches and schedules weak skills for review"
 [menu.improve_desc]
 other = "Measures your skill, then practices the weakest keys"
 [menu.text_desc]
 other = "Paste text or open a file"
 [menu.history_desc]
-other = "Sessions and per-key confidence"
+other = "Sessions, skills and 30-day trends"
 [menu.settings_desc]
 other = "Goals, language and appearance"
 [menu.help_desc]
@@ -72,6 +72,12 @@ other = "Storage error: {{.Error}}"
 other = "Sessions"
 [history.keys]
 other = "Keys"
+
+[history.trends]
+other = "30-day trends"
+
+[history.skill_summary]
+other = "Skills: {{.Count}} · stable: {{.Stable}} · due: {{.Due}}"
 [history.empty]
 other = "No completed lessons yet"
 [column.date]
@@ -167,7 +173,7 @@ other = "Enter · next lesson   Esc · menu"
 [hotkey.text]
 other = "Ctrl+S · start   Ctrl+O · open file   Esc · back"
 [hotkey.history]
-other = "Tab · switch   ↑/↓ or j/k · select   Esc · back"
+other = "Tab or 1/2/3 · switch   ↑/↓ or j/k · select   Esc · back"
 [hotkey.settings]
 other = "↑/↓ or j/k · select   ←/→ or h/l · change   Esc · back"
 [terminal.small]
@@ -175,7 +181,7 @@ other = "Terminal is too small\nMinimum: 60 × 16\nCurrent: {{.Width}} × {{.Hei
 [cli.lang]
 other = "training language: en or ru"
 [cli.mode]
-other = "mode: learn, improve or text"
+other = "mode: adaptive or text"
 [cli.text]
 other = "UTF-8 text file (opens custom text mode)"
 [cli.data_dir]
@@ -222,6 +228,8 @@ other = "Learn «{{.Key}}»: 100% confidence in two target lessons ({{.Streak}}/
 other = "Practice these keys: {{.Keys}}"
 [result.change]
 other = "«{{.Key}}» confidence: {{.Before}}% → {{.After}}%"
+[result.schedule]
+other = "Review level {{.Level}} · next review: {{.Due}}"
 [result.next]
 other = "Next:"
 [filter.all]

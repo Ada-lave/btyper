@@ -160,7 +160,7 @@ func (c *Context) setStoreError(err error) {
 	}
 }
 func (c *Context) modeName(mode domain.Mode) string {
-	ids := map[domain.Mode]i18n.MessageID{domain.ModeLearn: i18n.ModeLearn, domain.ModeImprove: i18n.ModeImprove, domain.ModeText: i18n.ModeText}
+	ids := map[domain.Mode]i18n.MessageID{domain.ModeAdaptive: i18n.ModeLearn, domain.ModeLearn: i18n.ModeLearn, domain.ModeImprove: i18n.ModeImprove, domain.ModeText: i18n.ModeText}
 	return c.t(ids[mode], nil)
 }
 

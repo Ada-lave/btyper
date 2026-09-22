@@ -53,6 +53,7 @@ const (
 	StoreError        MessageID = "error.store"
 	HistorySessions   MessageID = "history.sessions"
 	HistoryKeys       MessageID = "history.keys"
+	HistoryTrends     MessageID = "history.trends"
 	NoHistory         MessageID = "history.empty"
 	ColDate           MessageID = "column.date"
 	ColMode           MessageID = "column.mode"

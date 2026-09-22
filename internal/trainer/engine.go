@@ -23,7 +23,23 @@ type Engine struct {
 }
 
 func NewEngine(text string, mode domain.Mode, lang string, target rune, now time.Time) *Engine {
-	return &Engine{Text: []rune(text), Result: domain.SessionResult{AttemptID: uuid.NewString(), StartedAt: now, Mode: mode, Language: lang, TargetRune: target, Text: text, Chars: map[rune]*domain.CharacterStat{}}}
+	targetSkill := ""
+	if target != 0 {
+		targetSkill = string(target)
+	}
+	return newEngine(text, mode, lang, target, targetSkill, now)
+}
+
+func NewAdaptiveEngine(text, lang, targetSkill string, now time.Time) *Engine {
+	targetRune := rune(0)
+	if rs := []rune(targetSkill); len(rs) == 1 {
+		targetRune = rs[0]
+	}
+	return newEngine(text, domain.ModeAdaptive, lang, targetRune, targetSkill, now)
+}
+
+func newEngine(text string, mode domain.Mode, lang string, target rune, targetSkill string, now time.Time) *Engine {
+	return &Engine{Text: []rune(text), Result: domain.SessionResult{AttemptID: uuid.NewString(), StartedAt: now, Mode: mode, Language: lang, TargetRune: target, TargetSkill: targetSkill, Text: text, Chars: map[rune]*domain.CharacterStat{}, Skills: map[string]*domain.SkillStat{}}}
 }
 
 func (e *Engine) Input(r rune, now time.Time) bool {
@@ -42,10 +58,17 @@ func (e *Engine) Input(r rune, now time.Time) bool {
 	expected := e.Text[e.Pos]
 	stat := e.stat(expected)
 	stat.Samples++
+	skills := e.skillStats(expected)
+	for _, skill := range skills {
+		skill.Samples++
+	}
 	if r != expected {
 		e.Pending = r
 		e.Result.Errors++
 		stat.Errors++
+		for _, skill := range skills {
+			skill.Errors++
+		}
 		return false
 	}
 	e.accept(expected, now, stat)
@@ -64,6 +87,10 @@ func (e *Engine) accept(r rune, now time.Time, s *domain.CharacterStat) {
 	if !from.IsZero() {
 		s.LatencyMS += float64(now.Sub(from).Microseconds()) / 1000
 		s.LatencySamples++
+		for _, skill := range e.skillStats(r) {
+			skill.LatencyMS += float64(now.Sub(from).Microseconds()) / 1000
+			skill.LatencySamples++
+		}
 	}
 	e.LastAccepted = now
 	e.Pos++
@@ -71,6 +98,27 @@ func (e *Engine) accept(r rune, now time.Time, s *domain.CharacterStat) {
 	if e.Done() {
 		e.closeActive(now)
 	}
+}
+
+func (e *Engine) skillStats(current rune) []*domain.SkillStat {
+	out := []*domain.SkillStat{e.skill(domain.SkillRune, string(current))}
+	if e.Pos > 0 {
+		previous := e.Text[e.Pos-1]
+		if !unicode.IsSpace(previous) && !unicode.IsSpace(current) {
+			out = append(out, e.skill(domain.SkillBigram, string([]rune{previous, current})))
+		}
+	}
+	return out
+}
+
+func (e *Engine) skill(kind domain.SkillKind, pattern string) *domain.SkillStat {
+	key := string(kind) + ":" + pattern
+	s := e.Result.Skills[key]
+	if s == nil {
+		s = &domain.SkillStat{Kind: kind, Pattern: pattern}
+		e.Result.Skills[key] = s
+	}
+	return s
 }
 
 func (e *Engine) Pause(now time.Time) {
@@ -236,7 +284,7 @@ func UpdateProgress(old map[rune]domain.CharacterProgress, result domain.Session
 		}
 		old[r] = p
 	}
-	if result.Mode == domain.ModeLearn {
+	if result.Mode == domain.ModeLearn || result.Mode == domain.ModeAdaptive {
 		profile := Profiles()[result.Language]
 		unlocked, target := LearningState(profile, old, false)
 		if target != 0 {

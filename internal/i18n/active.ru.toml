@@ -5,7 +5,7 @@ other = "Английский (QWERTY)"
 [language.russian]
 other = "Русский (ЙЦУКЕН)"
 [menu.learn]
-other = "Учить буквы"
+other = "Адаптивная тренировка"
 [menu.improve]
 other = "Улучшать навык"
 [menu.text]
@@ -19,13 +19,13 @@ other = "Постановка пальцев"
 [menu.quit]
 other = "Выход"
 [menu.learn_desc]
-other = "Постепенно открывает новые буквы по мере освоения"
+other = "Оценивает навык и планирует повторение слабых мест"
 [menu.improve_desc]
 other = "Сначала оценивает навык, затем тренирует слабые клавиши"
 [menu.text_desc]
 other = "Вставить текст или открыть файл"
 [menu.history_desc]
-other = "Сессии и прогресс по клавишам"
+other = "Сессии, навыки и динамика за 30 дней"
 [menu.settings_desc]
 other = "Цели, язык и отображение"
 [menu.help_desc]
@@ -72,6 +72,12 @@ other = "Ошибка хранилища: {{.Error}}"
 other = "Сессии"
 [history.keys]
 other = "Клавиши"
+
+[history.trends]
+other = "Динамика за 30 дней"
+
+[history.skill_summary]
+other = "Навыки: {{.Count}} · устойчивые: {{.Stable}} · пора повторить: {{.Due}}"
 [history.empty]
 other = "Завершённых уроков пока нет"
 [column.date]
@@ -167,7 +173,7 @@ other = "Enter · следующий урок   Esc · меню"
 [hotkey.text]
 other = "Ctrl+S · начать   Ctrl+O · открыть файл   Esc · назад"
 [hotkey.history]
-other = "Tab · вкладка   ↑/↓ или j/k · выбор   Esc · назад"
+other = "Tab или 1/2/3 · вкладка   ↑/↓ или j/k · выбор   Esc · назад"
 [hotkey.settings]
 other = "↑/↓ или j/k · выбор   ←/→ или h/l · изменить   Esc · назад"
 [terminal.small]
@@ -175,7 +181,7 @@ other = "Терминал слишком мал\nМинимум: 60 × 16\nСе�
 [cli.lang]
 other = "язык тренировки: en или ru"
 [cli.mode]
-other = "режим: learn, improve или text"
+other = "режим: adaptive или text"
 [cli.text]
 other = "текстовый файл UTF-8 (открывает режим своего текста)"
 [cli.data_dir]
@@ -230,6 +236,8 @@ other = "Освоение «{{.Key}}»: уверенность 100% в двух 
 other = "Стоит повторить: {{.Keys}}"
 [result.change]
 other = "Уверенность «{{.Key}}»: {{.Before}}% → {{.After}}%"
+[result.schedule]
+other = "Уровень повторения {{.Level}} · следующее: {{.Due}}"
 [result.next]
 other = "Далее:"
 [filter.all]
