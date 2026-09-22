@@ -1,5 +1,7 @@
 # btyper
 
+**English** | [Русский](README.ru.md)
+
 Adaptive touch-typing practice in your terminal, inspired by Keybr's learning loop.
 
 ## Install and verify
@@ -28,8 +30,8 @@ go run ./cmd/btyper
 The application opens directly into the main menu. On the first launch, the
 training layout follows the detected UI language and can be changed later in
 Settings. The interface can be anchored to any of nine terminal positions from
-the same screen. Adaptive training calibrates keys in order, then schedules weak or
-overdue letters and common letter pairs for spaced review. Progress is
+the same screen. Adaptive training calibrates keys in order, then schedules
+weak or overdue letters and common letter pairs for spaced review. Progress is
 stored locally in an SQLite database under the XDG data directory.
 
 By default, the database is stored at `$XDG_DATA_HOME/btyper/btyper.db`, or
@@ -66,6 +68,10 @@ enlarging it.
 
 ## Learning and metrics
 
+For a detailed description of scheduling, confidence formulas, and the
+relationship between letters and bigrams, see
+[`docs/adaptive-learning.md`](docs/adaptive-learning.md) (Russian).
+
 WPM is correct characters / 5 / active minutes; CPM is correct characters /
 active minutes. Accuracy is successful attempts / all accepted attempts. Input
 while an error is awaiting Backspace is ignored. Pauses and time in menus are
@@ -79,8 +85,8 @@ moves through review intervals of 1, 3, 7, 14 and 30 days when a lesson meets
 the configured speed and accuracy targets; a failed review shortens the
 interval. Letter pairs are introduced only after every letter has accumulated
 30 observations; the lesson progress panel always names the actual letter or
-pair selected by the scheduler. Old `learn` and `improve` settings are migrated to `adaptive`, while
-their historical sessions remain available in statistics.
+pair selected by the scheduler. Old `learn` and `improve` settings are migrated
+to `adaptive`, while their historical sessions remain available in statistics.
 
 Results show weak letters, target confidence changes and the next exercise's
 purpose. A failed result save remains on screen: Enter retries the same attempt
