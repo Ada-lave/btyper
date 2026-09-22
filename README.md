@@ -27,8 +27,8 @@ go run ./cmd/btyper
 
 The application opens directly into the main menu. On the first launch, the
 training layout follows the detected UI language and can be changed later in
-Settings. "Learn letters" unlocks keys gradually; "Improve skill" first
-calibrates your current ability and then focuses on weak keys. Progress is
+Settings. Adaptive training calibrates keys in order, then schedules weak or
+overdue letters and common letter pairs for spaced review. Progress is
 stored locally in an SQLite database under the XDG data directory.
 
 By default, the database is stored at `$XDG_DATA_HOME/btyper/btyper.db`, or
@@ -44,7 +44,7 @@ Useful options:
 
 ```text
 --lang en|ru
---mode learn|improve|text
+--mode adaptive|text
 --text path/to/file.txt
 --data-dir path/to/data
 --version
@@ -72,11 +72,12 @@ excluded; time spent correcting mistakes is included. The first character does
 not contribute a zero-latency measurement.
 
 Confidence is the minimum of speed, accuracy and sample scores: the configured
-speed and accuracy targets, and 30 attempts per letter. A letter is mastered
-after two target lessons with confidence at least 0.999. Opened and mastered
-letters stay open. When confidence falls, weak letters are reviewed before new
-letters are introduced. Improve mode first collects at least 12 attempts per
-letter; it prioritizes letters whose calibration is incomplete.
+speed and accuracy targets, and 30 attempts per skill. The adaptive scheduler
+tracks both letters and common two-letter sequences. After calibration, a skill
+moves through review intervals of 1, 3, 7, 14 and 30 days when a lesson meets
+the configured speed and accuracy targets; a failed review shortens the
+interval. Old `learn` and `improve` settings are migrated to `adaptive`, while
+their historical sessions remain available in statistics.
 
 Results show weak letters, target confidence changes and the next exercise's
 purpose. A failed result save remains on screen: Enter retries the same attempt
@@ -99,6 +100,24 @@ days / thirty days. Left/right switch pages of 50 sessions. Summary speed and
 accuracy are weighted by active duration and attempts, respectively. History
 filters use the session start time; the daily practice counter uses actual
 active intervals, including those spanning midnight.
+
+The third statistics tab shows 30-day speed, accuracy and key-latency trends.
+
+## Backup and export
+
+Create a portable, versioned JSON backup or CSV reports without stopping using
+the local-first workflow:
+
+```sh
+btyper export --format backup --output btyper-backup.json
+btyper export --format csv --output-dir reports
+btyper import --input btyper-backup.json
+```
+
+Import validates the backup and replaces the current dataset in one
+transaction. Before replacement, btyper writes a timestamped safety backup to
+the active data directory. CSV export creates `sessions.csv`,
+`practice_time.csv`, and `skills.csv`.
 
 ## Data and upgrades
 
