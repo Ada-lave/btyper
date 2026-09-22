@@ -140,19 +140,28 @@ func (s *practiceScreen) View() string {
 	head := s.c.t(i18n.PracticeHeader, data)
 	pct := float64(e.Pos) / float64(max(1, len(e.Text)))
 	footer := fmt.Sprintf("%s  %s\n%s", s.bar.ViewAs(pct), s.c.theme.Title.Render(fmt.Sprintf("%d/%d", e.Pos, len(e.Text))), Hotkeys(s.c, i18n.HotkeyPractice))
-	out := s.c.theme.Title.Render(head)
-	out += "\n" + s.c.todayView(true) + "\n" + lessonPurpose(s.c, e)
+	header := strings.Join([]string{s.c.theme.Title.Render(head), s.c.todayView(true), lessonPurpose(s.c, e)}, "\n")
+	blocks := []string{centerBlock(header, s.c.width)}
 	if e.Result.Mode == domain.ModeAdaptive && s.c.height >= 22 {
-		out += "\n\n" + LearningProgress{}.View(s.c.service.Profile(), s.c.service.Progress(), s.c, min(100, s.c.width-8))
+		blocks = append(blocks, centerBlock(LearningProgress{}.View(s.c.service.Profile(), s.c.service.Progress(), e.Result.TargetSkill, s.c.service.Skills(), s.c, min(100, s.c.width-8)), s.c.width))
 	}
-	out += "\n\n" + s.c.theme.Border.Width(max(48, min(100, s.c.width-10))).Render(s.lesson.View(e, s.c.theme, s.c.width)) + "\n\n" + footer
+	blocks = append(blocks,
+		centerBlock(s.c.theme.Border.Width(max(48, min(100, s.c.width-10))).Render(s.lesson.View(e, s.c.theme, s.c.width)), s.c.width),
+		centerBlock(footer, s.c.width),
+	)
+	out := strings.Join(blocks, "\n\n")
 	if s.c.settings().ShowKeyboard && s.c.width >= 80 && s.c.height >= 24 {
-		withKeyboard := out + "\n\n" + s.keyboard.View(s.c.service.Profile(), e, s.c)
+		keyboard := centerBlock(s.keyboard.View(s.c.service.Profile(), e, s.c), s.c.width)
+		withKeyboard := out + "\n\n" + keyboard
 		if lipgloss.Height(lipgloss.NewStyle().Width(s.c.width).Render(withKeyboard)) <= s.c.height {
 			out = withKeyboard
 		}
 	}
 	return out
+}
+
+func centerBlock(view string, width int) string {
+	return lipgloss.NewStyle().Width(max(1, width)).Align(lipgloss.Center).Render(view)
 }
 
 type resultScreen struct{ c *Context }
@@ -206,7 +215,7 @@ func (s *resultScreen) View() string {
 	stats := s.c.t(i18n.ResultStats, map[string]any{"WPM": fmt.Sprintf("%6.1f", r.WPM), "CPM": fmt.Sprintf("%6.1f", r.CPM), "Accuracy": fmt.Sprintf("%6.1f", r.Accuracy*100), "Errors": fmt.Sprintf("%6d", r.Errors), "Duration": formatDuration(r.Duration)})
 	out := s.c.theme.Title.Render(s.c.t(i18n.ResultTitle, nil)) + target
 	if r.Mode == domain.ModeAdaptive {
-		out += "\n\n" + LearningProgress{}.View(s.c.service.Profile(), s.c.service.Progress(), s.c, min(100, s.c.width-8))
+		out += "\n\n" + LearningProgress{}.View(s.c.service.Profile(), s.c.service.Progress(), r.TargetSkill, s.c.service.Skills(), s.c, min(100, s.c.width-8))
 	}
 	footer := Hotkeys(s.c, i18n.HotkeyResult)
 	if s.c.unsaved {

@@ -49,9 +49,13 @@ other = "Finger: {{.Finger}}  ·  LP/LR/LM/LI | RI/RM/RR/RP"
 [practice.space_finger]
 other = "Space: press with either thumb"
 [practice.learn_progress]
-other = "Letters mastered: {{.Learned}}/{{.Total}}  ·  current: {{.Current}}  ·  confidence {{.Confidence}}%"
+other = "Letters practiced: {{.Learned}}/{{.Total}}  ·  current: {{.Current}}  ·  confidence {{.Confidence}}%"
 [practice.learn_progress_help]
 other = "red → yellow → green — confidence  ·  [letter] — current  ·  muted — later"
+[practice.pair_progress]
+other = "Letters practiced: {{.Learned}}/{{.Total}}  ·  current pair: {{.Current}}  ·  confidence {{.Confidence}}%"
+[practice.pair_progress_help]
+other = "letter pairs begin after every letter has enough observations; both letters are highlighted"
 [result.title]
 other = "Lesson complete"
 [result.target]
@@ -122,6 +126,8 @@ other = "Lesson length: {{.Value}}"
 other = "Virtual keyboard: {{.Value}}"
 [settings.theme]
 other = "Color theme: {{.Value}}"
+[settings.position]
+other = "Interface position: {{.Value}}"
 [theme.violet]
 other = "Violet"
 [theme.ocean]
@@ -130,6 +136,24 @@ other = "Ocean"
 other = "Sunset"
 [theme.mono]
 other = "Monochrome"
+[position.top_left]
+other = "Top left"
+[position.top_center]
+other = "Top center"
+[position.top_right]
+other = "Top right"
+[position.center_left]
+other = "Center left"
+[position.center]
+other = "Center"
+[position.center_right]
+other = "Center right"
+[position.bottom_left]
+other = "Bottom left"
+[position.bottom_center]
+other = "Bottom center"
+[position.bottom_right]
+other = "Bottom right"
 [settings.reset]
 other = "Reset progress"
 [settings.confirm_reset]

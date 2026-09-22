@@ -2,6 +2,7 @@ package ui
 
 import (
 	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"errors"
 	"testing"
 	"time"
@@ -129,6 +130,40 @@ func TestThemeSettingAppliesAndPersists(t *testing.T) {
 	}
 	if after := app.ctx.theme.Progress(.5).Render("x"); after == before {
 		t.Fatal("theme change did not rebuild progress palette")
+	}
+}
+
+func TestInterfacePositionAppliesAndPersists(t *testing.T) {
+	store := &testStore{settings: domain.DefaultSettings()}
+	app, err := New(store, store.settings)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := newSettingsScreen(app.ctx).(*settingsScreen)
+	s.cursor = 7
+	screenKey(s, key('l', 0, 0))
+	if got := app.ctx.settings().Position; got != domain.PositionCenterRight {
+		t.Fatalf("active position is %q", got)
+	}
+	if got := store.settings.Position; got != domain.PositionCenterRight {
+		t.Fatalf("saved position is %q", got)
+	}
+	h, v := positionAlignment(store.settings.Position)
+	if h != lipgloss.Right || v != lipgloss.Center {
+		t.Fatalf("alignment is %v/%v", h, v)
+	}
+}
+
+func TestLegacySettingsDefaultToCenteredPosition(t *testing.T) {
+	settings := domain.DefaultSettings()
+	settings.Position = ""
+	store := &testStore{settings: settings}
+	app, err := New(store, settings)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := app.ctx.settings().Position; got != domain.PositionCenter {
+		t.Fatalf("legacy position normalized to %q", got)
 	}
 }
 

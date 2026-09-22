@@ -54,8 +54,8 @@ func TestLearningProgressShowsEveryLetterAndCurrentState(t *testing.T) {
 		'l': {Rune: 'l', Confidence: .75},
 	}
 	c := &Context{localizer: loc, theme: NewTheme(true)}
-	view := ansi.Strip(LearningProgress{}.View(profile, progress, c, 70))
-	for _, want := range []string{"Letters mastered: 1/26", "current: N", "confidence 50%"} {
+	view := ansi.Strip(LearningProgress{}.View(profile, progress, "", nil, c, 70))
+	for _, want := range []string{"Letters practiced: 1/26", "current: N", "confidence 50%"} {
 		if !strings.Contains(view, want) {
 			t.Fatalf("progress view does not contain %q:\n%s", want, view)
 		}
@@ -63,6 +63,27 @@ func TestLearningProgressShowsEveryLetterAndCurrentState(t *testing.T) {
 	for _, r := range profile.UnlockOrder {
 		if !strings.ContainsRune(view, unicode.ToUpper(r)) {
 			t.Fatalf("progress view does not contain letter %q", r)
+		}
+	}
+}
+
+func TestLearningProgressUsesActualPairTarget(t *testing.T) {
+	loc, err := i18n.New("en")
+	if err != nil {
+		t.Fatal(err)
+	}
+	profile := trainer.Profiles()["en"]
+	progress := map[rune]domain.CharacterProgress{}
+	skills := map[string]domain.Skill{}
+	for _, r := range profile.UnlockOrder {
+		skills[trainer.SkillKey(domain.SkillRune, string(r))] = domain.Skill{Kind: domain.SkillRune, Pattern: string(r), Samples: trainer.RuneFoundationSamples}
+	}
+	skills[trainer.SkillKey(domain.SkillBigram, "br")] = domain.Skill{Kind: domain.SkillBigram, Pattern: "br", Confidence: .4}
+	c := &Context{localizer: loc, theme: NewTheme(true)}
+	view := ansi.Strip(LearningProgress{}.View(profile, progress, "br", skills, c, 80))
+	for _, want := range []string{"Letters practiced: 26/26", "current pair: BR", "confidence 40%"} {
+		if !strings.Contains(view, want) {
+			t.Fatalf("pair progress does not contain %q:\n%s", want, view)
 		}
 	}
 }
@@ -83,5 +104,34 @@ func TestKeyboardKeepsHeightAndShowsThumbHintForSpace(t *testing.T) {
 	}
 	if plain := ansi.Strip(space); !strings.Contains(plain, "press with either thumb") {
 		t.Fatalf("space hint is missing: %q", plain)
+	}
+}
+
+func TestKeyboardIsCenteredInWorkspace(t *testing.T) {
+	settings := domain.DefaultSettings()
+	store := &testStore{settings: settings}
+	app, err := New(store, settings)
+	if err != nil {
+		t.Fatal(err)
+	}
+	profile := trainer.Profiles()["en"]
+	keyboard := Keyboard{}.View(profile, trainer.NewEngine("e", domain.ModeAdaptive, "en", 'e', time.Time{}), app.ctx)
+	line := strings.Split(ansi.Strip(centerBlock(keyboard, 80)), "\n")[0]
+	content := strings.TrimSpace(line)
+	left := strings.Index(line, content)
+	right := len(line) - left - len(content)
+	if left < 1 || left-right < -1 || left-right > 1 {
+		t.Fatalf("keyboard row is not centered: left=%d right=%d line=%q", left, right, line)
+	}
+}
+
+func TestCenterBlockCentersEveryLine(t *testing.T) {
+	for _, line := range strings.Split(centerBlock("short\na longer block", 24), "\n") {
+		content := strings.TrimSpace(line)
+		left := strings.Index(line, content)
+		right := len(line) - left - len(content)
+		if left-right < -1 || left-right > 1 {
+			t.Fatalf("line is not centered: left=%d right=%d line=%q", left, right, line)
+		}
 	}
 }

@@ -77,6 +77,7 @@ func NormalizeSettings(v domain.Settings) domain.Settings {
 		v.Mode = d.Mode
 	}
 	v.ColorTheme = normalizeColorTheme(v.ColorTheme)
+	v.Position = normalizePosition(v.Position)
 	return v
 }
 
@@ -180,6 +181,17 @@ func normalizeColorTheme(theme domain.ColorTheme) domain.ColorTheme {
 		return theme
 	default:
 		return domain.ThemeViolet
+	}
+}
+
+func normalizePosition(position domain.InterfacePosition) domain.InterfacePosition {
+	switch position {
+	case domain.PositionTopLeft, domain.PositionTopCenter, domain.PositionTopRight,
+		domain.PositionCenterLeft, domain.PositionCenter, domain.PositionCenterRight,
+		domain.PositionBottomLeft, domain.PositionBottomCenter, domain.PositionBottomRight:
+		return position
+	default:
+		return domain.PositionCenter
 	}
 }
 
@@ -288,7 +300,7 @@ func (s *LessonService) CalibrationRemaining() int {
 		return n
 	}
 	for _, r := range s.profiles[s.settings.Language].UnlockOrder {
-		n += max(0, 6-s.skills[trainer.SkillKey(domain.SkillRune, string(r))].Samples)
+		n += max(0, trainer.RuneFoundationSamples-s.skills[trainer.SkillKey(domain.SkillRune, string(r))].Samples)
 	}
 	return n
 }

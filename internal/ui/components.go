@@ -64,13 +64,25 @@ func (LessonRenderer) View(e *trainer.Engine, t Theme, width int) string {
 
 type LearningProgress struct{}
 
-func (LearningProgress) View(profile domain.LanguageProfile, progress map[rune]domain.CharacterProgress, c *Context, width int) string {
-	unlocked, current := trainer.LearningState(profile, progress, false)
+func (LearningProgress) View(profile domain.LanguageProfile, progress map[rune]domain.CharacterProgress, targetSkill string, skills map[string]domain.Skill, c *Context, width int) string {
+	unlocked, fallback := trainer.LearningState(profile, progress, false)
+	current := rune(0)
+	if rs := []rune(targetSkill); len(rs) == 1 {
+		current = rs[0]
+	}
+	if targetSkill == "" {
+		current = fallback
+		targetSkill = string(fallback)
+	}
 	learned := 0
 	letters := make([]string, 0, len(profile.UnlockOrder))
 	for _, r := range profile.UnlockOrder {
 		state := progress[r]
-		if state.Mastered {
+		ready := state.Mastered
+		if skill, ok := skills[trainer.SkillKey(domain.SkillRune, string(r))]; ok {
+			ready = skill.Samples >= trainer.RuneFoundationSamples
+		}
+		if ready {
 			learned++
 		}
 		label := strings.ToUpper(string(r))
@@ -84,14 +96,29 @@ func (LearningProgress) View(profile domain.LanguageProfile, progress map[rune]d
 		}
 		letters = append(letters, label)
 	}
-	summary := c.t(i18n.LearnProgress, map[string]any{
+	confidence := progress[current].Confidence
+	if targetSkill != "" {
+		kind := domain.SkillRune
+		if len([]rune(targetSkill)) == 2 {
+			kind = domain.SkillBigram
+		}
+		if skill, ok := skills[trainer.SkillKey(kind, targetSkill)]; ok {
+			confidence = skill.Confidence
+		}
+	}
+	data := map[string]any{
 		"Learned":    learned,
 		"Total":      len(profile.UnlockOrder),
-		"Current":    strings.ToUpper(string(current)),
-		"Confidence": fmt.Sprintf("%.0f", progress[current].Confidence*100),
-	})
-	sequence := lipgloss.NewStyle().Width(max(40, width)).Render(strings.Join(letters, " "))
-	return summary + "\n" + sequence + "\n" + c.theme.Muted.Render(c.t(i18n.LearnProgressHelp, nil))
+		"Current":    strings.ToUpper(targetSkill),
+		"Confidence": fmt.Sprintf("%.0f", confidence*100),
+	}
+	summary, help := c.t(i18n.LearnProgress, data), c.t(i18n.LearnProgressHelp, nil)
+	if len([]rune(targetSkill)) == 2 {
+		summary = c.t("practice.pair_progress", data)
+		help = c.t("practice.pair_progress_help", nil)
+	}
+	sequence := lipgloss.NewStyle().Width(max(40, width)).Align(lipgloss.Center).Render(strings.Join(letters, " "))
+	return summary + "\n" + sequence + "\n" + c.theme.Muted.Render(help)
 }
 
 type Keyboard struct{}
@@ -103,9 +130,12 @@ func (Keyboard) View(p domain.LanguageProfile, e *trainer.Engine, c *Context) st
 	}
 	progress := c.service.Progress()
 	unlocked := map[rune]bool{}
-	target := rune(0)
+	targets := map[rune]bool{}
 	if e.Result.Mode == domain.ModeLearn || e.Result.Mode == domain.ModeImprove || e.Result.Mode == domain.ModeAdaptive {
-		unlocked, target = trainer.LearningState(p, progress, false)
+		unlocked, _ = trainer.LearningState(p, progress, false)
+		for _, r := range e.Result.TargetSkill {
+			targets[r] = true
+		}
 	}
 	var lines []string
 	for i, row := range p.Rows {
@@ -116,7 +146,7 @@ func (Keyboard) View(p domain.LanguageProfile, e *trainer.Engine, c *Context) st
 			switch {
 			case r == expected:
 				s = c.theme.Selection.Render("[" + string(r) + "]")
-			case r == target:
+			case targets[r]:
 				s = c.theme.Progress(progress[r].Confidence).Bold(true).Underline(true).Render("[" + string(r) + "]")
 			case unlocked[r]:
 				s = c.theme.Progress(progress[r].Confidence).Render(s)

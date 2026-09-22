@@ -4,6 +4,7 @@ import "time"
 
 type Mode string
 type ColorTheme string
+type InterfacePosition string
 
 const (
 	ModeAdaptive Mode = "adaptive"
@@ -11,6 +12,18 @@ const (
 	ModeLearn   Mode = "learn"
 	ModeImprove Mode = "improve"
 	ModeText    Mode = "text"
+)
+
+const (
+	PositionTopLeft      InterfacePosition = "top-left"
+	PositionTopCenter    InterfacePosition = "top-center"
+	PositionTopRight     InterfacePosition = "top-right"
+	PositionCenterLeft   InterfacePosition = "center-left"
+	PositionCenter       InterfacePosition = "center"
+	PositionCenterRight  InterfacePosition = "center-right"
+	PositionBottomLeft   InterfacePosition = "bottom-left"
+	PositionBottomCenter InterfacePosition = "bottom-center"
+	PositionBottomRight  InterfacePosition = "bottom-right"
 )
 
 const (
@@ -29,10 +42,11 @@ type Settings struct {
 	LessonRunes  int
 	ShowKeyboard bool
 	ColorTheme   ColorTheme
+	Position     InterfacePosition
 }
 
 func DefaultSettings() Settings {
-	return Settings{UILanguage: "", Language: "en", Mode: ModeAdaptive, TargetWPM: 35, Accuracy: 0.95, LessonRunes: 140, ShowKeyboard: true, ColorTheme: ThemeViolet}
+	return Settings{UILanguage: "", Language: "en", Mode: ModeAdaptive, TargetWPM: 35, Accuracy: 0.95, LessonRunes: 140, ShowKeyboard: true, ColorTheme: ThemeViolet, Position: PositionCenter}
 }
 
 type LanguageProfile struct {

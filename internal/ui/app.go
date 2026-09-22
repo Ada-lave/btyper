@@ -363,18 +363,19 @@ func (a *App) View() tea.View {
 		body += "\n\n" + s
 	}
 	if a.terminalWidth > 0 && a.terminalHeight > 0 {
-		body = lipgloss.NewStyle().Width(a.terminalWidth).Render(body)
+		body = lipgloss.NewStyle().MaxWidth(a.terminalWidth).Render(body)
 		lines := strings.Split(body, "\n")
 		if len(lines) > a.terminalHeight {
 			visible := max(1, a.terminalHeight-1)
 			start := min(a.scroll, len(lines)-visible)
 			body = strings.Join(lines[start:start+visible], "\n") + "\n" + lipgloss.NewStyle().MaxWidth(a.terminalWidth).Render(a.ctx.t("view.scroll", nil))
 		}
+		horizontal, vertical := positionAlignment(a.ctx.settings().Position)
 		body = lipgloss.Place(
 			a.terminalWidth,
 			a.terminalHeight,
-			lipgloss.Center,
-			lipgloss.Center,
+			horizontal,
+			vertical,
 			body,
 			lipgloss.WithWhitespaceChars(" "),
 		)
@@ -385,6 +386,23 @@ func (a *App) View() tea.View {
 	v.KeyboardEnhancements.ReportAlternateKeys = true
 	v.WindowTitle = "btyper"
 	return v
+}
+
+func positionAlignment(position domain.InterfacePosition) (lipgloss.Position, lipgloss.Position) {
+	horizontal, vertical := lipgloss.Center, lipgloss.Center
+	switch position {
+	case domain.PositionTopLeft, domain.PositionCenterLeft, domain.PositionBottomLeft:
+		horizontal = lipgloss.Left
+	case domain.PositionTopRight, domain.PositionCenterRight, domain.PositionBottomRight:
+		horizontal = lipgloss.Right
+	}
+	switch position {
+	case domain.PositionTopLeft, domain.PositionTopCenter, domain.PositionTopRight:
+		vertical = lipgloss.Top
+	case domain.PositionBottomLeft, domain.PositionBottomCenter, domain.PositionBottomRight:
+		vertical = lipgloss.Bottom
+	}
+	return horizontal, vertical
 }
 
 func layoutSize(terminalWidth, terminalHeight int) (int, int) {

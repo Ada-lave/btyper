@@ -49,9 +49,13 @@ other = "Палец: {{.Finger}}  ·  ЛМ/ЛБ/ЛС/ЛУ | ПУ/ПС/ПБ/ПМ"
 [practice.space_finger]
 other = "Пробел: нажмите любым большим пальцем"
 [practice.learn_progress]
-other = "Освоено букв: {{.Learned}}/{{.Total}}  ·  текущая: {{.Current}}  ·  уверенность {{.Confidence}}%"
+other = "Букв отработано: {{.Learned}}/{{.Total}}  ·  текущая: {{.Current}}  ·  уверенность {{.Confidence}}%"
 [practice.learn_progress_help]
 other = "красный → жёлтый → зелёный — уверенность  ·  [буква] — текущая  ·  тусклые — позже"
+[practice.pair_progress]
+other = "Букв отработано: {{.Learned}}/{{.Total}}  ·  текущая пара: {{.Current}}  ·  уверенность {{.Confidence}}%"
+[practice.pair_progress_help]
+other = "пары начинаются после достаточной выборки по всем буквам; обе буквы пары подсвечены"
 [result.title]
 other = "Урок завершён"
 [result.target]
@@ -122,6 +126,8 @@ other = "Длина урока: {{.Value}}"
 other = "Виртуальная клавиатура: {{.Value}}"
 [settings.theme]
 other = "Цветовая тема: {{.Value}}"
+[settings.position]
+other = "Расположение интерфейса: {{.Value}}"
 [theme.violet]
 other = "Фиолетовая"
 [theme.ocean]
@@ -130,6 +136,24 @@ other = "Океан"
 other = "Закат"
 [theme.mono]
 other = "Монохромная"
+[position.top_left]
+other = "Сверху слева"
+[position.top_center]
+other = "Сверху по центру"
+[position.top_right]
+other = "Сверху справа"
+[position.center_left]
+other = "По центру слева"
+[position.center]
+other = "По центру"
+[position.center_right]
+other = "По центру справа"
+[position.bottom_left]
+other = "Снизу слева"
+[position.bottom_center]
+other = "Снизу по центру"
+[position.bottom_right]
+other = "Снизу справа"
 [settings.reset]
 other = "Сбросить прогресс"
 [settings.confirm_reset]

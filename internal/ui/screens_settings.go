@@ -47,13 +47,13 @@ func (s *settingsScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 	case k.Key().Code == tea.KeyEsc:
 		return Action{Kind: ActionNavigate, Route: RouteMenu}, nil
 	case isUp(k):
-		s.cursor = (s.cursor + 7) % 8
+		s.cursor = (s.cursor + 8) % 9
 	case isDown(k) || k.Key().Code == tea.KeyTab:
-		s.cursor = (s.cursor + 1) % 8
+		s.cursor = (s.cursor + 1) % 9
 	case isLeft(k):
 		return Action{}, s.change(-1)
 	case isRight(k) || k.Key().Code == tea.KeyEnter:
-		if s.cursor == 7 {
+		if s.cursor == 8 {
 			s.confirm = true
 		} else {
 			return Action{}, s.change(1)
@@ -86,6 +86,8 @@ func (s *settingsScreen) change(d int) tea.Cmd {
 		v.ShowKeyboard = !v.ShowKeyboard
 	case 6:
 		v.ColorTheme = nextColorTheme(v.ColorTheme, d)
+	case 7:
+		v.Position = nextPosition(v.Position, d)
 	}
 	return s.c.work(func() error { return s.c.service.SaveSettings(v) }, func(err error) tea.Cmd {
 		if err != nil {
@@ -97,6 +99,22 @@ func (s *settingsScreen) change(d int) tea.Cmd {
 		s.c.status.Clear()
 		return nil
 	})
+}
+
+func nextPosition(current domain.InterfacePosition, direction int) domain.InterfacePosition {
+	positions := []domain.InterfacePosition{
+		domain.PositionTopLeft, domain.PositionTopCenter, domain.PositionTopRight,
+		domain.PositionCenterLeft, domain.PositionCenter, domain.PositionCenterRight,
+		domain.PositionBottomLeft, domain.PositionBottomCenter, domain.PositionBottomRight,
+	}
+	index := 4
+	for i, position := range positions {
+		if position == current {
+			index = i
+			break
+		}
+	}
+	return positions[(index+direction+len(positions))%len(positions)]
 }
 
 func nextColorTheme(current domain.ColorTheme, direction int) domain.ColorTheme {
@@ -120,6 +138,18 @@ func (s *settingsScreen) themeName(theme domain.ColorTheme) string {
 	}
 	return s.c.t(id, nil)
 }
+func (s *settingsScreen) positionName(position domain.InterfacePosition) string {
+	ids := map[domain.InterfacePosition]i18n.MessageID{
+		domain.PositionTopLeft: i18n.PositionTopLeft, domain.PositionTopCenter: i18n.PositionTopCenter, domain.PositionTopRight: i18n.PositionTopRight,
+		domain.PositionCenterLeft: i18n.PositionCenterLeft, domain.PositionCenter: i18n.PositionCenter, domain.PositionCenterRight: i18n.PositionCenterRight,
+		domain.PositionBottomLeft: i18n.PositionBottomLeft, domain.PositionBottomCenter: i18n.PositionBottomCenter, domain.PositionBottomRight: i18n.PositionBottomRight,
+	}
+	id, ok := ids[position]
+	if !ok {
+		id = i18n.PositionCenter
+	}
+	return s.c.t(id, nil)
+}
 func (s *settingsScreen) View() string {
 	v := s.c.settings()
 	profile := s.c.service.Profile()
@@ -128,7 +158,7 @@ func (s *settingsScreen) View() string {
 		yesno = s.c.t(i18n.BoolYes, nil)
 	}
 	length := s.c.localizer.Plural(i18n.CountCharacters, v.LessonRunes, map[string]any{"Count": v.LessonRunes})
-	vals := []string{s.c.t(i18n.SettingsUI, map[string]any{"Value": strings.ToUpper(v.UILanguage)}), s.c.t(i18n.SettingsTraining, map[string]any{"Value": s.c.t(i18n.MessageID(profile.NameID), nil)}), s.c.t(i18n.SettingsSpeed, map[string]any{"Value": fmt.Sprintf("%.0f", v.TargetWPM)}), s.c.t(i18n.SettingsAccuracy, map[string]any{"Value": fmt.Sprintf("%.0f", v.Accuracy*100)}), s.c.t(i18n.SettingsLength, map[string]any{"Value": length}), s.c.t(i18n.SettingsKeyboard, map[string]any{"Value": yesno}), s.c.t(i18n.SettingsTheme, map[string]any{"Value": s.themeName(v.ColorTheme)}), s.c.t(i18n.SettingsReset, nil)}
+	vals := []string{s.c.t(i18n.SettingsUI, map[string]any{"Value": strings.ToUpper(v.UILanguage)}), s.c.t(i18n.SettingsTraining, map[string]any{"Value": s.c.t(i18n.MessageID(profile.NameID), nil)}), s.c.t(i18n.SettingsSpeed, map[string]any{"Value": fmt.Sprintf("%.0f", v.TargetWPM)}), s.c.t(i18n.SettingsAccuracy, map[string]any{"Value": fmt.Sprintf("%.0f", v.Accuracy*100)}), s.c.t(i18n.SettingsLength, map[string]any{"Value": length}), s.c.t(i18n.SettingsKeyboard, map[string]any{"Value": yesno}), s.c.t(i18n.SettingsTheme, map[string]any{"Value": s.themeName(v.ColorTheme)}), s.c.t(i18n.SettingsPosition, map[string]any{"Value": s.positionName(v.Position)}), s.c.t(i18n.SettingsReset, nil)}
 	var b strings.Builder
 	b.WriteString(s.c.theme.Title.Render(s.c.t(i18n.Settings, nil)))
 	b.WriteString("\n\n")

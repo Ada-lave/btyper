@@ -15,7 +15,16 @@ func TestSchedulerCalibratesRunesInOrderThenSelectsOverdue(t *testing.T) {
 		t.Fatal(got)
 	}
 	for _, r := range p.UnlockOrder {
-		skills[SkillKey(domain.SkillRune, string(r))] = domain.Skill{Language: "en", Kind: domain.SkillRune, Pattern: string(r), Samples: 6, Confidence: 1, DueAt: now.Add(time.Hour)}
+		skills[SkillKey(domain.SkillRune, string(r))] = domain.Skill{Language: "en", Kind: domain.SkillRune, Pattern: string(r), Samples: 6, Confidence: .2, DueAt: now.Add(time.Hour)}
+	}
+	if got := SelectSkill(p, skills, now); got.Kind != domain.SkillRune {
+		t.Fatalf("bigram selected before rune foundation was ready: %v", got)
+	}
+	for _, r := range p.UnlockOrder {
+		skill := skills[SkillKey(domain.SkillRune, string(r))]
+		skill.Samples = RuneFoundationSamples
+		skill.Confidence = 1
+		skills[SkillKey(domain.SkillRune, string(r))] = skill
 	}
 	candidates := CandidateSkills(p)
 	var bigram domain.Skill

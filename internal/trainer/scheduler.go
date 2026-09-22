@@ -12,6 +12,8 @@ import (
 
 var reviewIntervals = [...]time.Duration{0, 24 * time.Hour, 3 * 24 * time.Hour, 7 * 24 * time.Hour, 14 * 24 * time.Hour, 30 * 24 * time.Hour}
 
+const RuneFoundationSamples = 30
+
 func SkillKey(kind domain.SkillKind, pattern string) string { return string(kind) + ":" + pattern }
 
 // CandidateSkills returns the portable curriculum encoded by a language
@@ -53,13 +55,15 @@ func CandidateSkills(p domain.LanguageProfile) []domain.Skill {
 
 func SelectSkill(p domain.LanguageProfile, skills map[string]domain.Skill, now time.Time) domain.Skill {
 	candidates := CandidateSkills(p)
-	// Finish basic rune calibration before introducing bigrams.
+	// Build a reliable sample base for every rune before introducing bigrams.
+	// Six observations are enough to unlock a rune for generated words, but not
+	// enough to make pair-level timing useful or understandable to the learner.
 	runesReady := true
 	for _, c := range candidates {
 		if c.Kind == domain.SkillBigram {
 			break
 		}
-		if skills[SkillKey(c.Kind, c.Pattern)].Samples < 6 {
+		if skills[SkillKey(c.Kind, c.Pattern)].Samples < RuneFoundationSamples {
 			runesReady = false
 			state := skills[SkillKey(c.Kind, c.Pattern)]
 			state.Language, state.Kind, state.Pattern = p.ID, c.Kind, c.Pattern
