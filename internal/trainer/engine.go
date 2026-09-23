@@ -101,10 +101,13 @@ func (e *Engine) accept(r rune, now time.Time, s *domain.CharacterStat) {
 }
 
 func (e *Engine) skillStats(current rune) []*domain.SkillStat {
-	out := []*domain.SkillStat{e.skill(domain.SkillRune, string(current))}
+	var out []*domain.SkillStat
+	if kind := SkillKindForPattern(string(current)); kind != "" {
+		out = append(out, e.skill(kind, string(current)))
+	}
 	if e.Pos > 0 {
 		previous := e.Text[e.Pos-1]
-		if !unicode.IsSpace(previous) && !unicode.IsSpace(current) {
+		if unicode.IsLetter(previous) && unicode.IsLower(previous) && unicode.IsLetter(current) && unicode.IsLower(current) {
 			out = append(out, e.skill(domain.SkillBigram, string([]rune{previous, current})))
 		}
 	}

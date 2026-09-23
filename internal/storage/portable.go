@@ -201,7 +201,8 @@ func (s *SQLite) ImportBackup(r io.Reader) error {
 	}
 	for _, skill := range b.Skills {
 		n := len([]rune(skill.Pattern))
-		if skill.Language == "" || skill.Samples < 0 || skill.Errors < 0 || skill.Errors > skill.Samples || skill.Level < 0 || skill.Level > 5 || (skill.Kind == domain.SkillRune && n != 1) || (skill.Kind == domain.SkillBigram && n != 2) {
+		validKind := skill.Kind == domain.SkillRune || skill.Kind == domain.SkillBigram || skill.Kind == domain.SkillNumber || skill.Kind == domain.SkillUppercase || skill.Kind == domain.SkillPunctuation
+		if skill.Language == "" || !validKind || skill.Samples < 0 || skill.Errors < 0 || skill.Errors > skill.Samples || skill.Level < 0 || skill.Level > 5 || (skill.Kind == domain.SkillBigram && n != 2) || (skill.Kind != domain.SkillBigram && n != 1) {
 			return errors.New("invalid skill in backup")
 		}
 	}

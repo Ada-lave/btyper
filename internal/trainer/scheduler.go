@@ -16,6 +16,28 @@ const RuneFoundationSamples = 30
 
 func SkillKey(kind domain.SkillKind, pattern string) string { return string(kind) + ":" + pattern }
 
+func SkillKindForPattern(pattern string) domain.SkillKind {
+	rs := []rune(pattern)
+	if len(rs) == 2 {
+		return domain.SkillBigram
+	}
+	if len(rs) != 1 {
+		return ""
+	}
+	switch {
+	case unicode.IsDigit(rs[0]):
+		return domain.SkillNumber
+	case unicode.IsUpper(rs[0]):
+		return domain.SkillUppercase
+	case unicode.IsPunct(rs[0]):
+		return domain.SkillPunctuation
+	case unicode.IsLetter(rs[0]):
+		return domain.SkillRune
+	default:
+		return ""
+	}
+}
+
 // CandidateSkills returns the portable curriculum encoded by a language
 // profile. Bigrams are ranked by their frequency in the bundled word list.
 func CandidateSkills(p domain.LanguageProfile) []domain.Skill {
@@ -49,6 +71,15 @@ func CandidateSkills(p domain.LanguageProfile) []domain.Skill {
 	})
 	for _, pair := range pairs[:min(64, len(pairs))] {
 		out = append(out, domain.Skill{Language: p.ID, Kind: domain.SkillBigram, Pattern: pair.pattern})
+	}
+	for _, r := range "0123456789" {
+		out = append(out, domain.Skill{Language: p.ID, Kind: domain.SkillNumber, Pattern: string(r)})
+	}
+	for _, r := range p.UnlockOrder {
+		out = append(out, domain.Skill{Language: p.ID, Kind: domain.SkillUppercase, Pattern: string(unicode.ToUpper(r))})
+	}
+	for _, r := range ".,!?;:'\"-()" {
+		out = append(out, domain.Skill{Language: p.ID, Kind: domain.SkillPunctuation, Pattern: string(r)})
 	}
 	return out
 }

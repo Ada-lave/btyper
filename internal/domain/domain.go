@@ -76,12 +76,15 @@ type CharacterStat struct {
 type SkillKind string
 
 const (
-	SkillRune   SkillKind = "rune"
-	SkillBigram SkillKind = "bigram"
+	SkillRune        SkillKind = "rune"
+	SkillBigram      SkillKind = "bigram"
+	SkillNumber      SkillKind = "number"
+	SkillUppercase   SkillKind = "uppercase"
+	SkillPunctuation SkillKind = "punctuation"
 )
 
 // Skill is the durable state used by the adaptive scheduler. Pattern contains
-// one rune for SkillRune and two runes for SkillBigram.
+// one rune for single-key skills and two runes for SkillBigram.
 type Skill struct {
 	Language, Pattern               string
 	Kind                            SkillKind

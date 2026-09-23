@@ -97,6 +97,9 @@ func TestAdaptiveLessonContainsScheduledSkill(t *testing.T) {
 		for _, target := range []domain.Skill{
 			{Language: language, Kind: domain.SkillRune, Pattern: string(profile.UnlockOrder[0])},
 			pair,
+			{Language: language, Kind: domain.SkillNumber, Pattern: "7"},
+			{Language: language, Kind: domain.SkillUppercase, Pattern: strings.ToUpper(string(profile.UnlockOrder[0]))},
+			{Language: language, Kind: domain.SkillPunctuation, Pattern: "!"},
 		} {
 			for seed := int64(0); seed < 10; seed++ {
 				lesson := NewGenerator(seed).AdaptiveLesson(profile, unlocked, target, nil, 140)

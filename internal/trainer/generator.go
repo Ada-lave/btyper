@@ -3,6 +3,7 @@ package trainer
 import (
 	"math/rand"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 
 	"btyper/internal/domain"
@@ -14,6 +15,39 @@ func NewGenerator(seed int64) *Generator { return &Generator{Rand: rand.New(rand
 
 func (g *Generator) AdaptiveLesson(profile domain.LanguageProfile, unlocked map[rune]bool, target domain.Skill, weak map[rune]float64, limit int) string {
 	rs := []rune(target.Pattern)
+	if target.Kind == domain.SkillNumber || target.Kind == domain.SkillUppercase || target.Kind == domain.SkillPunctuation {
+		base := g.Lesson(profile, unlocked, 0, weak, limit, domain.ModeAdaptive)
+		words := strings.Fields(base)
+		for i := 0; i < len(words); i += 5 {
+			for _, offset := range []int{0, 2} {
+				at := i + offset
+				if at >= len(words) {
+					continue
+				}
+				switch target.Kind {
+				case domain.SkillNumber:
+					words[at] = target.Pattern + words[at]
+				case domain.SkillUppercase:
+					lower := unicode.ToLower(rs[0])
+					if pos := strings.IndexRune(words[at], lower); pos >= 0 {
+						letters := []rune(words[at])
+						for j, r := range letters {
+							if r == lower {
+								letters[j] = rs[0]
+								break
+							}
+						}
+						words[at] = string(letters)
+					} else {
+						words[at] = target.Pattern + words[at]
+					}
+				case domain.SkillPunctuation:
+					words[at] += target.Pattern
+				}
+			}
+		}
+		return strings.Join(words, " ")
+	}
 	if target.Kind != domain.SkillBigram || len(rs) != 2 {
 		targetRune := rune(0)
 		if len(rs) == 1 {

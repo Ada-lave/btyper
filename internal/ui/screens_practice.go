@@ -71,10 +71,7 @@ func (s *practiceScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 		e.Input(rs[0], now)
 		if e.Done() {
 			if e.Result.TargetSkill != "" {
-				kind := domain.SkillRune
-				if len([]rune(e.Result.TargetSkill)) == 2 {
-					kind = domain.SkillBigram
-				}
+				kind := trainer.SkillKindForPattern(e.Result.TargetSkill)
 				s.c.previousConfidence = s.c.service.Skills()[trainer.SkillKey(kind, e.Result.TargetSkill)].Confidence
 			} else {
 				s.c.previousConfidence = s.c.service.Progress()[e.Result.TargetRune].Confidence
@@ -206,10 +203,7 @@ func (s *resultScreen) View() string {
 	r := s.c.result
 	target := ""
 	if r.TargetSkill != "" {
-		kind := domain.SkillRune
-		if len([]rune(r.TargetSkill)) == 2 {
-			kind = domain.SkillBigram
-		}
+		kind := trainer.SkillKindForPattern(r.TargetSkill)
 		target = s.c.t(i18n.ResultTarget, map[string]any{"Key": r.TargetSkill, "Confidence": fmt.Sprintf("%.0f", s.c.service.Skills()[trainer.SkillKey(kind, r.TargetSkill)].Confidence*100)})
 	}
 	stats := s.c.t(i18n.ResultStats, map[string]any{"WPM": fmt.Sprintf("%6.1f", r.WPM), "CPM": fmt.Sprintf("%6.1f", r.CPM), "Accuracy": fmt.Sprintf("%6.1f", r.Accuracy*100), "Errors": fmt.Sprintf("%6d", r.Errors), "Duration": formatDuration(r.Duration)})
@@ -257,10 +251,7 @@ func lessonPurpose(c *Context, e *trainer.Engine) string {
 	key, streak := string(e.Result.TargetRune), v.MasteryStreak
 	if e.Result.TargetSkill != "" {
 		key = e.Result.TargetSkill
-		kind := domain.SkillRune
-		if len([]rune(key)) == 2 {
-			kind = domain.SkillBigram
-		}
+		kind := trainer.SkillKindForPattern(key)
 		skill := c.service.Skills()[trainer.SkillKey(kind, key)]
 		streak = skill.Level
 	}
@@ -289,10 +280,7 @@ func resultFeedback(c *Context) string {
 		out = c.t("result.weak", map[string]any{"Keys": strings.Join(labels, ", ")})
 	}
 	if r.TargetSkill != "" {
-		kind := domain.SkillRune
-		if len([]rune(r.TargetSkill)) == 2 {
-			kind = domain.SkillBigram
-		}
+		kind := trainer.SkillKindForPattern(r.TargetSkill)
 		skill := c.service.Skills()[trainer.SkillKey(kind, r.TargetSkill)]
 		after := skill.Confidence
 		out += "\n" + c.t("result.change", map[string]any{"Key": r.TargetSkill, "Before": fmt.Sprintf("%.0f", c.previousConfidence*100), "After": fmt.Sprintf("%.0f", after*100)})

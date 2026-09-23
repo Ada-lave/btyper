@@ -97,6 +97,8 @@ interval. Letter pairs are introduced only after every letter has accumulated
 30 observations; the lesson progress panel always names the actual letter or
 pair selected by the scheduler. Old `learn` and `improve` settings are migrated
 to `adaptive`, while their historical sessions remain available in statistics.
+After the letter foundation, adaptive practice also schedules digits, uppercase
+letters and punctuation. Custom-text practice measures these skills too.
 
 Results show weak letters, target confidence changes and the next exercise's
 purpose. A failed result save remains on screen: Enter retries the same attempt

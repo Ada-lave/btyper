@@ -3,6 +3,7 @@ package trainer
 import (
 	"testing"
 	"time"
+	"unicode"
 
 	"btyper/internal/domain"
 )
@@ -38,7 +39,7 @@ func TestSchedulerCalibratesRunesInOrderThenSelectsOverdue(t *testing.T) {
 		t.Fatalf("got %v, want first bigram %v", got, bigram)
 	}
 	for _, skill := range candidates {
-		if skill.Kind == domain.SkillBigram {
+		if skill.Kind != domain.SkillRune {
 			skill.Samples = 10
 			skill.Confidence = 1
 			skill.DueAt = now.Add(time.Hour)
@@ -145,5 +146,48 @@ func TestEngineCollectsBigramStatistics(t *testing.T) {
 	stat := e.Result.Skills[SkillKey(domain.SkillBigram, "ab")]
 	if stat == nil || stat.Samples != 1 || stat.LatencySamples != 1 || stat.LatencyMS != 100 {
 		t.Fatal(stat)
+	}
+}
+
+func TestCandidateSkillsIncludeNumbersUppercaseAndPunctuation(t *testing.T) {
+	for _, language := range []string{"en", "ru"} {
+		profile := Profiles()[language]
+		found := map[string]bool{}
+		for _, skill := range CandidateSkills(profile) {
+			found[SkillKey(skill.Kind, skill.Pattern)] = true
+		}
+		for _, want := range []string{
+			SkillKey(domain.SkillNumber, "7"),
+			SkillKey(domain.SkillUppercase, string(unicode.ToUpper(profile.UnlockOrder[0]))),
+			SkillKey(domain.SkillPunctuation, "!"),
+		} {
+			if !found[want] {
+				t.Fatalf("%s: missing candidate %s", language, want)
+			}
+		}
+	}
+}
+
+func TestEngineMeasuresNewSkillsInCustomText(t *testing.T) {
+	now := time.Date(2026, 9, 22, 12, 0, 0, 0, time.UTC)
+	e := NewEngine("A7!", domain.ModeText, "en", 0, time.Time{})
+	for i, r := range "A7!" {
+		e.Input(r, now.Add(time.Duration(i)*100*time.Millisecond))
+	}
+	for _, tc := range []struct {
+		kind    domain.SkillKind
+		pattern string
+	}{
+		{domain.SkillUppercase, "A"},
+		{domain.SkillNumber, "7"},
+		{domain.SkillPunctuation, "!"},
+	} {
+		stat := e.Result.Skills[SkillKey(tc.kind, tc.pattern)]
+		if stat == nil || stat.Samples != 1 || stat.Errors != 0 {
+			t.Fatalf("%s %q: %v", tc.kind, tc.pattern, stat)
+		}
+	}
+	if _, ok := e.Result.Skills[SkillKey(domain.SkillBigram, "A7")]; ok {
+		t.Fatal("non-letter pair was counted as a bigram")
 	}
 }

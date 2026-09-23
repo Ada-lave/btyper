@@ -24,8 +24,8 @@ func (s *SQLite) migrate() error {
 	if err = tx.QueryRow(`SELECT COALESCE(MAX(version),0) FROM schema_migrations`).Scan(&version); err != nil {
 		return err
 	}
-	if version > 4 {
-		return fmt.Errorf("database schema %d is newer than supported schema 4", version)
+	if version > 5 {
+		return fmt.Errorf("database schema %d is newer than supported schema 5", version)
 	}
 	if version < 1 {
 		if _, err = tx.Exec(schemaV1); err != nil {
@@ -92,6 +92,29 @@ PRIMARY KEY(language,kind,pattern));
 INSERT INTO skills(language,kind,pattern,samples,errors,latency_samples,latency_ms,accuracy,confidence,level)
 SELECT language,'rune',rune,samples,errors,COALESCE(samples-errors,0),latency_ms,accuracy,confidence,CASE WHEN mastered=1 THEN 1 ELSE 0 END FROM progress;
 INSERT INTO schema_migrations(version) VALUES(4);`)
+		if err != nil {
+			return err
+		}
+	}
+	if version < 5 {
+		_, err = tx.Exec(`CREATE TABLE skills_v5(
+language TEXT NOT NULL,
+kind TEXT NOT NULL CHECK(kind IN ('rune','bigram','number','uppercase','punctuation')),
+pattern TEXT NOT NULL,
+samples INTEGER NOT NULL,
+errors INTEGER NOT NULL,
+latency_samples INTEGER NOT NULL,
+latency_ms REAL NOT NULL,
+accuracy REAL NOT NULL,
+confidence REAL NOT NULL,
+level INTEGER NOT NULL,
+last_practiced TEXT NOT NULL DEFAULT '',
+due_at TEXT NOT NULL DEFAULT '',
+PRIMARY KEY(language,kind,pattern));
+INSERT INTO skills_v5 SELECT * FROM skills;
+DROP TABLE skills;
+ALTER TABLE skills_v5 RENAME TO skills;
+INSERT INTO schema_migrations(version) VALUES(5);`)
 		if err != nil {
 			return err
 		}

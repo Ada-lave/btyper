@@ -68,7 +68,7 @@ func (LearningProgress) View(profile domain.LanguageProfile, progress map[rune]d
 	unlocked, fallback := trainer.LearningState(profile, progress, false)
 	current := rune(0)
 	if rs := []rune(targetSkill); len(rs) == 1 {
-		current = rs[0]
+		current = unicode.ToLower(rs[0])
 	}
 	if targetSkill == "" {
 		current = fallback
@@ -98,10 +98,7 @@ func (LearningProgress) View(profile domain.LanguageProfile, progress map[rune]d
 	}
 	confidence := progress[current].Confidence
 	if targetSkill != "" {
-		kind := domain.SkillRune
-		if len([]rune(targetSkill)) == 2 {
-			kind = domain.SkillBigram
-		}
+		kind := trainer.SkillKindForPattern(targetSkill)
 		if skill, ok := skills[trainer.SkillKey(kind, targetSkill)]; ok {
 			confidence = skill.Confidence
 		}
@@ -116,6 +113,9 @@ func (LearningProgress) View(profile domain.LanguageProfile, progress map[rune]d
 	if len([]rune(targetSkill)) == 2 {
 		summary = c.t("practice.pair_progress", data)
 		help = c.t("practice.pair_progress_help", nil)
+	} else if kind := trainer.SkillKindForPattern(targetSkill); kind == domain.SkillNumber || kind == domain.SkillUppercase || kind == domain.SkillPunctuation {
+		summary = c.t("practice.symbol_progress", data)
+		help = c.t("practice.symbol_progress_help", nil)
 	}
 	sequence := lipgloss.NewStyle().Width(max(40, width)).Align(lipgloss.Center).Render(strings.Join(letters, " "))
 	return summary + "\n" + sequence + "\n" + c.theme.Muted.Render(help)
@@ -134,7 +134,7 @@ func (Keyboard) View(p domain.LanguageProfile, e *trainer.Engine, c *Context) st
 	if e.Result.Mode == domain.ModeLearn || e.Result.Mode == domain.ModeImprove || e.Result.Mode == domain.ModeAdaptive {
 		unlocked, _ = trainer.LearningState(p, progress, false)
 		for _, r := range e.Result.TargetSkill {
-			targets[r] = true
+			targets[unicode.ToLower(r)] = true
 		}
 	}
 	var lines []string

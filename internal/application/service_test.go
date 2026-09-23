@@ -173,3 +173,38 @@ func TestAdaptiveEngineUsesScheduledSkillAsVisibleTarget(t *testing.T) {
 		t.Fatalf("scheduled %q, engine target %q, rune %q, text %q", want.Pattern, e.Result.TargetSkill, e.Result.TargetRune, e.Text)
 	}
 }
+
+func TestCustomTextPersistsNumberUppercaseAndPunctuationSkills(t *testing.T) {
+	db, err := storage.Open(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	s, err := NewLessonService(db, domain.DefaultSettings())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := s.SetCustomText("A7!"); err != nil {
+		t.Fatal(err)
+	}
+	e, ok := s.NextCustomLesson()
+	if !ok {
+		t.Fatal("custom lesson missing")
+	}
+	now := time.Date(2026, 9, 22, 12, 0, 0, 0, time.UTC)
+	for i, r := range e.Text {
+		e.Input(r, now.Add(time.Duration(i)*100*time.Millisecond))
+	}
+	if _, err := s.Complete(e, now.Add(time.Second)); err != nil {
+		t.Fatal(err)
+	}
+	loaded, err := db.LoadSkills("en")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, key := range []string{"uppercase:A", "number:7", "punctuation:!"} {
+		if loaded[key].Samples != 1 {
+			t.Fatalf("%s not persisted: %v", key, loaded[key])
+		}
+	}
+}

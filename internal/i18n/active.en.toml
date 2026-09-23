@@ -56,6 +56,10 @@ other = "red → yellow → green — confidence  ·  [letter] — current  ·  
 other = "Letters practiced: {{.Learned}}/{{.Total}}  ·  current pair: {{.Current}}  ·  confidence {{.Confidence}}%"
 [practice.pair_progress_help]
 other = "letter pairs begin after every letter has enough observations; both letters are highlighted"
+[practice.symbol_progress]
+other = "Letters practiced: {{.Learned}}/{{.Total}}  ·  current skill: {{.Current}}  ·  confidence {{.Confidence}}%"
+[practice.symbol_progress_help]
+other = "digits, uppercase letters and punctuation join practice after the letter foundation"
 [result.title]
 other = "Lesson complete"
 [result.target]

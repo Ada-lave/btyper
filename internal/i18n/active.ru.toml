@@ -56,6 +56,10 @@ other = "красный → жёлтый → зелёный — уверенно
 other = "Букв отработано: {{.Learned}}/{{.Total}}  ·  текущая пара: {{.Current}}  ·  уверенность {{.Confidence}}%"
 [practice.pair_progress_help]
 other = "пары начинаются после достаточной выборки по всем буквам; обе буквы пары подсвечены"
+[practice.symbol_progress]
+other = "Букв отработано: {{.Learned}}/{{.Total}}  ·  текущий навык: {{.Current}}  ·  уверенность {{.Confidence}}%"
+[practice.symbol_progress_help]
+other = "цифры, заглавные буквы и знаки препинания добавляются после буквенной базы"
 [result.title]
 other = "Урок завершён"
 [result.target]

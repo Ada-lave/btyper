@@ -263,7 +263,7 @@ func TestMigrationFailureRollsBack(t *testing.T) {
 }
 
 func TestMigrateFromIntermediateSchemas(t *testing.T) {
-	for _, version := range []int{2, 3} {
+	for _, version := range []int{2, 3, 4} {
 		t.Run(fmt.Sprintf("v%d", version), func(t *testing.T) {
 			dir := t.TempDir()
 			db, err := sql.Open("sqlite", filepath.Join(dir, "btyper.db"))
@@ -284,10 +284,19 @@ INSERT INTO sessions(started_at,mode,language,target_rune,text,duration_ms,corre
 			if err != nil {
 				t.Fatal(err)
 			}
-			if version == 3 {
+			if version >= 3 {
 				_, err = db.Exec(`CREATE TABLE practice_time(attempt_id TEXT NOT NULL, day TEXT NOT NULL, duration_ns INTEGER NOT NULL CHECK(duration_ns>=0), PRIMARY KEY(attempt_id,day));
 INSERT INTO practice_time VALUES('old-attempt','2026-09-18',1000000000);
 INSERT INTO schema_migrations(version) VALUES(3);`)
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
+			if version == 4 {
+				_, err = db.Exec(`ALTER TABLE sessions ADD COLUMN target_skill TEXT NOT NULL DEFAULT '';
+CREATE TABLE skills(language TEXT NOT NULL,kind TEXT NOT NULL CHECK(kind IN ('rune','bigram')),pattern TEXT NOT NULL,samples INTEGER NOT NULL,errors INTEGER NOT NULL,latency_samples INTEGER NOT NULL,latency_ms REAL NOT NULL,accuracy REAL NOT NULL,confidence REAL NOT NULL,level INTEGER NOT NULL,last_practiced TEXT NOT NULL DEFAULT '',due_at TEXT NOT NULL DEFAULT '',PRIMARY KEY(language,kind,pattern));
+INSERT INTO skills VALUES('en','rune','e',30,0,30,200,1,1,1,'','');
+INSERT INTO schema_migrations(version) VALUES(4);`)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -301,7 +310,7 @@ INSERT INTO schema_migrations(version) VALUES(3);`)
 			}
 			defer s.Close()
 			var current int
-			if err = s.db.QueryRow(`SELECT MAX(version) FROM schema_migrations`).Scan(&current); err != nil || current != 4 {
+			if err = s.db.QueryRow(`SELECT MAX(version) FROM schema_migrations`).Scan(&current); err != nil || current != 5 {
 				t.Fatalf("schema version %d: %v", current, err)
 			}
 			if h, err := s.History(domain.HistoryFilter{}); err != nil || len(h) != 1 {
