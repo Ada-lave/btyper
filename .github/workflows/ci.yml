@@ -17,3 +17,8 @@ jobs:
       - run: go test -race ./...
       - run: go vet ./...
       - run: go build -o /tmp/btyper ./cmd/btyper
+      - name: Package recipe checks
+        run: |
+          bash -n install.sh packaging/aur/PKGBUILD
+          ruby -c Formula/btyper.rb
+          python3 packaging/verify.py

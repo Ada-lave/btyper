@@ -6,6 +6,10 @@ Adaptive touch-typing practice in your terminal, inspired by Keybr's learning lo
 
 ## Install and verify
 
+See [all installation channels](docs/install.md) for Homebrew, the
+AUR-compatible PKGBUILD, Scoop on Windows, and platform smoke tests. The
+project is licensed under [MIT](LICENSE).
+
 Install the latest Linux or macOS release into `~/.local/bin`:
 
 ```sh
@@ -170,6 +174,9 @@ database, close btyper and restore a copy of the entire data directory,
 including any `-wal` and `-shm` files. Do not copy a live SQLite database.
 
 ## Data and upgrades
+
+The [stable v1.0 contract](docs/stable-contract.md) documents supported
+platforms, backup compatibility, migration policy and accessibility checks.
 
 Schema upgrades run transactionally at startup. Existing settings and session
 history are preserved. Previously practiced letters restore a contiguous opened

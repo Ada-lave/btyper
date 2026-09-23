@@ -1,0 +1,27 @@
+# Maintainer: Ada-lave <https://github.com/Ada-lave>
+pkgname=btyper-bin
+pkgver=0.5.0
+pkgrel=1
+pkgdesc='Adaptive touch-typing practice in the terminal'
+arch=('x86_64' 'aarch64')
+url='https://github.com/Ada-lave/btyper'
+license=('MIT')
+provides=('btyper')
+conflicts=('btyper')
+source=('LICENSE::https://raw.githubusercontent.com/Ada-lave/btyper/main/LICENSE')
+source_x86_64=("btyper-linux-amd64-v${pkgver}::https://github.com/Ada-lave/btyper/releases/download/v${pkgver}/btyper-linux-amd64")
+source_aarch64=("btyper-linux-arm64-v${pkgver}::https://github.com/Ada-lave/btyper/releases/download/v${pkgver}/btyper-linux-arm64")
+sha256sums=('bdabf93f2c955e364578613d481fe3ec286b7e03d295a3b1ef3a1d162e7844cd')
+sha256sums_x86_64=('d3f6c2863b7a998d6e993034f65c86d48a0732d3104844af33d608c56299f429')
+sha256sums_aarch64=('5888f8e9dc33d66c0a6e48cd3b46482a87b3742a4cab824fc9248247c2023169')
+
+package() {
+  local asset
+  case "$CARCH" in
+    x86_64) asset="btyper-linux-amd64-v${pkgver}" ;;
+    aarch64) asset="btyper-linux-arm64-v${pkgver}" ;;
+    *) return 1 ;;
+  esac
+  install -Dm755 "$asset" "$pkgdir/usr/bin/btyper"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

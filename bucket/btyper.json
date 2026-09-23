@@ -1,0 +1,13 @@
+{
+    "version": "0.5.0",
+    "description": "Adaptive touch-typing practice in the terminal",
+    "homepage": "https://github.com/Ada-lave/btyper",
+    "license": "MIT",
+    "architecture": {
+        "64bit": {
+            "url": "https://github.com/Ada-lave/btyper/releases/download/v0.5.0/btyper-windows-amd64.exe#/btyper.exe",
+            "hash": "b41134bc13e82ecd45ee0403425c20c4a0d528ae4c309ac3d9fb59c800976918"
+        }
+    },
+    "bin": "btyper.exe"
+}
