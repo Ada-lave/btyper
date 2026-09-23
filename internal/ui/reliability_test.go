@@ -142,7 +142,7 @@ func TestScreensFitSupportedSizes(t *testing.T) {
 			t.Run(fmt.Sprintf("%s-%dx%d", lang, size[0], size[1]), func(t *testing.T) {
 				a, _ := realApp(t, lang)
 				a.Update(tea.WindowSizeMsg{Width: size[0], Height: size[1]})
-				for _, route := range []Route{RouteMenu, RoutePractice, RouteResult, RouteSettings, RouteHelp, RouteStatistics, RouteText} {
+				for _, route := range []Route{RouteMenu, RoutePractice, RouteResult, RouteSettings, RouteHelp, RouteStatistics, RouteText, RouteDrill} {
 					a.ctx.engine = a.ctx.service.StartAdaptive(domain.ModeLearn, time.Now())
 					a.ctx.result = domain.SessionResult{Mode: domain.ModeLearn, Language: lang, TargetRune: a.ctx.engine.Result.TargetRune}
 					drainCommand(t, a, a.navigate(route, nil))

@@ -6,6 +6,7 @@ import (
 	"maps"
 	"math"
 	"os"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -222,6 +223,52 @@ func (s *LessonService) StartAdaptive(mode domain.Mode, now time.Time) *trainer.
 	return trainer.NewAdaptiveEngine(text, s.settings.Language, target.Pattern, time.Time{})
 }
 
+func (s *LessonService) StartDrill(pattern string, now time.Time) (*trainer.Engine, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	p := s.profiles[s.settings.Language]
+	pattern = strings.ToLower(strings.TrimSpace(pattern))
+	var target domain.Skill
+	rs := []rune(pattern)
+	if len(rs) == 1 || len(rs) == 2 {
+		allowed := map[rune]bool{}
+		for _, r := range p.UnlockOrder {
+			allowed[r] = true
+		}
+		valid := true
+		for _, r := range rs {
+			valid = valid && allowed[r]
+		}
+		if valid {
+			kind := domain.SkillRune
+			if len(rs) == 2 {
+				kind = domain.SkillBigram
+			}
+			target = domain.Skill{Language: p.ID, Kind: kind, Pattern: pattern}
+		}
+	}
+	if target.Pattern == "" {
+		return nil, errors.New("choose a letter or bigram from the current language")
+	}
+	unlocked := trainer.InitialUnlocked(p)
+	for _, skill := range s.skills {
+		if skill.Kind == domain.SkillRune && skill.Samples >= 6 {
+			if rs := []rune(skill.Pattern); len(rs) == 1 {
+				unlocked[rs[0]] = true
+			}
+		}
+	}
+	for _, r := range target.Pattern {
+		unlocked[r] = true
+	}
+	weak := make(map[rune]float64, len(s.progress))
+	for r, v := range s.progress {
+		weak[r] = v.Confidence
+	}
+	text := trainer.NewGenerator(now.UnixNano()).AdaptiveLesson(p, unlocked, target, weak, s.settings.LessonRunes)
+	return trainer.NewFocusedEngine(text, domain.ModeDrill, p.ID, target.Pattern, time.Time{}), nil
+}
+
 func (s *LessonService) needsLegacyCalibration(p domain.LanguageProfile) bool {
 	for _, r := range p.UnlockOrder {
 		if s.progress[r].Samples < 12 {
@@ -329,6 +376,77 @@ func NormalizeCustomText(raw string) ([]rune, error) {
 		return nil, ErrEmptyText
 	}
 	return []rune(clean), nil
+}
+
+type TextSkillPreview struct {
+	Kind        domain.SkillKind
+	Pattern     string
+	Occurrences int
+	Confidence  float64
+}
+
+type TextAnalysis struct {
+	Frequent  []TextSkillPreview
+	Difficult []TextSkillPreview
+}
+
+func (s *LessonService) AnalyzeCustomText(raw string) (TextAnalysis, error) {
+	text, err := NormalizeCustomText(raw)
+	if err != nil {
+		return TextAnalysis{}, err
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	candidates := map[string]bool{}
+	profile := s.profiles[s.settings.Language]
+	allowedLetters := map[rune]bool{}
+	for _, r := range profile.UnlockOrder {
+		allowedLetters[r] = true
+	}
+	for _, skill := range trainer.CandidateSkills(profile) {
+		candidates[trainer.SkillKey(skill.Kind, skill.Pattern)] = true
+	}
+	counts := map[string]*TextSkillPreview{}
+	add := func(kind domain.SkillKind, pattern string) {
+		key := trainer.SkillKey(kind, pattern)
+		if !candidates[key] {
+			return
+		}
+		if counts[key] == nil {
+			counts[key] = &TextSkillPreview{Kind: kind, Pattern: pattern, Confidence: s.skills[key].Confidence}
+		}
+		counts[key].Occurrences++
+	}
+	for i, r := range text {
+		if kind := trainer.SkillKindForPattern(string(r)); kind != "" {
+			add(kind, string(r))
+		}
+		if i > 0 && allowedLetters[text[i-1]] && allowedLetters[r] {
+			candidates[trainer.SkillKey(domain.SkillBigram, string([]rune{text[i-1], r}))] = true
+			add(domain.SkillBigram, string([]rune{text[i-1], r}))
+		}
+	}
+	var all []TextSkillPreview
+	for _, value := range counts {
+		all = append(all, *value)
+	}
+	frequent := append([]TextSkillPreview(nil), all...)
+	sort.Slice(frequent, func(i, j int) bool {
+		if frequent[i].Occurrences != frequent[j].Occurrences {
+			return frequent[i].Occurrences > frequent[j].Occurrences
+		}
+		return frequent[i].Pattern < frequent[j].Pattern
+	})
+	difficult := append([]TextSkillPreview(nil), all...)
+	sort.Slice(difficult, func(i, j int) bool {
+		left := float64(difficult[i].Occurrences) * (1 - difficult[i].Confidence)
+		right := float64(difficult[j].Occurrences) * (1 - difficult[j].Confidence)
+		if left != right {
+			return left > right
+		}
+		return difficult[i].Pattern < difficult[j].Pattern
+	})
+	return TextAnalysis{Frequent: frequent[:min(5, len(frequent))], Difficult: difficult[:min(5, len(difficult))]}, nil
 }
 
 func CustomChunk(text []rune, offset, limit int) (string, int) {

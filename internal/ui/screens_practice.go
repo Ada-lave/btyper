@@ -117,8 +117,8 @@ func (s *practiceScreen) updatePause(k tea.KeyPressMsg, now time.Time) (Action, 
 }
 
 func restartEngine(e *trainer.Engine) *trainer.Engine {
-	if e.Result.Mode == domain.ModeAdaptive {
-		return trainer.NewAdaptiveEngine(string(e.Text), e.Result.Language, e.Result.TargetSkill, time.Time{})
+	if e.Result.Mode == domain.ModeAdaptive || e.Result.Mode == domain.ModeDrill {
+		return trainer.NewFocusedEngine(string(e.Text), e.Result.Mode, e.Result.Language, e.Result.TargetSkill, time.Time{})
 	}
 	return trainer.NewEngine(string(e.Text), e.Result.Mode, e.Result.Language, e.Result.TargetRune, time.Time{})
 }
@@ -146,7 +146,7 @@ func (s *practiceScreen) View() string {
 	footer := fmt.Sprintf("%s  %s\n%s", s.bar.ViewAs(pct), s.c.theme.Title.Render(fmt.Sprintf("%d/%d", e.Pos, len(e.Text))), Hotkeys(s.c, i18n.HotkeyPractice))
 	header := strings.Join([]string{s.c.theme.Title.Render(head), s.c.todayView(true), lessonPurpose(s.c, e)}, "\n")
 	blocks := []string{centerBlock(header, s.c.width)}
-	if e.Result.Mode == domain.ModeAdaptive && s.c.height >= 22 {
+	if (e.Result.Mode == domain.ModeAdaptive || e.Result.Mode == domain.ModeDrill) && s.c.height >= 22 {
 		blocks = append(blocks, centerBlock(LearningProgress{}.View(s.c.service.Profile(), s.c.service.Progress(), e.Result.TargetSkill, s.c.service.Skills(), s.c, min(100, s.c.width-8)), s.c.width))
 	}
 	blocks = append(blocks,
@@ -199,6 +199,9 @@ func (s *resultScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 			}
 			return Action{Kind: ActionNavigate, Route: RouteMenu}, nil
 		}
+		if s.c.result.Mode == domain.ModeDrill {
+			return Action{Kind: ActionNavigate, Route: RouteDrill}, nil
+		}
 		s.c.engine = s.c.service.StartAdaptive(s.c.result.Mode, time.Now())
 		return Action{Kind: ActionNavigate, Route: RoutePractice}, nil
 	case k.Key().Code == tea.KeyEsc || isPlainKey(k, 'q'):
@@ -215,7 +218,7 @@ func (s *resultScreen) View() string {
 	}
 	stats := s.c.t(i18n.ResultStats, map[string]any{"WPM": fmt.Sprintf("%6.1f", r.WPM), "CPM": fmt.Sprintf("%6.1f", r.CPM), "Accuracy": fmt.Sprintf("%6.1f", r.Accuracy*100), "Errors": fmt.Sprintf("%6d", r.Errors), "Duration": formatDuration(r.Duration)})
 	out := s.c.theme.Title.Render(s.c.t(i18n.ResultTitle, nil)) + target
-	if r.Mode == domain.ModeAdaptive {
+	if r.Mode == domain.ModeAdaptive || r.Mode == domain.ModeDrill {
 		out += "\n\n" + LearningProgress{}.View(s.c.service.Profile(), s.c.service.Progress(), r.TargetSkill, s.c.service.Skills(), s.c, min(100, s.c.width-8))
 	}
 	footer := Hotkeys(s.c, i18n.HotkeyResult)
@@ -297,7 +300,7 @@ func resultFeedback(c *Context) string {
 		}
 		out += "\n" + c.t("result.schedule", map[string]any{"Level": skill.Level, "Due": due})
 	}
-	if r.Mode != domain.ModeText {
+	if r.Mode == domain.ModeAdaptive || r.Mode == domain.ModeLearn || r.Mode == domain.ModeImprove {
 		next := c.service.StartAdaptive(domain.ModeAdaptive, time.Now())
 		out += "\n" + c.t("result.next", nil) + " " + lessonPurpose(c, next)
 	}

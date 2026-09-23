@@ -194,7 +194,7 @@ func (s *SQLite) ImportBackup(r io.Reader) error {
 	}
 	seen := map[string]bool{}
 	for _, session := range b.Sessions {
-		if session.AttemptID == "" || seen[session.AttemptID] || session.StartedAt.IsZero() || (session.Mode != domain.ModeAdaptive && session.Mode != domain.ModeLearn && session.Mode != domain.ModeImprove && session.Mode != domain.ModeText) {
+		if session.AttemptID == "" || seen[session.AttemptID] || session.StartedAt.IsZero() || (session.Mode != domain.ModeAdaptive && session.Mode != domain.ModeLearn && session.Mode != domain.ModeImprove && session.Mode != domain.ModeText && session.Mode != domain.ModeDrill) {
 			return errors.New("invalid or duplicate session attempt ID")
 		}
 		seen[session.AttemptID] = true

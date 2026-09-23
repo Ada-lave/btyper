@@ -12,6 +12,7 @@ const (
 	ModeLearn   Mode = "learn"
 	ModeImprove Mode = "improve"
 	ModeText    Mode = "text"
+	ModeDrill   Mode = "drill"
 )
 
 const (

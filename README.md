@@ -100,6 +100,13 @@ to `adaptive`, while their historical sessions remain available in statistics.
 After the letter foundation, adaptive practice also schedules digits, uppercase
 letters and punctuation. Custom-text practice measures these skills too.
 
+Choose **Drill a letter or pair** from the menu to practice any letter or
+two-letter pair in the current language. Selecting a target does not advance
+the adaptive queue; completed Drill sessions are saved under their own mode in
+history. When you submit custom text with Ctrl+S, btyper first shows its most
+frequent skills and skills that may be difficult based on occurrence count and
+your saved confidence. Press Enter to start or Esc to edit the text.
+
 Results show weak letters, target confidence changes and the next exercise's
 purpose. A failed result save remains on screen: Enter retries the same attempt
 without duplication; Esc explicitly discards the unsaved result. Confirmed

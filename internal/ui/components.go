@@ -131,7 +131,7 @@ func (Keyboard) View(p domain.LanguageProfile, e *trainer.Engine, c *Context) st
 	progress := c.service.Progress()
 	unlocked := map[rune]bool{}
 	targets := map[rune]bool{}
-	if e.Result.Mode == domain.ModeLearn || e.Result.Mode == domain.ModeImprove || e.Result.Mode == domain.ModeAdaptive {
+	if e.Result.Mode == domain.ModeLearn || e.Result.Mode == domain.ModeImprove || e.Result.Mode == domain.ModeAdaptive || e.Result.Mode == domain.ModeDrill {
 		unlocked, _ = trainer.LearningState(p, progress, false)
 		for _, r := range e.Result.TargetSkill {
 			targets[unicode.ToLower(r)] = true

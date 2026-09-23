@@ -2,6 +2,8 @@ package ui
 
 import (
 	"errors"
+	"fmt"
+	"strings"
 
 	"btyper/internal/application"
 	"btyper/internal/i18n"
@@ -11,8 +13,9 @@ import (
 )
 
 type textScreen struct {
-	c    *Context
-	area textarea.Model
+	c       *Context
+	area    textarea.Model
+	preview *application.TextAnalysis
 }
 
 func newTextScreen(c *Context, payload any) Screen {
@@ -34,6 +37,22 @@ func (s *textScreen) Resize(w, h int) {
 }
 func (s *textScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 	if k, ok := msg.(tea.KeyPressMsg); ok {
+		if s.preview != nil {
+			switch {
+			case k.Key().Code == tea.KeyEsc:
+				s.preview = nil
+				return Action{}, nil
+			case k.Key().Code == tea.KeyEnter || isCtrlKey(k, 's'):
+				if err := s.c.service.SetCustomText(s.area.Value()); err != nil {
+					s.c.status.Set(err.Error())
+					return Action{}, nil
+				}
+				s.c.engine, _ = s.c.service.NextCustomLesson()
+				s.c.status.Clear()
+				return Action{Kind: ActionNavigate, Route: RoutePractice}, nil
+			}
+			return Action{}, nil
+		}
 		switch {
 		case k.Key().Code == tea.KeyEsc:
 			s.area.Blur()
@@ -42,7 +61,7 @@ func (s *textScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 			s.area.Blur()
 			return Action{Kind: ActionNavigate, Route: RoutePicker, Payload: s.area.Value()}, nil
 		case isCtrlKey(k, 's'):
-			err := s.c.service.SetCustomText(s.area.Value())
+			analysis, err := s.c.service.AnalyzeCustomText(s.area.Value())
 			if err != nil {
 				if errors.Is(err, application.ErrInvalidUTF8) {
 					s.c.status.Set(s.c.t(i18n.InvalidUTF8, nil))
@@ -53,9 +72,9 @@ func (s *textScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 				}
 				return Action{}, nil
 			}
-			s.c.engine, _ = s.c.service.NextCustomLesson()
+			s.preview = &analysis
 			s.c.status.Clear()
-			return Action{Kind: ActionNavigate, Route: RoutePractice}, nil
+			return Action{}, nil
 		}
 	}
 	var cmd tea.Cmd
@@ -63,6 +82,22 @@ func (s *textScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 	return Action{}, cmd
 }
 func (s *textScreen) View() string {
+	if s.preview != nil {
+		format := func(items []application.TextSkillPreview) string {
+			var labels []string
+			for _, item := range items {
+				labels = append(labels, fmt.Sprintf("%s ×%d (%.0f%%)", item.Pattern, item.Occurrences, item.Confidence*100))
+			}
+			if len(labels) == 0 {
+				return "—"
+			}
+			return strings.Join(labels, ", ")
+		}
+		return s.c.theme.Title.Render(s.c.t("text.analysis_title", nil)) + "\n\n" +
+			s.c.t("text.analysis_frequent", nil) + "\n" + format(s.preview.Frequent) + "\n\n" +
+			s.c.t("text.analysis_difficult", nil) + "\n" + format(s.preview.Difficult) + "\n\n" +
+			s.c.t("text.analysis_help", nil) + "\n\n" + s.c.t("text.analysis_hotkeys", nil)
+	}
 	return s.c.theme.Title.Render(s.c.t(i18n.CustomText, nil)) + "\n\n" + s.area.View() + "\n\n" + Hotkeys(s.c, i18n.HotkeyText)
 }
 

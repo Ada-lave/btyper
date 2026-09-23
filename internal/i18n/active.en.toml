@@ -10,6 +10,10 @@ other = "Adaptive training"
 other = "Improve skill"
 [menu.text]
 other = "Custom text"
+[menu.drill]
+other = "Drill a letter or pair"
+[menu.drill_desc]
+other = "Choose a skill for a focused lesson"
 [menu.history]
 other = "History & stats"
 [menu.settings]
@@ -60,6 +64,26 @@ other = "letter pairs begin after every letter has enough observations; both let
 other = "Letters practiced: {{.Learned}}/{{.Total}}  ·  current skill: {{.Current}}  ·  confidence {{.Confidence}}%"
 [practice.symbol_progress_help]
 other = "digits, uppercase letters and punctuation join practice after the letter foundation"
+[drill.title]
+other = "Focused Drill"
+[drill.placeholder]
+other = "letter or pair"
+[drill.instructions]
+other = "Type a letter or pair in the current language (for example: {{.Pairs}})."
+[drill.invalid]
+other = "Choose a letter or pair from the current language"
+[drill.hotkeys]
+other = "Enter start  ·  Esc back"
+[text.analysis_title]
+other = "Before custom-text practice"
+[text.analysis_frequent]
+other = "Most frequent skills (occurrences, confidence):"
+[text.analysis_difficult]
+other = "Potentially difficult skills (occurrences, confidence):"
+[text.analysis_help]
+other = "Difficulty is estimated from frequency and your saved confidence; unseen skills have 0% confidence."
+[text.analysis_hotkeys]
+other = "Enter start  ·  Esc edit text"
 [result.title]
 other = "Lesson complete"
 [result.target]
@@ -114,6 +138,8 @@ other = "Learn"
 other = "Improve"
 [mode.text]
 other = "Text"
+[mode.drill]
+other = "Drill"
 [mode.calibration]
 other = "Calibration"
 [settings.ui_language]

@@ -40,8 +40,8 @@ func (s *statisticsScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 			s.filter.Language = []string{"", "en", "ru"}[s.languageIndex]
 			s.filter.Offset = 0
 		case isPlainKey(k, 'm'):
-			s.modeIndex = (s.modeIndex + 1) % 5
-			s.filter.Mode = []domain.Mode{"", domain.ModeAdaptive, domain.ModeText, domain.ModeLearn, domain.ModeImprove}[s.modeIndex]
+			s.modeIndex = (s.modeIndex + 1) % 6
+			s.filter.Mode = []domain.Mode{"", domain.ModeAdaptive, domain.ModeDrill, domain.ModeText, domain.ModeLearn, domain.ModeImprove}[s.modeIndex]
 			s.filter.Offset = 0
 		case isPlainKey(k, 'p'):
 			s.periodIndex = (s.periodIndex + 1) % 3

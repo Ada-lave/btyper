@@ -10,6 +10,10 @@ other = "Адаптивная тренировка"
 other = "Улучшать навык"
 [menu.text]
 other = "Свой текст"
+[menu.drill]
+other = "Тренировка буквы или пары"
+[menu.drill_desc]
+other = "Выбрать навык для прицельного урока"
 [menu.history]
 other = "История и статистика"
 [menu.settings]
@@ -60,6 +64,26 @@ other = "пары начинаются после достаточной выб�
 other = "Букв отработано: {{.Learned}}/{{.Total}}  ·  текущий навык: {{.Current}}  ·  уверенность {{.Confidence}}%"
 [practice.symbol_progress_help]
 other = "цифры, заглавные буквы и знаки препинания добавляются после буквенной базы"
+[drill.title]
+other = "Прицельная тренировка"
+[drill.placeholder]
+other = "буква или пара"
+[drill.instructions]
+other = "Введите букву или пару выбранного языка (например: {{.Pairs}})."
+[drill.invalid]
+other = "Выберите букву или пару выбранного языка"
+[drill.hotkeys]
+other = "Enter — начать  ·  Esc — назад"
+[text.analysis_title]
+other = "Перед тренировкой своего текста"
+[text.analysis_frequent]
+other = "Частые навыки (вхождения, уверенность):"
+[text.analysis_difficult]
+other = "Потенциально трудные навыки (вхождения, уверенность):"
+[text.analysis_help]
+other = "Сложность оценивается по частоте и сохранённой уверенности; для новых навыков уверенность равна 0%."
+[text.analysis_hotkeys]
+other = "Enter — начать  ·  Esc — изменить текст"
 [result.title]
 other = "Урок завершён"
 [result.target]
@@ -114,6 +138,8 @@ other = "Обучение"
 other = "Тренировка"
 [mode.text]
 other = "Текст"
+[mode.drill]
+other = "Тренировка"
 [mode.calibration]
 other = "Калибровка"
 [settings.ui_language]

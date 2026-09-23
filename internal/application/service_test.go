@@ -208,3 +208,61 @@ func TestCustomTextPersistsNumberUppercaseAndPunctuationSkills(t *testing.T) {
 		}
 	}
 }
+
+func TestDrillRequiresExplicitTargetAndSavesHistory(t *testing.T) {
+	db, err := storage.Open(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	s, err := NewLessonService(db, domain.DefaultSettings())
+	if err != nil {
+		t.Fatal(err)
+	}
+	now := time.Date(2026, 9, 22, 12, 0, 0, 0, time.UTC)
+	before := trainer.SelectSkill(s.Profile(), s.Skills(), now)
+	if _, err := s.StartDrill("7", now); err == nil {
+		t.Fatal("accepted a skill outside letter and bigram Drill")
+	}
+	e, err := s.StartDrill("zz", now)
+	if err != nil || e.Result.Mode != domain.ModeDrill || e.Result.TargetSkill != "zz" || !strings.Contains(string(e.Text), "zz") {
+		t.Fatalf("drill setup failed: %v %v", e, err)
+	}
+	if got := trainer.SelectSkill(s.Profile(), s.Skills(), now); got != before {
+		t.Fatalf("choosing Drill changed adaptive queue: %v -> %v", before, got)
+	}
+	for i, r := range e.Text {
+		e.Input(r, now.Add(time.Duration(i+1)*100*time.Millisecond))
+	}
+	if _, err := s.Complete(e, now.Add(time.Duration(len(e.Text)+2)*100*time.Millisecond)); err != nil {
+		t.Fatal(err)
+	}
+	history, err := s.History(domain.HistoryFilter{Mode: domain.ModeDrill})
+	if err != nil || len(history) != 1 || history[0].Mode != domain.ModeDrill {
+		t.Fatalf("Drill missing from history: %v %v", history, err)
+	}
+}
+
+func TestCustomTextAnalysisReportsFrequentAndWeakSkills(t *testing.T) {
+	s, _ := newTestService(t)
+	s.skills[trainer.SkillKey(domain.SkillRune, "e")] = domain.Skill{Confidence: .9}
+	s.skills[trainer.SkillKey(domain.SkillRune, "n")] = domain.Skill{Confidence: .1}
+	analysis, err := s.AnalyzeCustomText("en en en 7!")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(analysis.Frequent) == 0 || analysis.Frequent[0].Occurrences != 3 {
+		t.Fatalf("frequent skills missing: %+v", analysis)
+	}
+	find := func(items []TextSkillPreview, pattern string) bool {
+		for _, item := range items {
+			if item.Pattern == pattern {
+				return true
+			}
+		}
+		return false
+	}
+	if !find(analysis.Frequent, "en") || !find(analysis.Difficult, "n") {
+		t.Fatalf("text skills missing: %+v", analysis)
+	}
+}

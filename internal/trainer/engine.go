@@ -31,11 +31,15 @@ func NewEngine(text string, mode domain.Mode, lang string, target rune, now time
 }
 
 func NewAdaptiveEngine(text, lang, targetSkill string, now time.Time) *Engine {
+	return NewFocusedEngine(text, domain.ModeAdaptive, lang, targetSkill, now)
+}
+
+func NewFocusedEngine(text string, mode domain.Mode, lang, targetSkill string, now time.Time) *Engine {
 	targetRune := rune(0)
 	if rs := []rune(targetSkill); len(rs) == 1 {
 		targetRune = rs[0]
 	}
-	return newEngine(text, domain.ModeAdaptive, lang, targetRune, targetSkill, now)
+	return newEngine(text, mode, lang, targetRune, targetSkill, now)
 }
 
 func newEngine(text string, mode domain.Mode, lang string, target rune, targetSkill string, now time.Time) *Engine {

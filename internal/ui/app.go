@@ -25,6 +25,7 @@ const (
 	RouteStatistics
 	RouteSettings
 	RouteHelp
+	RouteDrill
 )
 
 type ActionKind int
@@ -160,7 +161,7 @@ func (c *Context) setStoreError(err error) {
 	}
 }
 func (c *Context) modeName(mode domain.Mode) string {
-	ids := map[domain.Mode]i18n.MessageID{domain.ModeAdaptive: i18n.ModeLearn, domain.ModeLearn: i18n.ModeLearn, domain.ModeImprove: i18n.ModeImprove, domain.ModeText: i18n.ModeText}
+	ids := map[domain.Mode]i18n.MessageID{domain.ModeAdaptive: i18n.ModeLearn, domain.ModeLearn: i18n.ModeLearn, domain.ModeImprove: i18n.ModeImprove, domain.ModeText: i18n.ModeText, domain.ModeDrill: "mode.drill"}
 	return c.t(ids[mode], nil)
 }
 
@@ -347,6 +348,8 @@ func (a *App) newScreen(route Route, payload any) Screen {
 		return newSettingsScreen(a.ctx)
 	case RouteHelp:
 		return newHelpScreen(a.ctx)
+	case RouteDrill:
+		return newDrillScreen(a.ctx)
 	}
 	panic("unknown route")
 }
