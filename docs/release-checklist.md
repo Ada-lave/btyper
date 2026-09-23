@@ -7,10 +7,11 @@ Record manual smoke-test results in the release notes or release issue.
    [stable contract](stable-contract.md), both READMEs, profile guide and
    changelog/release notes as needed. If the schema or backup format changes,
    add round-trip and old-version fixture tests before proceeding.
-2. Run `go test ./...`, `go test -race ./...`, `go vet ./...`,
-   `go build ./cmd/btyper`, `bash -n install.sh`, and
-   `bash -n packaging/aur/PKGBUILD`. Run `makepkg --printsrcinfo` on Arch and
-   `ruby -c Formula/btyper.rb`. Ensure main CI is green.
+2. Run `bash scripts/release-check.sh`. It runs the Go tests, race tests,
+   vet, build, shell and Ruby syntax checks, and verifies package recipes
+   against published checksums. On Arch it also compares `makepkg --printsrcinfo`
+   with the checked-in `.SRCINFO`. Main CI runs the same script; ensure it is
+   green.
 3. Perform the [accessibility checklist](stable-contract.md#accessibility-checklist)
    on at least one supported terminal. Export a backup from the previous
    release, import it in the candidate, then export and compare key counts;
