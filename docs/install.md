@@ -1,7 +1,7 @@
 # Installation
 
 The maintained installation channel for Linux and macOS is the checksum-
-verified `install.sh` script. Homebrew, AUR, and Scoop releases are paused.
+verified `install.sh` script. Package-manager releases are not provided.
 
 ## Linux and macOS
 

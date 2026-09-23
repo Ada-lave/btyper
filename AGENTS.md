@@ -2,14 +2,14 @@
 
 ## Project Structure & Module Organization
 
-`cmd/btyper` contains the CLI entry point. Core code lives under `internal/`: `ui` handles terminal screens and key input, `trainer` generates and scores lessons, `application` coordinates services, `storage` owns SQLite and backups, `domain` defines shared types, and `i18n` contains English and Russian messages. Built-in keyboard layouts are JSON files in `internal/trainer/profiles/`. Keep tests beside the code they cover as `*_test.go`. User guides and release notes live in `docs/`; installation recipes live in `Formula/`, `packaging/aur/`, and `bucket/`.
+`cmd/btyper` contains the CLI entry point. Core code lives under `internal/`: `ui` handles terminal screens and key input, `trainer` generates and scores lessons, `application` coordinates services, `storage` owns SQLite and backups, `domain` defines shared types, and `i18n` contains English and Russian messages. Built-in keyboard layouts are JSON files in `internal/trainer/profiles/`. Keep tests beside the code they cover as `*_test.go`. User guides and release notes live in `docs/`; the maintained release installer is `install.sh`.
 
 ## Build, Test, and Development Commands
 
 - `just run` starts the app from source. For persistence experiments, run `go run ./cmd/btyper --data-dir /tmp/btyper-dev` to avoid personal data.
 - `just build` creates `/tmp/btyper`; `just install` installs the Go binary.
 - `just test`, `just test-race`, and `just vet` run the focused Go checks. `just coverage` reports package coverage.
-- `just check` runs the full local and CI check set, including package recipe validation against published checksums. It needs network access and, on Arch, checks `.SRCINFO` with `makepkg`.
+- `just check` runs the full local and CI check set. It does not require package-manager tooling.
 
 ## Coding Style & Naming Conventions
 
@@ -21,4 +21,4 @@ Use Go's `testing` package. Add focused regression tests for behavior changes, e
 
 ## Commits & Pull Requests
 
-Recent commits commonly use concise prefixes such as `feat:`, `fix:`, `docs:`, `ci:`, and `chore:`. Describe the observable change in the imperative. Pull requests should explain behavior, mention affected platforms or data formats, link relevant issues, and report the checks run. Include terminal captures when changing visible UI. Follow `docs/release-checklist.md` for tags, assets, and package recipe updates.
+Recent commits commonly use concise prefixes such as `feat:`, `fix:`, `docs:`, `ci:`, and `chore:`. Describe the observable change in the imperative. Pull requests should explain behavior, mention affected platforms or data formats, link relevant issues, and report the checks run. Include terminal captures when changing visible UI. Follow `docs/release-checklist.md` for tags and release assets.

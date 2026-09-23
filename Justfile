@@ -7,6 +7,23 @@ default:
 run:
     go run ./cmd/btyper
 
+fmt:
+    find . -path './submodules' -prune -o -type f -name '*.go' -exec gofmt -w {} +
+
+fmt-check:
+    @files="$(find . -path './submodules' -prune -o -type f -name '*.go' -exec gofmt -l {} +)"; test -z "$files" || { echo "Go files are not formatted:" >&2; echo "$files" >&2; echo "Run 'just fmt' to fix them." >&2; exit 1; }
+
+vet:
+    go vet ./...
+
+lint:
+    golangci-lint run ./...
+
+tidy:
+    go mod tidy
+
+check: fmt vet lint test test-race vet build syntax
+
 build:
     go build -o /tmp/btyper ./cmd/btyper
 
@@ -22,21 +39,8 @@ test-race:
 coverage:
     go test -cover ./...
 
-vet:
-    go vet ./...
-
 format:
     go fmt ./...
 
 syntax:
-    bash -n install.sh packaging/aur/PKGBUILD
-    ruby -c Formula/btyper.rb
-
-recipes:
-    python3 packaging/verify.py
-    if command -v makepkg >/dev/null 2>&1; then diff -u packaging/aur/.SRCINFO <(cd packaging/aur && makepkg --printsrcinfo); else echo 'Skipping makepkg metadata check (makepkg is unavailable)'; fi
-
-srcinfo:
-    cd packaging/aur && makepkg --printsrcinfo > .SRCINFO
-
-check: test test-race vet build syntax recipes
+    bash -n install.sh

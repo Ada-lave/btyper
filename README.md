@@ -6,9 +6,8 @@ Adaptive touch-typing practice in your terminal, inspired by Keybr's learning lo
 
 ## Install and verify
 
-See [all installation channels](docs/install.md) for Homebrew, the
-AUR-compatible PKGBUILD, Scoop on Windows, and platform smoke tests. The
-project is licensed under [MIT](LICENSE).
+See the [installation guide](docs/install.md) for the supported installer.
+The project is licensed under [MIT](LICENSE).
 
 Install the latest Linux or macOS release into `~/.local/bin`:
 
@@ -18,7 +17,7 @@ curl -fsSL https://raw.githubusercontent.com/Ada-lave/btyper/main/install.sh | s
 
 Review [`install.sh`](install.sh) before running it. Set `BTYPER_INSTALL_DIR`
 to choose another destination or `BTYPER_VERSION` to install a specific
-release, for example `BTYPER_VERSION=v1.0.1`.
+release, for example `BTYPER_VERSION=v1.0.2`.
 
 Alternatively, build from source using the Go version specified in `go.mod`
 and `just`:
@@ -33,8 +32,8 @@ just install
 default. Add that directory to your PATH.
 
 Development checks: `just test`, `just test-race`, and `just vet`.
-Run `just check` for the same checks as CI, including the build and package
-recipes. Use `just coverage` to report package coverage.
+Run `just check` for the same checks as CI, including the build and installer
+syntax check. Use `just coverage` to report package coverage.
 
 ## Run
 

@@ -7,8 +7,7 @@ Keybr.
 
 ## Установка и проверка
 
-Способы установки через Homebrew, AUR-совместимый PKGBUILD и Scoop для Windows,
-а также проверки для каждой платформы описаны в
+Поддерживаемый способ установки описан в
 [руководстве по установке](docs/install.md). Лицензия проекта — [MIT](LICENSE).
 
 Установите последний релиз для Linux или macOS в `~/.local/bin`:
@@ -19,7 +18,7 @@ curl -fsSL https://raw.githubusercontent.com/Ada-lave/btyper/main/install.sh | s
 
 Перед запуском ознакомьтесь с [`install.sh`](install.sh). Переменная
 `BTYPER_INSTALL_DIR` выбирает другой каталог, а `BTYPER_VERSION` — конкретный
-релиз, например `BTYPER_VERSION=v1.0.1`.
+релиз, например `BTYPER_VERSION=v1.0.2`.
 
 Либо соберите программу из исходного кода с версией Go из `go.mod` и `just`:
 
@@ -34,7 +33,8 @@ just install
 
 Команды для проверки разработки: `just test`, `just test-race` и
 `just vet`. `just check` запускает те же проверки, что и CI, включая сборку
-и проверку пакетов. Покрытие можно получить командой `just coverage`.
+и проверку синтаксиса установщика. Покрытие можно получить командой
+`just coverage`.
 
 ## Запуск
 

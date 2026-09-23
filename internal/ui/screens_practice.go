@@ -15,12 +15,12 @@ import (
 )
 
 type practiceScreen struct {
-	c           *Context
-	bar         progress.Model
-	lesson      LessonRenderer
-	keyboard    Keyboard
-	pauseCursor int
-	manualPause bool
+	c            *Context
+	bar          progress.Model
+	lesson       LessonRenderer
+	keyboard     Keyboard
+	pauseCursor  int
+	manualPause  bool
 	hideKeyboard bool
 }
 
@@ -31,7 +31,7 @@ func (s *practiceScreen) Activate() tea.Cmd {
 	s.hideKeyboard = false
 	return nil
 }
-func (s *practiceScreen) Resize(w, h int)   { s.bar.SetWidth(max(10, min(70, max(40, w-8)-20))) }
+func (s *practiceScreen) Resize(w, h int) { s.bar.SetWidth(max(10, min(70, max(40, w-8)-20))) }
 func (s *practiceScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 	e := s.c.engine
 	if e == nil {

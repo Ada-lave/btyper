@@ -7,11 +7,8 @@ Record manual smoke-test results in the release notes or release issue.
    [stable contract](stable-contract.md), both READMEs, profile guide and
    changelog/release notes as needed. If the schema or backup format changes,
    add round-trip and old-version fixture tests before proceeding.
-2. Run `just check`. It runs the Go tests, race tests,
-   vet, build, shell and Ruby syntax checks, and verifies package recipes
-   against published checksums. On Arch it also compares `makepkg --printsrcinfo`
-   with the checked-in `.SRCINFO`. Main CI runs the same recipe; ensure it is
-   green.
+2. Run `just check`. It runs the Go tests, race tests, vet, build, and installer
+   shell syntax check. Main CI runs the same recipe; ensure it is green.
 3. Perform the [accessibility checklist](stable-contract.md#accessibility-checklist)
    on at least one supported terminal. Export a backup from the previous
    release, import it in the candidate, then export and compare key counts;
@@ -21,17 +18,9 @@ Record manual smoke-test results in the release notes or release issue.
    annotated `vX.Y.Z` tag at that commit. Wait for the release workflow to
    publish Linux, macOS and Windows binaries, `checksums.txt`, and `install.sh`.
    Confirm every asset exists and matches its checksum.
-5. Update `Formula/btyper.rb`, `packaging/aur/PKGBUILD`, and
-   `bucket/btyper.json` to the new version and exact published asset SHA-256
-   values. Pin the AUR license source to the tagged `LICENSE` and its hash.
-   Regenerate `packaging/aur/.SRCINFO` with `makepkg --printsrcinfo` if
-   submitting to AUR. Commit and push these package updates.
-6. Run the [installation smoke tests](install.md) for install.sh, Homebrew,
-   AUR-compatible PKGBUILD and Scoop on their respective platforms, or record
-   the CI job that exercises the path. Do not claim untested OS/CPU pairs as
+5. Run the [installation smoke test](install.md) for `install.sh` on an
+   available supported platform. Do not claim untested OS/CPU pairs as
    smoke-tested. Check `btyper --version` and a fresh launch.
-7. Update release notes with changes, compatibility notes, checksums, test
+6. Update release notes with changes, compatibility notes, checksums, test
    evidence and any untested paths. Close the completed issues and milestone
-   only after their acceptance criteria are met. If a central Homebrew/AUR or
-   Scoop registry submission is desired, publish there separately; these
-   recipes work from this repository without central listing.
+   only after their acceptance criteria are met.
