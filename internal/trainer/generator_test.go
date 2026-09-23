@@ -79,3 +79,37 @@ func TestSyntheticLearningWordsAlternateLetterClasses(t *testing.T) {
 		}
 	}
 }
+
+func TestAdaptiveLessonContainsScheduledSkill(t *testing.T) {
+	for _, language := range []string{"en", "ru"} {
+		profile := Profiles()[language]
+		unlocked := make(map[rune]bool, len(profile.UnlockOrder))
+		for _, r := range profile.UnlockOrder {
+			unlocked[r] = true
+		}
+		var pair domain.Skill
+		for _, candidate := range CandidateSkills(profile) {
+			if candidate.Kind == domain.SkillBigram {
+				pair = candidate
+				break
+			}
+		}
+		for _, target := range []domain.Skill{
+			{Language: language, Kind: domain.SkillRune, Pattern: string(profile.UnlockOrder[0])},
+			pair,
+		} {
+			for seed := int64(0); seed < 10; seed++ {
+				lesson := NewGenerator(seed).AdaptiveLesson(profile, unlocked, target, nil, 140)
+				focused := 0
+				for _, word := range strings.Fields(lesson) {
+					if strings.Contains(word, target.Pattern) {
+						focused++
+					}
+				}
+				if focused < 2 {
+					t.Fatalf("%s seed %d: target %q occurs in only %d words: %q", language, seed, target.Pattern, focused, lesson)
+				}
+			}
+		}
+	}
+}

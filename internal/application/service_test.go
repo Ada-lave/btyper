@@ -151,3 +151,25 @@ func TestCalibrationOnlyTargetsMissingSamples(t *testing.T) {
 		t.Fatalf("%q", e.Text)
 	}
 }
+
+func TestAdaptiveEngineUsesScheduledSkillAsVisibleTarget(t *testing.T) {
+	s, _ := newTestService(t)
+	now := time.Date(2026, 9, 22, 12, 0, 0, 0, time.UTC)
+	profile := s.Profile()
+	for _, candidate := range trainer.CandidateSkills(profile) {
+		if candidate.Kind == domain.SkillRune {
+			s.skills[trainer.SkillKey(candidate.Kind, candidate.Pattern)] = domain.Skill{
+				Language: profile.ID, Kind: candidate.Kind, Pattern: candidate.Pattern,
+				Samples: trainer.RuneFoundationSamples, Confidence: 1, DueAt: now.Add(time.Hour),
+			}
+		}
+	}
+	want := trainer.SelectSkill(profile, s.Skills(), now)
+	if want.Kind != domain.SkillBigram {
+		t.Fatalf("test setup selected %v", want)
+	}
+	e := s.StartAdaptive(domain.ModeAdaptive, now)
+	if e.Result.TargetSkill != want.Pattern || e.Result.TargetRune != 0 || !strings.Contains(string(e.Text), want.Pattern) {
+		t.Fatalf("scheduled %q, engine target %q, rune %q, text %q", want.Pattern, e.Result.TargetSkill, e.Result.TargetRune, e.Text)
+	}
+}

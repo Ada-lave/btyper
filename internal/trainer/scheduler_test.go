@@ -54,8 +54,51 @@ func TestSchedulerCalibratesRunesInOrderThenSelectsOverdue(t *testing.T) {
 	}
 }
 
+func TestRuneFoundationBlocksBigramsAtBoundary(t *testing.T) {
+	for _, language := range []string{"en", "ru"} {
+		p := Profiles()[language]
+		now := time.Date(2026, 9, 22, 12, 0, 0, 0, time.UTC)
+		skills := map[string]domain.Skill{}
+		for _, r := range p.UnlockOrder {
+			pattern := string(r)
+			skills[SkillKey(domain.SkillRune, pattern)] = domain.Skill{Samples: RuneFoundationSamples, Confidence: 1, DueAt: now.Add(time.Hour)}
+		}
+		last := string(p.UnlockOrder[len(p.UnlockOrder)-1])
+		skill := skills[SkillKey(domain.SkillRune, last)]
+		skill.Samples--
+		skills[SkillKey(domain.SkillRune, last)] = skill
+		if got := SelectSkill(p, skills, now); got.Kind != domain.SkillRune || got.Pattern != last {
+			t.Fatalf("%s: selected %v with last rune at 29 samples", language, got)
+		}
+		skill.Samples++
+		skills[SkillKey(domain.SkillRune, last)] = skill
+		if got := SelectSkill(p, skills, now); got.Kind != domain.SkillBigram {
+			t.Fatalf("%s: selected %v after all runes reached 30 samples", language, got)
+		}
+	}
+}
+
+func TestSchedulerPrioritizesOverdueObservedSkill(t *testing.T) {
+	p := Profiles()["en"]
+	now := time.Date(2026, 9, 22, 12, 0, 0, 0, time.UTC)
+	skills := map[string]domain.Skill{}
+	for _, candidate := range CandidateSkills(p) {
+		skills[SkillKey(candidate.Kind, candidate.Pattern)] = domain.Skill{
+			Samples: 30, Confidence: 1, DueAt: now.Add(time.Hour),
+		}
+	}
+	want := CandidateSkills(p)[len(p.UnlockOrder)+3]
+	key := SkillKey(want.Kind, want.Pattern)
+	overdue := skills[key]
+	overdue.DueAt = now.Add(-time.Minute)
+	skills[key] = overdue
+	if got := SelectSkill(p, skills, now); got.Kind != want.Kind || got.Pattern != want.Pattern {
+		t.Fatalf("selected %v, want overdue %v", got, want)
+	}
+}
+
 func TestUpdateSkillsPromotesAndDemotesReviewLevel(t *testing.T) {
-	now := time.Now().UTC()
+	now := time.Date(2026, 9, 22, 12, 0, 0, 0, time.UTC)
 	settings := domain.DefaultSettings()
 	key := SkillKey(domain.SkillRune, "e")
 	result := domain.SessionResult{Language: "en", Skills: map[string]*domain.SkillStat{key: {Kind: domain.SkillRune, Pattern: "e", Samples: 6, LatencySamples: 6, LatencyMS: 600}}}
@@ -67,6 +110,30 @@ func TestUpdateSkillsPromotesAndDemotesReviewLevel(t *testing.T) {
 	got = UpdateSkills(map[string]domain.Skill{key: got}, result, settings, now.Add(time.Hour))[key]
 	if got.Level != 0 || !got.DueAt.Equal(now.Add(time.Hour)) {
 		t.Fatal(got)
+	}
+}
+
+func TestReviewLevelRequiresSixObservationsAndStaysWithinBounds(t *testing.T) {
+	now := time.Date(2026, 9, 22, 12, 0, 0, 0, time.UTC)
+	settings := domain.DefaultSettings()
+	key := SkillKey(domain.SkillRune, "e")
+	stat := &domain.SkillStat{Kind: domain.SkillRune, Pattern: "e", Samples: 5, LatencySamples: 5, LatencyMS: 500}
+	result := domain.SessionResult{Language: "en", Skills: map[string]*domain.SkillStat{key: stat}}
+	got := UpdateSkills(map[string]domain.Skill{key: {Level: 2}}, result, settings, now)[key]
+	if got.Level != 2 || !got.DueAt.Equal(now.Add(3*24*time.Hour)) {
+		t.Fatalf("five observations changed review level: %v", got)
+	}
+	stat.Samples = 6
+	stat.LatencySamples = 6
+	stat.LatencyMS = 600
+	got = UpdateSkills(map[string]domain.Skill{key: {Level: 5}}, result, settings, now)[key]
+	if got.Level != 5 || !got.DueAt.Equal(now.Add(30*24*time.Hour)) {
+		t.Fatalf("promotion exceeded maximum level: %v", got)
+	}
+	stat.Errors = 6
+	got = UpdateSkills(map[string]domain.Skill{key: {Level: 0}}, result, settings, now)[key]
+	if got.Level != 0 || !got.DueAt.Equal(now) {
+		t.Fatalf("demotion exceeded minimum level: %v", got)
 	}
 }
 
