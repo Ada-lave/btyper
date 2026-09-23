@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -72,10 +73,16 @@ func (s *settingsScreen) change(d int) tea.Cmd {
 			v.UILanguage = "en"
 		}
 	case 1:
-		if v.Language == "en" {
-			v.Language = "ru"
-		} else {
-			v.Language = "en"
+		var languages []string
+		for id := range s.c.service.Profiles() {
+			languages = append(languages, id)
+		}
+		sort.Strings(languages)
+		for i, id := range languages {
+			if id == v.Language {
+				v.Language = languages[(i+d+len(languages))%len(languages)]
+				break
+			}
 		}
 	case 2:
 		v.TargetWPM = max(10, min(150, v.TargetWPM+float64(d*5)))
@@ -156,12 +163,16 @@ func (s *settingsScreen) positionName(position domain.InterfacePosition) string 
 func (s *settingsScreen) View() string {
 	v := s.c.settings()
 	profile := s.c.service.Profile()
+	profileName := profile.Name
+	if profileName == "" {
+		profileName = s.c.t(i18n.MessageID(profile.NameID), nil)
+	}
 	yesno := s.c.t(i18n.BoolNo, nil)
 	if v.ShowKeyboard {
 		yesno = s.c.t(i18n.BoolYes, nil)
 	}
 	length := s.c.localizer.Plural(i18n.CountCharacters, v.LessonRunes, map[string]any{"Count": v.LessonRunes})
-	vals := []string{s.c.t(i18n.SettingsUI, map[string]any{"Value": strings.ToUpper(v.UILanguage)}), s.c.t(i18n.SettingsTraining, map[string]any{"Value": s.c.t(i18n.MessageID(profile.NameID), nil)}), s.c.t(i18n.SettingsSpeed, map[string]any{"Value": fmt.Sprintf("%.0f", v.TargetWPM)}), s.c.t(i18n.SettingsAccuracy, map[string]any{"Value": fmt.Sprintf("%.0f", v.Accuracy*100)}), s.c.t(i18n.SettingsLength, map[string]any{"Value": length}), s.c.t(i18n.SettingsKeyboard, map[string]any{"Value": yesno}), s.c.t(i18n.SettingsTheme, map[string]any{"Value": s.themeName(v.ColorTheme)}), s.c.t(i18n.SettingsPosition, map[string]any{"Value": s.positionName(v.Position)}), s.c.t("settings.daily_goal", map[string]any{"Value": v.DailyGoalMinutes}), s.c.t(i18n.SettingsReset, nil)}
+	vals := []string{s.c.t(i18n.SettingsUI, map[string]any{"Value": strings.ToUpper(v.UILanguage)}), s.c.t(i18n.SettingsTraining, map[string]any{"Value": profileName}), s.c.t(i18n.SettingsSpeed, map[string]any{"Value": fmt.Sprintf("%.0f", v.TargetWPM)}), s.c.t(i18n.SettingsAccuracy, map[string]any{"Value": fmt.Sprintf("%.0f", v.Accuracy*100)}), s.c.t(i18n.SettingsLength, map[string]any{"Value": length}), s.c.t(i18n.SettingsKeyboard, map[string]any{"Value": yesno}), s.c.t(i18n.SettingsTheme, map[string]any{"Value": s.themeName(v.ColorTheme)}), s.c.t(i18n.SettingsPosition, map[string]any{"Value": s.positionName(v.Position)}), s.c.t("settings.daily_goal", map[string]any{"Value": v.DailyGoalMinutes}), s.c.t(i18n.SettingsReset, nil)}
 	var b strings.Builder
 	b.WriteString(s.c.theme.Title.Render(s.c.t(i18n.Settings, nil)))
 	b.WriteString("\n\n")

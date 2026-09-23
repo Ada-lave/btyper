@@ -2,6 +2,7 @@
   "id": "en",
   "name_id": "language.english",
   "unlock_order": "enitrlsaudcyghpmobwfvkxzqj",
+  "vowels": "aeiouy",
   "rows": ["qwertyuiop", "asdfghjkl", "zxcvbnm"],
   "finger_groups": ["qaz", "wsx", "edc", "rfvtgb", "yhnujm", "ik", "ol", "p"],
   "words": ["the", "there", "their", "learn", "letter", "line", "time", "train", "read", "write", "speed", "skill", "type", "quick", "brown", "fox", "jump", "over", "keyboard", "practice", "screen", "focus", "better", "daily", "simple", "word", "sound", "hand", "finger", "home"],

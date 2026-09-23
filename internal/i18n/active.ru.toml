@@ -251,7 +251,7 @@ other = "↑/↓ или j/k · выбор   ←/→ или h/l · изменит
 [terminal.small]
 other = "Терминал слишком мал\nМинимум: 60 × 16\nСейчас: {{.Width}} × {{.Height}}"
 [cli.lang]
-other = "язык тренировки: en или ru"
+other = "ID профиля тренировки: en, ru или установленный профиль"
 [cli.mode]
 other = "режим: adaptive или text"
 [cli.text]

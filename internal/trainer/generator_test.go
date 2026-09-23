@@ -67,7 +67,7 @@ func TestSyntheticLearningWordsAlternateLetterClasses(t *testing.T) {
 	for _, language := range []string{"en", "ru"} {
 		profile := Profiles()[language]
 		allowed := profile.UnlockOrder[:6]
-		vowels := vowelRunes(language, allowed)
+		vowels := vowelRunes(profile, allowed)
 		generator := NewGenerator(7)
 		for i := 0; i < 100; i++ {
 			word := []rune(generator.syntheticWord(profile, allowed, allowed[0], map[rune]float64{}))

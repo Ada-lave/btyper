@@ -22,6 +22,7 @@ type ProfileDocument struct {
 	Name          string   `json:"name,omitempty"`
 	NameID        string   `json:"name_id,omitempty"`
 	UnlockOrder   string   `json:"unlock_order"`
+	Vowels        string   `json:"vowels"`
 	Rows          []string `json:"rows"`
 	FingerGroups  []string `json:"finger_groups"`
 	Words         []string `json:"words"`
@@ -45,6 +46,9 @@ func Profiles() map[string]domain.LanguageProfile {
 }
 
 func LoadProfileJSON(data []byte) (domain.LanguageProfile, error) {
+	if !utf8.Valid(data) {
+		return domain.LanguageProfile{}, errors.New("profile JSON: invalid UTF-8")
+	}
 	var doc ProfileDocument
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()
@@ -59,7 +63,7 @@ func LoadProfileJSON(data []byte) (domain.LanguageProfile, error) {
 	}
 	profile := domain.LanguageProfile{
 		ID: doc.ID, Name: doc.Name, NameID: doc.NameID,
-		UnlockOrder: []rune(doc.UnlockOrder), Rows: doc.Rows,
+		UnlockOrder: []rune(doc.UnlockOrder), Vowels: []rune(doc.Vowels), Rows: doc.Rows,
 		FingerGroups: doc.FingerGroups, Finger: fingers(doc.FingerGroups),
 		Words: doc.Words, FrequentPairs: doc.FrequentPairs,
 	}
@@ -75,7 +79,7 @@ func MarshalProfileJSON(profile domain.LanguageProfile) ([]byte, error) {
 	}
 	doc := ProfileDocument{
 		ID: profile.ID, Name: profile.Name, NameID: profile.NameID,
-		UnlockOrder: string(profile.UnlockOrder), Rows: profile.Rows,
+		UnlockOrder: string(profile.UnlockOrder), Vowels: string(profile.Vowels), Rows: profile.Rows,
 		FingerGroups: profile.FingerGroups, Words: profile.Words,
 		FrequentPairs: profile.FrequentPairs,
 	}
@@ -95,11 +99,24 @@ func ValidateProfiles(profiles map[string]domain.LanguageProfile) error {
 }
 
 func ValidateProfile(p domain.LanguageProfile) error {
-	if p.ID == "" || len(p.ID) > 32 || strings.ContainsAny(p.ID, "/\\. ") {
-		return errors.New("profile.id: expected a short ID without path characters")
+	if p.ID == "" || len(p.ID) > 32 {
+		return errors.New("profile.id: expected 1–32 ASCII letters, digits, hyphens, or underscores")
+	}
+	for _, r := range p.ID {
+		if (r < 'a' || r > 'z') && (r < '0' || r > '9') && r != '-' && r != '_' {
+			return errors.New("profile.id: expected lowercase ASCII letters, digits, hyphens, or underscores")
+		}
 	}
 	if p.Name == "" && p.NameID == "" {
 		return errors.New("profile.name: required")
+	}
+	if len(p.Name) > 80 || strings.TrimSpace(p.Name) != p.Name {
+		return errors.New("profile.name: expected a trimmed name of up to 80 bytes")
+	}
+	for _, r := range p.Name {
+		if unicode.IsControl(r) {
+			return errors.New("profile.name: control characters are not allowed")
+		}
 	}
 	if len(p.UnlockOrder) < 6 || len(p.UnlockOrder) > 128 {
 		return errors.New("profile.unlock_order: expected 6–128 letters")
@@ -110,6 +127,16 @@ func ValidateProfile(p domain.LanguageProfile) error {
 			return fmt.Errorf("profile.unlock_order[%d]: expected a unique lowercase letter", i)
 		}
 		seen[r] = true
+	}
+	if len(p.Vowels) == 0 {
+		return errors.New("profile.vowels: required")
+	}
+	vowels := map[rune]bool{}
+	for i, r := range p.Vowels {
+		if !seen[r] || vowels[r] {
+			return fmt.Errorf("profile.vowels[%d]: expected a unique profile letter", i)
+		}
+		vowels[r] = true
 	}
 	if len(p.Rows) == 0 || len(p.Rows) > 8 {
 		return errors.New("profile.rows: expected 1–8 rows")

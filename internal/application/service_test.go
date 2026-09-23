@@ -4,6 +4,7 @@ import (
 	"btyper/internal/domain"
 	"btyper/internal/storage"
 	"btyper/internal/trainer"
+	"bytes"
 	"errors"
 	"math"
 	"os"
@@ -301,5 +302,43 @@ func TestProgressReviewExplainsSkillRetention(t *testing.T) {
 	review, err := s.ProgressReview(now)
 	if err != nil || review.ObservedSkills != 2 || review.StableSkills != 1 || review.DueSkills != 1 {
 		t.Fatalf("review %+v: %v", review, err)
+	}
+}
+
+func TestImportedProfileCanBeSelectedAfterRestart(t *testing.T) {
+	dir := t.TempDir()
+	db, err := storage.Open(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	profile := trainer.Profiles()["en"]
+	profile.ID, profile.Name, profile.NameID = "en_alt", "English alternative", ""
+	data, err := trainer.MarshalProfileJSON(profile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.ImportUserProfile(bytes.NewReader(data)); err != nil {
+		t.Fatal(err)
+	}
+	settings := domain.DefaultSettings()
+	settings.Language = "en_alt"
+	if err := db.SaveSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Close(); err != nil {
+		t.Fatal(err)
+	}
+	db, err = storage.Open(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	loaded, err := db.LoadSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := NewLessonService(db, loaded)
+	if err != nil || s.Profile().ID != "en_alt" || s.StartAdaptive(domain.ModeAdaptive, time.Now()).Result.Language != "en_alt" {
+		t.Fatalf("imported profile cannot be used after restart: %v", err)
 	}
 }

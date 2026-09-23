@@ -251,7 +251,7 @@ other = "↑/↓ or j/k · select   ←/→ or h/l · change   Esc · back"
 [terminal.small]
 other = "Terminal is too small\nMinimum: 60 × 16\nCurrent: {{.Width}} × {{.Height}}"
 [cli.lang]
-other = "training language: en or ru"
+other = "training profile ID: en, ru, or an installed profile"
 [cli.mode]
 other = "mode: adaptive or text"
 [cli.text]

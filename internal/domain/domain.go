@@ -54,6 +54,7 @@ func DefaultSettings() Settings {
 type LanguageProfile struct {
 	ID, NameID, Name string
 	UnlockOrder      []rune
+	Vowels           []rune
 	Rows             []string
 	FingerGroups     []string
 	Finger           map[rune]string

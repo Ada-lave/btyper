@@ -3,6 +3,7 @@ package ui
 import (
 	"btyper/internal/domain"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -37,8 +38,15 @@ func (s *statisticsScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 		changed := true
 		switch {
 		case isPlainKey(k, 'l'):
-			s.languageIndex = (s.languageIndex + 1) % 3
-			s.filter.Language = []string{"", "en", "ru"}[s.languageIndex]
+			languages := []string{""}
+			var ids []string
+			for id := range s.c.service.Profiles() {
+				ids = append(ids, id)
+			}
+			sort.Strings(ids)
+			languages = append(languages, ids...)
+			s.languageIndex = (s.languageIndex + 1) % len(languages)
+			s.filter.Language = languages[s.languageIndex]
 			s.filter.Offset = 0
 		case isPlainKey(k, 'm'):
 			s.modeIndex = (s.modeIndex + 1) % 6

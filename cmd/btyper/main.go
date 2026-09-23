@@ -1,17 +1,20 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"time"
 
 	"btyper/internal/application"
 	"btyper/internal/domain"
 	"btyper/internal/i18n"
 	"btyper/internal/storage"
+	"btyper/internal/trainer"
 	"btyper/internal/ui"
 	tea "charm.land/bubbletea/v2"
 )
@@ -26,6 +29,12 @@ func main() {
 	}
 	if len(os.Args) > 1 && (os.Args[1] == "export" || os.Args[1] == "import") {
 		if err := runDataCommand(os.Args[1], os.Args[2:]); err != nil {
+			fatal(loc, err)
+		}
+		return
+	}
+	if len(os.Args) > 1 && os.Args[1] == "profile" {
+		if err := runProfileCommand(os.Args[2:]); err != nil {
 			fatal(loc, err)
 		}
 		return
@@ -52,7 +61,15 @@ func main() {
 	settings = applyLocaleDefaults(settings, i18n.Detect(), *lang)
 	_ = loc.SetLanguage(settings.UILanguage)
 	if *lang != "" {
-		if *lang != "en" && *lang != "ru" {
+		profiles := trainer.Profiles()
+		userProfiles, err := store.UserProfiles()
+		if err != nil {
+			fatal(loc, err)
+		}
+		for id, profile := range userProfiles {
+			profiles[id] = profile
+		}
+		if _, ok := profiles[*lang]; !ok {
 			fatal(loc, fmt.Errorf("%s", loc.Text(i18n.CLIInvalidLang, map[string]any{"Value": fmt.Sprintf("%q", *lang)})))
 		}
 		settings.Language = *lang
@@ -93,6 +110,79 @@ func main() {
 	if _, err := tea.NewProgram(model).Run(); err != nil {
 		fatal(loc, err)
 	}
+}
+
+func runProfileCommand(args []string) error {
+	if len(args) == 0 {
+		return errors.New("profile command requires import, export, or list")
+	}
+	command := args[0]
+	fs := flag.NewFlagSet("btyper profile "+command, flag.ContinueOnError)
+	dataDir := fs.String("data-dir", "", "data directory")
+	input := fs.String("input", "", "profile JSON input file")
+	output := fs.String("output", "", "profile JSON output file")
+	id := fs.String("id", "", "profile ID")
+	if err := fs.Parse(args[1:]); err != nil {
+		return err
+	}
+	store, err := storage.Open(*dataDir)
+	if err != nil {
+		return err
+	}
+	defer store.Close()
+	switch command {
+	case "import":
+		if *input == "" {
+			return errors.New("--input is required")
+		}
+		file, err := os.Open(*input)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+		profile, err := store.ImportUserProfile(file)
+		if err != nil {
+			return err
+		}
+		fmt.Fprintln(os.Stdout, "imported profile:", profile.ID)
+	case "export":
+		if *id == "" || *output == "" {
+			return errors.New("--id and --output are required")
+		}
+		var data bytes.Buffer
+		if err := store.ExportUserProfile(*id, &data); err != nil {
+			return err
+		}
+		file, err := os.OpenFile(*output, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
+		if err != nil {
+			return err
+		}
+		if _, err = file.Write(data.Bytes()); err != nil {
+			file.Close()
+			return err
+		}
+		return file.Close()
+	case "list":
+		profiles := trainer.Profiles()
+		users, err := store.UserProfiles()
+		if err != nil {
+			return err
+		}
+		for key, profile := range users {
+			profiles[key] = profile
+		}
+		var ids []string
+		for key := range profiles {
+			ids = append(ids, key)
+		}
+		sort.Strings(ids)
+		for _, key := range ids {
+			fmt.Fprintln(os.Stdout, key)
+		}
+	default:
+		return fmt.Errorf("unknown profile command %q", command)
+	}
+	return nil
 }
 
 func runDataCommand(command string, args []string) error {

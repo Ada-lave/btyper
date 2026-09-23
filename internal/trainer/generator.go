@@ -215,7 +215,7 @@ func (g *Generator) synthetic(profile domain.LanguageProfile, allowed []rune, ta
 }
 
 func (g *Generator) syntheticWord(profile domain.LanguageProfile, allowed []rune, target rune, weak map[rune]float64) string {
-	vowels := vowelRunes(profile.ID, allowed)
+	vowels := vowelRunes(profile, allowed)
 	consonants := without(allowed, vowels)
 	n := 3 + g.Rand.Intn(5)
 	runes := make([]rune, n)
@@ -249,14 +249,10 @@ func (g *Generator) syntheticWord(profile domain.LanguageProfile, allowed []rune
 	return string(runes)
 }
 
-func vowelRunes(language string, allowed []rune) []rune {
-	vowels := "aeiouy"
-	if language == "ru" {
-		vowels = "аеёиоуыэюя"
-	}
+func vowelRunes(profile domain.LanguageProfile, allowed []rune) []rune {
 	var out []rune
 	for _, r := range allowed {
-		if strings.ContainsRune(vowels, r) {
+		if contains(profile.Vowels, r) {
 			out = append(out, r)
 		}
 	}

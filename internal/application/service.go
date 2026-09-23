@@ -68,7 +68,7 @@ func NormalizeSettings(v domain.Settings) domain.Settings {
 	if v.DailyGoalMinutes < 1 || v.DailyGoalMinutes > 120 {
 		v.DailyGoalMinutes = d.DailyGoalMinutes
 	}
-	if v.Language != "en" && v.Language != "ru" {
+	if v.Language == "" {
 		v.Language = d.Language
 	}
 	if v.UILanguage != "" && v.UILanguage != "en" && v.UILanguage != "ru" {
@@ -102,6 +102,17 @@ func LoadSettings(store domain.Store) (domain.Settings, error) { return store.Lo
 func NewLessonService(store domain.Store, settings domain.Settings) (*LessonService, error) {
 	settings = NormalizeSettings(settings)
 	profiles := trainer.Profiles()
+	if provider, ok := store.(interface {
+		UserProfiles() (map[string]domain.LanguageProfile, error)
+	}); ok {
+		userProfiles, err := provider.UserProfiles()
+		if err != nil {
+			return nil, err
+		}
+		for id, profile := range userProfiles {
+			profiles[id] = profile
+		}
+	}
 	if err := trainer.ValidateProfiles(profiles); err != nil {
 		return nil, err
 	}

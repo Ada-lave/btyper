@@ -56,7 +56,7 @@ a large hardcoded dictionary.
 Useful options:
 
 ```text
---lang en|ru
+--lang PROFILE_ID
 --mode adaptive|text
 --text path/to/file.txt
 --data-dir path/to/data
@@ -137,6 +137,8 @@ The retention summary counts observed skills at review level 3 or higher
 (interval of at least seven days) and skills currently due for review.
 Bundled EN/RU layouts, learning order, words, and frequent pairs live in
 validated JSON profiles inside the binary.
+You can import and export your own profiles offline; see the
+[language-profile authoring guide](docs/language-profiles.md).
 Settings also has a daily active-practice goal (1–120 minutes, default 10).
 The menu and practice screens show a neutral in-progress or complete status
 and the current streak of completed local calendar days. An incomplete today
