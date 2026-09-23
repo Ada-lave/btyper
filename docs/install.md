@@ -74,6 +74,6 @@ SHA-256 to `checksums.txt` before running.
 
 ## Source
 
-With the Go version in `go.mod`, run `go install ./cmd/btyper` from the repo.
+With the Go version in `go.mod` and `just`, run `just install` from the repo.
 The local source build reports `dev` for `--version` unless built with release
-linker flags. Run `go test ./...` before using a source checkout as a release.
+linker flags. Run `just check` before using a source checkout as a release.

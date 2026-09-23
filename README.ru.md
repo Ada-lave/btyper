@@ -21,26 +21,25 @@ curl -fsSL https://raw.githubusercontent.com/Ada-lave/btyper/main/install.sh | s
 `BTYPER_INSTALL_DIR` выбирает другой каталог, а `BTYPER_VERSION` — конкретный
 релиз, например `BTYPER_VERSION=v1.0.1`.
 
-Либо соберите программу из исходного кода с версией Go из `go.mod`:
+Либо соберите программу из исходного кода с версией Go из `go.mod` и `just`:
 
 ```sh
-go build -o /tmp/btyper ./cmd/btyper
+just build
 /tmp/btyper --version
-go install ./cmd/btyper
+just install
 ```
 
-`go install` помещает исполняемый файл в `GOBIN`, а если переменная не задана —
+`just install` помещает исполняемый файл в `GOBIN`, а если переменная не задана —
 в `$(go env GOPATH)/bin`. Добавьте этот каталог в `PATH`.
 
-Команды для проверки разработки: `go test ./...`, `go test -race ./...` и
-`go vet ./...`. CI также собирает исполняемый файл. Покрытие можно получить
-командой `go test -cover ./...`, если установленный Go включает инструменты
-покрытия.
+Команды для проверки разработки: `just test`, `just test-race` и
+`just vet`. `just check` запускает те же проверки, что и CI, включая сборку
+и проверку пакетов. Покрытие можно получить командой `just coverage`.
 
 ## Запуск
 
 ```sh
-go run ./cmd/btyper
+just run
 ```
 
 Приложение сразу открывает главное меню. При первом запуске язык раскладки для

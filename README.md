@@ -20,25 +20,26 @@ Review [`install.sh`](install.sh) before running it. Set `BTYPER_INSTALL_DIR`
 to choose another destination or `BTYPER_VERSION` to install a specific
 release, for example `BTYPER_VERSION=v1.0.1`.
 
-Alternatively, build from source using the Go version specified in `go.mod`:
+Alternatively, build from source using the Go version specified in `go.mod`
+and `just`:
 
 ```sh
-go build -o /tmp/btyper ./cmd/btyper
+just build
 /tmp/btyper --version
-go install ./cmd/btyper
+just install
 ```
 
-`go install` places the executable in `GOBIN`, or `$(go env GOPATH)/bin` by
+`just install` places the executable in `GOBIN`, or `$(go env GOPATH)/bin` by
 default. Add that directory to your PATH.
 
-Development checks: `go test ./...`, `go test -race ./...`, and `go vet ./...`.
-CI also builds the executable. Coverage can be collected with
-`go test -cover ./...` when the installed Go toolchain includes coverage tools.
+Development checks: `just test`, `just test-race`, and `just vet`.
+Run `just check` for the same checks as CI, including the build and package
+recipes. Use `just coverage` to report package coverage.
 
 ## Run
 
 ```sh
-go run ./cmd/btyper
+just run
 ```
 
 The application opens directly into the main menu. On the first launch, the
