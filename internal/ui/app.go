@@ -65,6 +65,7 @@ type Context struct {
 	previousConfidence float64
 	busyView           string
 	dailyTotals        map[string]time.Duration
+	goalDays           map[string]time.Duration
 	dailySeen          map[string]time.Duration
 	dailyPending       map[string]domain.PracticeTime
 	lastDailySave      time.Time
@@ -79,7 +80,13 @@ func dayStart(now time.Time) time.Time {
 
 func (c *Context) todayView(includeCurrent bool) string {
 	d := c.dailyTotals[c.now.Format("2006-01-02")]
-	return c.t("today.time", map[string]any{"Time": formatDuration(d)})
+	status := application.DailyGoalStatus(c.now, c.goalDays, c.settings().DailyGoalMinutes)
+	state := c.t("goal.in_progress", nil)
+	if status.Completed {
+		state = c.t("goal.complete", nil)
+	}
+	return c.t("today.time", map[string]any{"Time": formatDuration(d)}) + "  ·  " +
+		c.t("goal.status", map[string]any{"Goal": c.settings().DailyGoalMinutes, "State": state, "Streak": status.Streak})
 }
 
 func (c *Context) captureTime(now time.Time) {
@@ -91,10 +98,14 @@ func (c *Context) captureTime(now time.Time) {
 		c.dailySeen = map[string]time.Duration{}
 		c.dailyPending = map[string]domain.PracticeTime{}
 	}
+	if c.goalDays == nil {
+		c.goalDays = map[string]time.Duration{}
+	}
 	for _, entry := range c.engine.PracticeTimes(now) {
 		key := entry.AttemptID + "/" + entry.Day
 		if delta := entry.Duration - c.dailySeen[key]; delta > 0 {
 			c.dailyTotals[entry.Day] += delta
+			c.goalDays[entry.Day] += delta
 			c.dailySeen[key] = entry.Duration
 			c.dailyPending[key] = entry
 		}
@@ -198,6 +209,14 @@ func New(store domain.Store, initial domain.Settings) (*App, error) {
 		ctx.setStoreError(err)
 	}
 	ctx.dailyTotals = map[string]time.Duration{day: duration}
+	ctx.goalDays, err = service.PracticeDays()
+	if err != nil {
+		ctx.setStoreError(err)
+		ctx.goalDays = map[string]time.Duration{}
+	}
+	if ctx.goalDays[day] < duration {
+		ctx.goalDays[day] = duration
+	}
 	ctx.dailySeen = map[string]time.Duration{}
 	ctx.dailyPending = map[string]domain.PracticeTime{}
 	ctx.lastDailySave = ctx.now

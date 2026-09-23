@@ -35,19 +35,20 @@ const (
 )
 
 type Settings struct {
-	UILanguage   string
-	Language     string
-	Mode         Mode
-	TargetWPM    float64
-	Accuracy     float64
-	LessonRunes  int
-	ShowKeyboard bool
-	ColorTheme   ColorTheme
-	Position     InterfacePosition
+	UILanguage       string
+	Language         string
+	Mode             Mode
+	TargetWPM        float64
+	Accuracy         float64
+	LessonRunes      int
+	DailyGoalMinutes int
+	ShowKeyboard     bool
+	ColorTheme       ColorTheme
+	Position         InterfacePosition
 }
 
 func DefaultSettings() Settings {
-	return Settings{UILanguage: "", Language: "en", Mode: ModeAdaptive, TargetWPM: 35, Accuracy: 0.95, LessonRunes: 140, ShowKeyboard: true, ColorTheme: ThemeViolet, Position: PositionCenter}
+	return Settings{UILanguage: "", Language: "en", Mode: ModeAdaptive, TargetWPM: 35, Accuracy: 0.95, LessonRunes: 140, DailyGoalMinutes: 10, ShowKeyboard: true, ColorTheme: ThemeViolet, Position: PositionCenter}
 }
 
 type LanguageProfile struct {
@@ -157,6 +158,10 @@ type AdaptiveStore interface {
 type PracticeTime struct {
 	AttemptID, Day string
 	Duration       time.Duration
+}
+
+type DailyStore interface {
+	PracticeDays() (map[string]time.Duration, error)
 }
 
 type Store interface {

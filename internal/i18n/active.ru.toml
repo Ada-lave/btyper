@@ -14,6 +14,12 @@ other = "Свой текст"
 other = "Тренировка буквы или пары"
 [menu.drill_desc]
 other = "Выбрать навык для прицельного урока"
+[goal.status]
+other = "Цель {{.Goal}} мин: {{.State}} · серия {{.Streak}} дн."
+[goal.in_progress]
+other = "в процессе"
+[goal.complete]
+other = "выполнена"
 [menu.history]
 other = "История и статистика"
 [menu.settings]
@@ -144,6 +150,8 @@ other = "Тренировка"
 other = "Калибровка"
 [settings.ui_language]
 other = "Язык интерфейса: {{.Value}}"
+[settings.daily_goal]
+other = "Дневная цель активной практики: {{.Value}} мин"
 [settings.training_language]
 other = "Язык тренировки: {{.Value}}"
 [settings.speed]

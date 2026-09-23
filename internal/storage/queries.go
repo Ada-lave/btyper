@@ -260,6 +260,24 @@ func (s *SQLite) PracticeTime(day string) (time.Duration, error) {
 	return time.Duration(ns), err
 }
 
+func (s *SQLite) PracticeDays() (map[string]time.Duration, error) {
+	rows, err := s.db.Query(`SELECT day,SUM(duration_ns) FROM practice_time GROUP BY day`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	days := map[string]time.Duration{}
+	for rows.Next() {
+		var day string
+		var ns int64
+		if err := rows.Scan(&day, &ns); err != nil {
+			return nil, err
+		}
+		days[day] = time.Duration(ns)
+	}
+	return days, rows.Err()
+}
+
 func (s *SQLite) Summary(f domain.HistoryFilter) (domain.HistorySummary, error) {
 	where, args := historyWhere(f)
 	var out domain.HistorySummary

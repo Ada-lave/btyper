@@ -164,6 +164,9 @@ func TestDailyTimePersistsWithoutCompletedLesson(t *testing.T) {
 	if d, err := s.PracticeTime("2026-09-19"); err != nil || d != time.Second {
 		t.Fatal(d, err)
 	}
+	if days, err := s.PracticeDays(); err != nil || days["2026-09-18"] != 3*time.Second || days["2026-09-19"] != time.Second {
+		t.Fatal(days, err)
+	}
 	if err = s.Reset(); err != nil {
 		t.Fatal(err)
 	}

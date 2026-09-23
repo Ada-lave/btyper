@@ -65,6 +65,9 @@ func NormalizeSettings(v domain.Settings) domain.Settings {
 	if v.LessonRunes < 50 || v.LessonRunes > 500 {
 		v.LessonRunes = d.LessonRunes
 	}
+	if v.DailyGoalMinutes < 1 || v.DailyGoalMinutes > 120 {
+		v.DailyGoalMinutes = d.DailyGoalMinutes
+	}
 	if v.Language != "en" && v.Language != "ru" {
 		v.Language = d.Language
 	}
@@ -334,6 +337,37 @@ func (s *LessonService) SavePracticeTime(entries []domain.PracticeTime) error {
 }
 func (s *LessonService) PracticeTime(day string) (time.Duration, error) {
 	return s.store.PracticeTime(day)
+}
+
+func (s *LessonService) PracticeDays() (map[string]time.Duration, error) {
+	if daily, ok := s.store.(domain.DailyStore); ok {
+		return daily.PracticeDays()
+	}
+	return map[string]time.Duration{}, nil
+}
+
+type GoalStatus struct {
+	Today     time.Duration
+	Goal      time.Duration
+	Completed bool
+	Streak    int
+}
+
+func DailyGoalStatus(now time.Time, days map[string]time.Duration, minutes int) GoalStatus {
+	goal := time.Duration(minutes) * time.Minute
+	today := days[now.Format("2006-01-02")]
+	completed := today >= goal
+	streak := 0
+	year, month, date := now.Date()
+	day := time.Date(year, month, date, 12, 0, 0, 0, now.Location())
+	if !completed {
+		day = day.AddDate(0, 0, -1)
+	}
+	for days[day.Format("2006-01-02")] >= goal {
+		streak++
+		day = day.AddDate(0, 0, -1)
+	}
+	return GoalStatus{Today: today, Goal: goal, Completed: completed, Streak: streak}
 }
 
 func (s *LessonService) CalibrationRemaining() int {

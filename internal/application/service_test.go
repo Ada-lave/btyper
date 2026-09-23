@@ -266,3 +266,29 @@ func TestCustomTextAnalysisReportsFrequentAndWeakSkills(t *testing.T) {
 		t.Fatalf("text skills missing: %+v", analysis)
 	}
 }
+
+func TestDailyGoalStatusUsesLocalCalendarDays(t *testing.T) {
+	loc, err := time.LoadLocation("America/New_York")
+	if err != nil {
+		t.Fatal(err)
+	}
+	now := time.Date(2026, 3, 9, 9, 0, 0, 0, loc)
+	days := map[string]time.Duration{
+		"2026-03-07": 10 * time.Minute,
+		"2026-03-08": 10 * time.Minute,
+		"2026-03-09": 9 * time.Minute,
+	}
+	status := DailyGoalStatus(now, days, 10)
+	if status.Completed || status.Streak != 2 {
+		t.Fatalf("in-progress day broke streak across DST: %+v", status)
+	}
+	days["2026-03-09"] = 10 * time.Minute
+	status = DailyGoalStatus(now, days, 10)
+	if !status.Completed || status.Streak != 3 {
+		t.Fatalf("completed day did not extend streak: %+v", status)
+	}
+	status = DailyGoalStatus(now.AddDate(0, 0, 2), days, 10)
+	if status.Completed || status.Streak != 0 {
+		t.Fatalf("missed day did not end streak: %+v", status)
+	}
+}

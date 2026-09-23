@@ -33,6 +33,7 @@ func (s *settingsScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 				} else {
 					s.c.engine = nil
 					s.c.dailyTotals = map[string]time.Duration{}
+					s.c.goalDays = map[string]time.Duration{}
 					s.c.dailySeen = map[string]time.Duration{}
 					s.c.dailyPending = map[string]domain.PracticeTime{}
 					s.c.status.SetFor(s.c.t(i18n.SettingsResetDone, nil), time.Now().Add(2*time.Second))
@@ -47,13 +48,13 @@ func (s *settingsScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 	case k.Key().Code == tea.KeyEsc:
 		return Action{Kind: ActionNavigate, Route: RouteMenu}, nil
 	case isUp(k):
-		s.cursor = (s.cursor + 8) % 9
+		s.cursor = (s.cursor + 9) % 10
 	case isDown(k) || k.Key().Code == tea.KeyTab:
-		s.cursor = (s.cursor + 1) % 9
+		s.cursor = (s.cursor + 1) % 10
 	case isLeft(k):
 		return Action{}, s.change(-1)
 	case isRight(k) || k.Key().Code == tea.KeyEnter:
-		if s.cursor == 8 {
+		if s.cursor == 9 {
 			s.confirm = true
 		} else {
 			return Action{}, s.change(1)
@@ -88,6 +89,8 @@ func (s *settingsScreen) change(d int) tea.Cmd {
 		v.ColorTheme = nextColorTheme(v.ColorTheme, d)
 	case 7:
 		v.Position = nextPosition(v.Position, d)
+	case 8:
+		v.DailyGoalMinutes = max(1, min(120, v.DailyGoalMinutes+d))
 	}
 	return s.c.work(func() error { return s.c.service.SaveSettings(v) }, func(err error) tea.Cmd {
 		if err != nil {
@@ -158,7 +161,7 @@ func (s *settingsScreen) View() string {
 		yesno = s.c.t(i18n.BoolYes, nil)
 	}
 	length := s.c.localizer.Plural(i18n.CountCharacters, v.LessonRunes, map[string]any{"Count": v.LessonRunes})
-	vals := []string{s.c.t(i18n.SettingsUI, map[string]any{"Value": strings.ToUpper(v.UILanguage)}), s.c.t(i18n.SettingsTraining, map[string]any{"Value": s.c.t(i18n.MessageID(profile.NameID), nil)}), s.c.t(i18n.SettingsSpeed, map[string]any{"Value": fmt.Sprintf("%.0f", v.TargetWPM)}), s.c.t(i18n.SettingsAccuracy, map[string]any{"Value": fmt.Sprintf("%.0f", v.Accuracy*100)}), s.c.t(i18n.SettingsLength, map[string]any{"Value": length}), s.c.t(i18n.SettingsKeyboard, map[string]any{"Value": yesno}), s.c.t(i18n.SettingsTheme, map[string]any{"Value": s.themeName(v.ColorTheme)}), s.c.t(i18n.SettingsPosition, map[string]any{"Value": s.positionName(v.Position)}), s.c.t(i18n.SettingsReset, nil)}
+	vals := []string{s.c.t(i18n.SettingsUI, map[string]any{"Value": strings.ToUpper(v.UILanguage)}), s.c.t(i18n.SettingsTraining, map[string]any{"Value": s.c.t(i18n.MessageID(profile.NameID), nil)}), s.c.t(i18n.SettingsSpeed, map[string]any{"Value": fmt.Sprintf("%.0f", v.TargetWPM)}), s.c.t(i18n.SettingsAccuracy, map[string]any{"Value": fmt.Sprintf("%.0f", v.Accuracy*100)}), s.c.t(i18n.SettingsLength, map[string]any{"Value": length}), s.c.t(i18n.SettingsKeyboard, map[string]any{"Value": yesno}), s.c.t(i18n.SettingsTheme, map[string]any{"Value": s.themeName(v.ColorTheme)}), s.c.t(i18n.SettingsPosition, map[string]any{"Value": s.positionName(v.Position)}), s.c.t("settings.daily_goal", map[string]any{"Value": v.DailyGoalMinutes}), s.c.t(i18n.SettingsReset, nil)}
 	var b strings.Builder
 	b.WriteString(s.c.theme.Title.Render(s.c.t(i18n.Settings, nil)))
 	b.WriteString("\n\n")

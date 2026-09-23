@@ -14,6 +14,12 @@ other = "Custom text"
 other = "Drill a letter or pair"
 [menu.drill_desc]
 other = "Choose a skill for a focused lesson"
+[goal.status]
+other = "Goal {{.Goal}} min: {{.State}} · streak {{.Streak}} d"
+[goal.in_progress]
+other = "in progress"
+[goal.complete]
+other = "complete"
 [menu.history]
 other = "History & stats"
 [menu.settings]
@@ -144,6 +150,8 @@ other = "Drill"
 other = "Calibration"
 [settings.ui_language]
 other = "UI language: {{.Value}}"
+[settings.daily_goal]
+other = "Daily active-practice goal: {{.Value}} min"
 [settings.training_language]
 other = "Training language: {{.Value}}"
 [settings.speed]

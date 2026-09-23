@@ -130,6 +130,10 @@ filters use the session start time; the daily practice counter uses actual
 active intervals, including those spanning midnight.
 
 The third statistics tab shows 30-day speed, accuracy and key-latency trends.
+Settings also has a daily active-practice goal (1–120 minutes, default 10).
+The menu and practice screens show a neutral in-progress or complete status
+and the current streak of completed local calendar days. An incomplete today
+does not break yesterday's streak. The goal and daily time survive restart.
 
 ## Backup and export
 
