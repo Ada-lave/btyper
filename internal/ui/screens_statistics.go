@@ -85,14 +85,15 @@ func (s *statisticsScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 		} else {
 			s.tab = (s.tab + 1) % 4
 		}
-		if s.tab == 0 {
+		switch s.tab {
+		case 0:
 			return Action{}, s.loadHistory()
-		} else if s.tab == 1 {
+		case 1:
 			s.rebuildKeys()
 			s.Resize(s.c.width, s.c.height)
-		} else if s.tab == 2 {
+		case 2:
 			return Action{}, s.loadTrends()
-		} else {
+		default:
 			return Action{}, s.loadReview()
 		}
 		return Action{}, nil
@@ -218,13 +219,14 @@ func (s *statisticsScreen) rebuildKeys() {
 }
 func (s *statisticsScreen) View() string {
 	a, b, trend, reviewTab := "[1] "+s.c.t(i18n.HistorySessions, nil), "[2] "+s.c.t(i18n.HistoryKeys, nil), "[3] "+s.c.t(i18n.HistoryTrends, nil), "[4] "+s.c.t("history.review", nil)
-	if s.tab == 0 {
+	switch s.tab {
+	case 0:
 		a = s.c.theme.Title.Render(a)
-	} else if s.tab == 1 {
+	case 1:
 		b = s.c.theme.Title.Render(b)
-	} else if s.tab == 2 {
+	case 2:
 		trend = s.c.theme.Title.Render(trend)
-	} else {
+	default:
 		reviewTab = s.c.theme.Title.Render(reviewTab)
 	}
 	out := s.c.theme.Title.Render(s.c.t(i18n.History, nil)) + "\n" + a + "   " + b + "   " + trend + "   " + reviewTab + "\n\n"
@@ -238,7 +240,8 @@ func (s *statisticsScreen) View() string {
 			s.c.t("review.retention", map[string]any{"Stable": s.review.StableSkills, "Observed": s.review.ObservedSkills, "Due": s.review.DueSkills}) + "\n\n" +
 			s.c.t("review.explanation", nil) + "\n" + s.c.todayView(false) + "\n" + Hotkeys(s.c, i18n.HotkeyHistory)
 	}
-	if s.tab == 0 {
+	switch s.tab {
+	case 0:
 		language := strings.ToUpper(s.filter.Language)
 		if language == "" {
 			language = s.c.t("filter.all", nil)
@@ -251,7 +254,7 @@ func (s *statisticsScreen) View() string {
 		out += s.c.t("history.filters", map[string]any{"Language": language, "Mode": mode, "Period": period}) + "\n"
 		out += s.c.t("history.summary", map[string]any{"Count": s.summary.Sessions, "Time": formatDuration(s.summary.Duration), "WPM": fmt.Sprintf("%.1f", s.summary.WPM), "Accuracy": fmt.Sprintf("%.1f", s.summary.Accuracy*100)}) + "\n"
 		out += s.c.t("history.page", map[string]any{"Page": s.filter.Offset/50 + 1, "Pages": max(1, (s.summary.Sessions+49)/50)}) + "\n\n"
-	} else if s.tab == 2 {
+	case 2:
 		skills, stable, due := s.c.service.Skills(), 0, 0
 		for _, skill := range skills {
 			if skill.Level >= 5 {

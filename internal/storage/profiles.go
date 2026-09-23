@@ -80,13 +80,13 @@ func (s *SQLite) ImportUserProfile(reader io.Reader) (domain.LanguageProfile, er
 	if err != nil {
 		return domain.LanguageProfile{}, err
 	}
-	defer os.Remove(file.Name())
+	defer func() { _ = os.Remove(file.Name()) }()
 	if _, err = file.Write(data); err != nil {
-		file.Close()
+		_ = file.Close()
 		return domain.LanguageProfile{}, err
 	}
 	if err = file.Sync(); err != nil {
-		file.Close()
+		_ = file.Close()
 		return domain.LanguageProfile{}, err
 	}
 	if err = file.Close(); err != nil {

@@ -241,7 +241,7 @@ func validateCatalogs() error {
 	}
 	sort.Strings(missing)
 	if len(missing) > 0 {
-		return fmt.Errorf("Russian translation catalog is missing: %s", strings.Join(missing, ", "))
+		return fmt.Errorf("russian translation catalog is missing: %s", strings.Join(missing, ", "))
 	}
 	return nil
 }

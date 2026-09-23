@@ -13,7 +13,7 @@ btyper --version
 ```
 
 The script verifies the release SHA-256 and installs to `~/.local/bin` by
-default. Set `BTYPER_VERSION=v1.0.2` to pin a version and
+default. Set `BTYPER_VERSION=v1.0.3` to pin a version and
 `BTYPER_INSTALL_DIR` to change the destination. Ensure the install directory is
 in `PATH`.
 

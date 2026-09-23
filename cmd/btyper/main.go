@@ -53,7 +53,7 @@ func main() {
 	if err != nil {
 		fatal(loc, err)
 	}
-	defer store.Close()
+	defer func() { _ = store.Close() }()
 	settings, err := application.LoadSettings(store)
 	if err != nil {
 		fatal(loc, err)
@@ -129,7 +129,7 @@ func runProfileCommand(args []string) error {
 	if err != nil {
 		return err
 	}
-	defer store.Close()
+	defer func() { _ = store.Close() }()
 	switch command {
 	case "import":
 		if *input == "" {
@@ -139,12 +139,14 @@ func runProfileCommand(args []string) error {
 		if err != nil {
 			return err
 		}
-		defer file.Close()
+		defer func() { _ = file.Close() }()
 		profile, err := store.ImportUserProfile(file)
 		if err != nil {
 			return err
 		}
-		fmt.Fprintln(os.Stdout, "imported profile:", profile.ID)
+		if _, err := fmt.Fprintln(os.Stdout, "imported profile:", profile.ID); err != nil {
+			return err
+		}
 	case "export":
 		if *id == "" || *output == "" {
 			return errors.New("--id and --output are required")
@@ -158,7 +160,7 @@ func runProfileCommand(args []string) error {
 			return err
 		}
 		if _, err = file.Write(data.Bytes()); err != nil {
-			file.Close()
+			_ = file.Close()
 			return err
 		}
 		return file.Close()
@@ -177,7 +179,9 @@ func runProfileCommand(args []string) error {
 		}
 		sort.Strings(ids)
 		for _, key := range ids {
-			fmt.Fprintln(os.Stdout, key)
+			if _, err := fmt.Fprintln(os.Stdout, key); err != nil {
+				return err
+			}
 		}
 	default:
 		return fmt.Errorf("unknown profile command %q", command)
@@ -199,7 +203,7 @@ func runDataCommand(command string, args []string) error {
 	if err != nil {
 		return err
 	}
-	defer store.Close()
+	defer func() { _ = store.Close() }()
 	if command == "export" {
 		switch *format {
 		case "backup":
@@ -211,7 +215,7 @@ func runDataCommand(command string, args []string) error {
 				return err
 			}
 			if err = store.ExportBackup(f); err != nil {
-				f.Close()
+				_ = f.Close()
 				return err
 			}
 			return f.Close()
@@ -233,7 +237,7 @@ func runDataCommand(command string, args []string) error {
 		return err
 	}
 	if err = store.ExportBackup(backup); err != nil {
-		backup.Close()
+		_ = backup.Close()
 		return err
 	}
 	if err = backup.Close(); err != nil {
@@ -243,12 +247,12 @@ func runDataCommand(command string, args []string) error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	if err = store.ImportBackup(f); err != nil {
 		return fmt.Errorf("import failed (current data preserved; safety backup: %s): %w", backupPath, err)
 	}
-	fmt.Fprintln(os.Stdout, "safety backup:", backupPath)
-	return nil
+	_, err = fmt.Fprintln(os.Stdout, "safety backup:", backupPath)
+	return err
 }
 
 func applyLocaleDefaults(settings domain.Settings, detected, cliLanguage string) domain.Settings {

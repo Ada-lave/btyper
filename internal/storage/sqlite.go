@@ -26,11 +26,11 @@ func Open(dir string) (*SQLite, error) {
 	s := &SQLite{db: db, dir: dir}
 	db.SetMaxOpenConns(1)
 	if _, err = db.Exec("PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000;"); err != nil {
-		db.Close()
+		_ = db.Close()
 		return nil, err
 	}
 	if err = s.migrate(); err != nil {
-		db.Close()
+		_ = db.Close()
 		return nil, err
 	}
 	return s, nil

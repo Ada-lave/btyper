@@ -17,7 +17,7 @@ func testDB(t *testing.T) *SQLite {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { s.Close() })
+	t.Cleanup(func() { _ = s.Close() })
 	return s
 }
 func sampleResult(id, lang string, now time.Time) domain.SessionResult {
@@ -157,7 +157,7 @@ func TestDailyTimePersistsWithoutCompletedLesson(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { _ = s.Close() }()
 	if d, err := s.PracticeTime("2026-09-18"); err != nil || d != 3*time.Second {
 		t.Fatal(d, err)
 	}
@@ -189,12 +189,12 @@ INSERT INTO character_stats VALUES(1,'a',3,0,400);`)
 	if err != nil {
 		t.Fatal(err)
 	}
-	db.Close()
+	_ = db.Close()
 	s, err := Open(dir)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { _ = s.Close() }()
 	p, err := s.LoadProgress("en")
 	if err != nil {
 		t.Fatal(err)
@@ -248,12 +248,12 @@ func TestMigrationFailureRollsBack(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 	if _, err = db.Exec(`CREATE TABLE schema_migrations(version INTEGER PRIMARY KEY);` + schemaV1 + `CREATE TABLE practice_time(conflict TEXT);`); err != nil {
 		t.Fatal(err)
 	}
 	if s, err := Open(dir); err == nil {
-		s.Close()
+		_ = s.Close()
 		t.Fatal("expected migration failure")
 	}
 	var version int
@@ -311,7 +311,7 @@ INSERT INTO schema_migrations(version) VALUES(4);`)
 			if err != nil {
 				t.Fatal(err)
 			}
-			defer s.Close()
+			defer func() { _ = s.Close() }()
 			var current int
 			if err = s.db.QueryRow(`SELECT MAX(version) FROM schema_migrations`).Scan(&current); err != nil || current != 5 {
 				t.Fatalf("schema version %d: %v", current, err)

@@ -43,12 +43,12 @@ func (s *SQLite) ExportBackup(w io.Writer) error {
 		var p domain.CharacterProgress
 		var key string
 		if err = rows.Scan(&p.Language, &key, &p.Samples, &p.Errors, &p.LatencyMS, &p.Accuracy, &p.Confidence, &p.MasteryStreak, &p.Unlocked, &p.Mastered); err != nil {
-			rows.Close()
+			_ = rows.Close()
 			return err
 		}
 		rs := []rune(key)
 		if len(rs) != 1 {
-			rows.Close()
+			_ = rows.Close()
 			return errors.New("invalid progress rune")
 		}
 		p.Rune = rs[0]
@@ -65,21 +65,21 @@ func (s *SQLite) ExportBackup(w io.Writer) error {
 		var skill domain.Skill
 		var kind, last, due string
 		if err = rows.Scan(&skill.Language, &kind, &skill.Pattern, &skill.Samples, &skill.Errors, &skill.LatencySamples, &skill.LatencyMS, &skill.Accuracy, &skill.Confidence, &skill.Level, &last, &due); err != nil {
-			rows.Close()
+			_ = rows.Close()
 			return err
 		}
 		skill.Kind = domain.SkillKind(kind)
 		if last != "" {
 			skill.LastPracticed, err = time.Parse(time.RFC3339Nano, last)
 			if err != nil {
-				rows.Close()
+				_ = rows.Close()
 				return err
 			}
 		}
 		if due != "" {
 			skill.DueAt, err = time.Parse(time.RFC3339Nano, due)
 			if err != nil {
-				rows.Close()
+				_ = rows.Close()
 				return err
 			}
 		}
@@ -101,7 +101,7 @@ func (s *SQLite) ExportBackup(w io.Writer) error {
 		var stamp, mode, target string
 		var attempt sql.NullString
 		if err = rows.Scan(&id, &attempt, &stamp, &mode, &r.Language, &target, &r.TargetSkill, &r.Text, &ms, &r.Correct, &r.Attempts, &r.Errors, &r.Corrections, &r.WPM, &r.CPM, &r.Accuracy); err != nil {
-			rows.Close()
+			_ = rows.Close()
 			return err
 		}
 		r.AttemptID = attempt.String
@@ -112,7 +112,7 @@ func (s *SQLite) ExportBackup(w io.Writer) error {
 		}
 		r.StartedAt, err = time.Parse(time.RFC3339Nano, stamp)
 		if err != nil {
-			rows.Close()
+			_ = rows.Close()
 			return err
 		}
 		r.Mode, r.Duration, r.Chars = domain.Mode(mode), time.Duration(ms)*time.Millisecond, map[rune]*domain.CharacterStat{}
@@ -143,7 +143,7 @@ func (s *SQLite) ExportBackup(w io.Writer) error {
 			var c domain.CharacterStat
 			var latencySamples sql.NullInt64
 			if err = stats.Scan(&key, &c.Samples, &c.Errors, &c.LatencyMS, &latencySamples); err != nil {
-				stats.Close()
+				_ = stats.Close()
 				return err
 			}
 			c.LatencySamples = int(latencySamples.Int64)
@@ -165,7 +165,7 @@ func (s *SQLite) ExportBackup(w io.Writer) error {
 		var p domain.PracticeTime
 		var ns int64
 		if err = rows.Scan(&p.AttemptID, &p.Day, &ns); err != nil {
-			rows.Close()
+			_ = rows.Close()
 			return err
 		}
 		p.Duration = time.Duration(ns)
@@ -235,7 +235,7 @@ func (s *SQLite) ImportBackup(r io.Reader) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 	if _, err = tx.Exec(`DELETE FROM character_stats; DELETE FROM sessions; DELETE FROM progress; DELETE FROM practice_time; DELETE FROM skills; DELETE FROM settings;`); err != nil {
 		return err
 	}
@@ -312,7 +312,7 @@ func (s *SQLite) writeCSV(path string, header []string, query string) error {
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	f, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o600)
 	if err != nil {
 		return err
@@ -320,12 +320,12 @@ func (s *SQLite) writeCSV(path string, header []string, query string) error {
 	b := bufio.NewWriter(f)
 	w := csv.NewWriter(b)
 	if err = w.Write(header); err != nil {
-		f.Close()
+		_ = f.Close()
 		return err
 	}
 	cols, err := rows.Columns()
 	if err != nil {
-		f.Close()
+		_ = f.Close()
 		return err
 	}
 	values := make([]any, len(cols))
@@ -335,7 +335,7 @@ func (s *SQLite) writeCSV(path string, header []string, query string) error {
 	}
 	for rows.Next() {
 		if err = rows.Scan(ptrs...); err != nil {
-			f.Close()
+			_ = f.Close()
 			return err
 		}
 		record := make([]string, len(values))
@@ -353,17 +353,17 @@ func (s *SQLite) writeCSV(path string, header []string, query string) error {
 			}
 		}
 		if err = w.Write(record); err != nil {
-			f.Close()
+			_ = f.Close()
 			return err
 		}
 	}
 	w.Flush()
 	if err = w.Error(); err != nil {
-		f.Close()
+		_ = f.Close()
 		return err
 	}
 	if err = b.Flush(); err != nil {
-		f.Close()
+		_ = f.Close()
 		return err
 	}
 	return f.Close()

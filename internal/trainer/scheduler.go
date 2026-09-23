@@ -79,13 +79,11 @@ func selectSkill(p domain.LanguageProfile, candidates []domain.Skill, skills map
 	// Build a reliable sample base for every rune before introducing bigrams.
 	// Six observations are enough to unlock a rune for generated words, but not
 	// enough to make pair-level timing useful or understandable to the learner.
-	runesReady := true
 	for _, c := range candidates {
 		if c.Kind == domain.SkillBigram {
 			break
 		}
 		if skills[SkillKey(c.Kind, c.Pattern)].Samples < RuneFoundationSamples {
-			runesReady = false
 			state := skills[SkillKey(c.Kind, c.Pattern)]
 			state.Language, state.Kind, state.Pattern = p.ID, c.Kind, c.Pattern
 			return state
@@ -94,9 +92,6 @@ func selectSkill(p domain.LanguageProfile, candidates []domain.Skill, skills map
 	bestScore := -1.0
 	best := candidates[0]
 	for index, candidate := range candidates {
-		if candidate.Kind == domain.SkillBigram && !runesReady {
-			continue
-		}
 		state := skills[SkillKey(candidate.Kind, candidate.Pattern)]
 		state.Language, state.Kind, state.Pattern = p.ID, candidate.Kind, candidate.Pattern
 		score := skillPriority(state, index, now)

@@ -46,7 +46,7 @@ func newTestService(t *testing.T) (*LessonService, *failingStore) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { db.Close() })
+	t.Cleanup(func() { _ = db.Close() })
 	store := &failingStore{Store: db}
 	s, err := NewLessonService(store, domain.DefaultSettings())
 	if err != nil {
@@ -180,7 +180,7 @@ func TestCustomTextPersistsNumberUppercaseAndPunctuationSkills(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 	s, err := NewLessonService(db, domain.DefaultSettings())
 	if err != nil {
 		t.Fatal(err)
@@ -215,7 +215,7 @@ func TestDrillRequiresExplicitTargetAndSavesHistory(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 	s, err := NewLessonService(db, domain.DefaultSettings())
 	if err != nil {
 		t.Fatal(err)
@@ -332,7 +332,7 @@ func TestImportedProfileCanBeSelectedAfterRestart(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 	loaded, err := db.LoadSettings()
 	if err != nil {
 		t.Fatal(err)

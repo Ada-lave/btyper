@@ -58,7 +58,7 @@ func realApp(t *testing.T, lang string) (*App, *faultStore) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { db.Close() })
+	t.Cleanup(func() { _ = db.Close() })
 	store := &faultStore{Store: db}
 	settings := domain.DefaultSettings()
 	settings.UILanguage = lang

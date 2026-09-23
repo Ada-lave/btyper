@@ -37,7 +37,7 @@ func (s *SQLite) LoadProgress(language string) (map[rune]domain.CharacterProgres
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	out := map[rune]domain.CharacterProgress{}
 	for rows.Next() {
 		p, err := scanProgress(rows, language)
@@ -56,7 +56,7 @@ func (s *SQLite) SaveSession(r domain.SessionResult, progress map[rune]domain.Ch
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 	_, err = saveSession(tx, r, progress)
 	if err != nil {
 		return err
@@ -99,7 +99,7 @@ func (s *SQLite) LoadSkills(language string) (map[string]domain.Skill, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	out := map[string]domain.Skill{}
 	for rows.Next() {
 		var skill domain.Skill
@@ -134,7 +134,7 @@ func (s *SQLite) SaveAdaptiveSession(r domain.SessionResult, progress map[rune]d
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 	inserted, err := saveSession(tx, r, progress)
 	if err != nil {
 		return err
@@ -185,7 +185,7 @@ func (s *SQLite) History(f domain.HistoryFilter) ([]domain.HistoryEntry, error) 
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	var out []domain.HistoryEntry
 	for rows.Next() {
 		h, err := scanHistory(rows)
@@ -201,7 +201,7 @@ func (s *SQLite) Reset() error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 	if _, err = tx.Exec("DELETE FROM character_stats; DELETE FROM sessions; DELETE FROM progress; DELETE FROM practice_time; DELETE FROM skills;"); err != nil {
 		return err
 	}
@@ -220,7 +220,7 @@ GROUP BY date(s.started_at,'localtime') ORDER BY date(s.started_at,'localtime')`
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	var out []domain.TrendPoint
 	for rows.Next() {
 		var p domain.TrendPoint
@@ -239,7 +239,7 @@ func (s *SQLite) SavePracticeTime(entries []domain.PracticeTime) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 	for _, entry := range entries {
 		if entry.AttemptID == "" || entry.Duration < 0 {
 			return errors.New("invalid practice time")
@@ -265,7 +265,7 @@ func (s *SQLite) PracticeDays() (map[string]time.Duration, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	days := map[string]time.Duration{}
 	for rows.Next() {
 		var day string
