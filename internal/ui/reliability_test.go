@@ -190,3 +190,15 @@ func TestDailyCounterIncludesAbandonedTimeAndSaveDoesNotBlockInput(t *testing.T)
 		t.Fatal(a.ctx.todayView(false))
 	}
 }
+
+func TestWeeklyReviewIsAvailableFromStatistics(t *testing.T) {
+	a, _ := realApp(t, "en")
+	a.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	drainCommand(t, a, a.navigate(RouteStatistics, nil))
+	_, cmd := a.Update(key('4', 0, 0))
+	drainCommand(t, a, cmd)
+	s, ok := a.screen.(*statisticsScreen)
+	if !ok || s.tab != 3 || !strings.Contains(a.View().Content, "Personal baseline") {
+		t.Fatal("weekly review is not visible from statistics")
+	}
+}

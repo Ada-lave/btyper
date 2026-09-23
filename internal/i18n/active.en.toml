@@ -20,6 +20,16 @@ other = "Goal {{.Goal}} min: {{.State}} · streak {{.Streak}} d"
 other = "in progress"
 [goal.complete]
 other = "complete"
+[history.review]
+other = "Review"
+[review.week]
+other = "Last 7 local days: {{.Time}} active practice, {{.Sessions}} sessions, {{.WPM}} WPM. Previous 7 days: {{.Previous}} active practice."
+[review.baseline]
+other = "Personal baseline before this week: {{.WPM}} WPM across {{.Sessions}} sessions."
+[review.retention]
+other = "Retention status: {{.Stable}}/{{.Observed}} observed skills at level 3+; {{.Due}} due for review."
+[review.explanation]
+other = "Level 3+ means a review interval of at least 7 days; due skills need practice. The baseline is duration-weighted speed from all earlier local sessions."
 [menu.history]
 other = "History & stats"
 [menu.settings]

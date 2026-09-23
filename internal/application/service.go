@@ -332,6 +332,32 @@ func (s *LessonService) Trends(since time.Time) ([]domain.TrendPoint, error) {
 	return adaptive.Trends(s.Settings().Language, since)
 }
 
+func (s *LessonService) ProgressReview(now time.Time) (domain.ProgressReview, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	var review domain.ProgressReview
+	if store, ok := s.store.(domain.ReviewStore); ok {
+		var err error
+		review, err = store.ProgressReview(now, s.settings.Language)
+		if err != nil {
+			return review, err
+		}
+	}
+	for _, skill := range s.skills {
+		if skill.Samples == 0 {
+			continue
+		}
+		review.ObservedSkills++
+		if skill.Level >= 3 {
+			review.StableSkills++
+		}
+		if !skill.DueAt.IsZero() && !skill.DueAt.After(now) {
+			review.DueSkills++
+		}
+	}
+	return review, nil
+}
+
 func (s *LessonService) SavePracticeTime(entries []domain.PracticeTime) error {
 	return s.store.SavePracticeTime(entries)
 }

@@ -20,6 +20,7 @@ type statisticsScreen struct {
 	languageIndex, modeIndex, periodIndex int
 	summary                               domain.HistorySummary
 	trends                                []domain.TrendPoint
+	review                                domain.ProgressReview
 }
 
 func newStatisticsScreen(c *Context) Screen {
@@ -64,23 +65,27 @@ func (s *statisticsScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 			return Action{}, s.loadHistory()
 		}
 	}
-	if k, ok := msg.(tea.KeyPressMsg); ok && (k.String() == "tab" || k.String() == "1" || k.String() == "2" || k.String() == "3") {
+	if k, ok := msg.(tea.KeyPressMsg); ok && (k.String() == "tab" || k.String() == "1" || k.String() == "2" || k.String() == "3" || k.String() == "4") {
 		if k.String() == "1" {
 			s.tab = 0
 		} else if k.String() == "2" {
 			s.tab = 1
 		} else if k.String() == "3" {
 			s.tab = 2
+		} else if k.String() == "4" {
+			s.tab = 3
 		} else {
-			s.tab = (s.tab + 1) % 3
+			s.tab = (s.tab + 1) % 4
 		}
 		if s.tab == 0 {
 			return Action{}, s.loadHistory()
 		} else if s.tab == 1 {
 			s.rebuildKeys()
 			s.Resize(s.c.width, s.c.height)
-		} else {
+		} else if s.tab == 2 {
 			return Action{}, s.loadTrends()
+		} else {
+			return Action{}, s.loadReview()
 		}
 		return Action{}, nil
 	}
@@ -100,6 +105,22 @@ func (s *statisticsScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 	var cmd tea.Cmd
 	s.table.Model, cmd = s.table.Model.Update(msg)
 	return Action{}, cmd
+}
+
+func (s *statisticsScreen) loadReview() tea.Cmd {
+	var review domain.ProgressReview
+	return s.c.work(func() error {
+		var err error
+		review, err = s.c.service.ProgressReview(s.c.now)
+		return err
+	}, func(err error) tea.Cmd {
+		if err != nil {
+			s.c.setStoreError(err)
+			return nil
+		}
+		s.review = review
+		return nil
+	})
 }
 
 func (s *statisticsScreen) loadTrends() tea.Cmd {
@@ -188,15 +209,27 @@ func (s *statisticsScreen) rebuildKeys() {
 	s.table.Model = table.New(table.WithColumns([]table.Column{{Title: s.c.t(i18n.ColKey, nil), Width: 8}, {Title: s.c.t(i18n.ColSamples, nil), Width: 10}, {Title: s.c.t(i18n.ColErrors, nil), Width: 9}, {Title: s.c.t(i18n.ColLatency, nil), Width: 12}, {Title: s.c.t(i18n.ColAccuracy, nil), Width: 12}, {Title: s.c.t(i18n.ColConfidence, nil), Width: 13}}), table.WithRows(rows), table.WithHeight(12), table.WithFocused(true))
 }
 func (s *statisticsScreen) View() string {
-	a, b, trend := "[1] "+s.c.t(i18n.HistorySessions, nil), "[2] "+s.c.t(i18n.HistoryKeys, nil), "[3] "+s.c.t(i18n.HistoryTrends, nil)
+	a, b, trend, reviewTab := "[1] "+s.c.t(i18n.HistorySessions, nil), "[2] "+s.c.t(i18n.HistoryKeys, nil), "[3] "+s.c.t(i18n.HistoryTrends, nil), "[4] "+s.c.t("history.review", nil)
 	if s.tab == 0 {
 		a = s.c.theme.Title.Render(a)
 	} else if s.tab == 1 {
 		b = s.c.theme.Title.Render(b)
-	} else {
+	} else if s.tab == 2 {
 		trend = s.c.theme.Title.Render(trend)
+	} else {
+		reviewTab = s.c.theme.Title.Render(reviewTab)
 	}
-	out := s.c.theme.Title.Render(s.c.t(i18n.History, nil)) + "\n" + a + "   " + b + "   " + trend + "\n\n"
+	out := s.c.theme.Title.Render(s.c.t(i18n.History, nil)) + "\n" + a + "   " + b + "   " + trend + "   " + reviewTab + "\n\n"
+	if s.tab == 3 {
+		baseline := "—"
+		if s.review.BaselineSessions > 0 {
+			baseline = fmt.Sprintf("%.1f", s.review.BaselineWPM)
+		}
+		return out + s.c.t("review.week", map[string]any{"Time": formatDuration(s.review.WeekPractice), "Previous": formatDuration(s.review.PreviousPractice), "Sessions": s.review.WeekSessions, "WPM": fmt.Sprintf("%.1f", s.review.WeekWPM)}) + "\n\n" +
+			s.c.t("review.baseline", map[string]any{"WPM": baseline, "Sessions": s.review.BaselineSessions}) + "\n\n" +
+			s.c.t("review.retention", map[string]any{"Stable": s.review.StableSkills, "Observed": s.review.ObservedSkills, "Due": s.review.DueSkills}) + "\n\n" +
+			s.c.t("review.explanation", nil) + "\n" + s.c.todayView(false) + "\n" + Hotkeys(s.c, i18n.HotkeyHistory)
+	}
 	if s.tab == 0 {
 		language := strings.ToUpper(s.filter.Language)
 		if language == "" {

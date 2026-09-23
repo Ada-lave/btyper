@@ -328,3 +328,30 @@ INSERT INTO schema_migrations(version) VALUES(4);`)
 		})
 	}
 }
+
+func TestProgressReviewUsesLocalSevenDayWindowsAndBaseline(t *testing.T) {
+	s := testDB(t)
+	loc, err := time.LoadLocation("America/New_York")
+	if err != nil {
+		t.Fatal(err)
+	}
+	now := time.Date(2026, 3, 9, 9, 0, 0, 0, loc)
+	baseline := sampleResult("baseline", "en", time.Date(2026, 3, 1, 12, 0, 0, 0, loc))
+	week := sampleResult("week", "en", time.Date(2026, 3, 8, 12, 0, 0, 0, loc))
+	week.Correct = 4
+	for _, result := range []domain.SessionResult{baseline, week} {
+		if err := s.SaveSession(result, nil); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := s.SavePracticeTime([]domain.PracticeTime{
+		{AttemptID: "baseline", Day: "2026-03-01", Duration: 2 * time.Minute},
+		{AttemptID: "week", Day: "2026-03-08", Duration: 3 * time.Minute},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	review, err := s.ProgressReview(now, "en")
+	if err != nil || review.WeekSessions != 1 || review.BaselineSessions != 1 || review.WeekPractice != 3*time.Minute || review.PreviousPractice != 2*time.Minute || review.WeekWPM != 48 || review.BaselineWPM != 24 {
+		t.Fatalf("review %+v: %v", review, err)
+	}
+}

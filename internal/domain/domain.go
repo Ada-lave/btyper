@@ -149,6 +149,17 @@ type TrendPoint struct {
 	WPM, Accuracy, Latency float64
 }
 
+type ProgressReview struct {
+	WeekPractice, PreviousPractice          time.Duration
+	WeekSessions, BaselineSessions          int
+	WeekWPM, BaselineWPM                    float64
+	ObservedSkills, StableSkills, DueSkills int
+}
+
+type ReviewStore interface {
+	ProgressReview(now time.Time, language string) (ProgressReview, error)
+}
+
 type AdaptiveStore interface {
 	LoadSkills(language string) (map[string]Skill, error)
 	SaveAdaptiveSession(SessionResult, map[rune]CharacterProgress, map[string]Skill) error

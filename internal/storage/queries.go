@@ -278,6 +278,44 @@ func (s *SQLite) PracticeDays() (map[string]time.Duration, error) {
 	return days, rows.Err()
 }
 
+func (s *SQLite) ProgressReview(now time.Time, language string) (domain.ProgressReview, error) {
+	year, month, day := now.Date()
+	today := time.Date(year, month, day, 0, 0, 0, 0, now.Location())
+	weekStart := today.AddDate(0, 0, -6)
+	previousStart := weekStart.AddDate(0, 0, -7)
+	tomorrow := today.AddDate(0, 0, 1)
+	var review domain.ProgressReview
+	practice := func(start, end time.Time) (time.Duration, error) {
+		var ns int64
+		err := s.db.QueryRow(`SELECT COALESCE(SUM(duration_ns),0) FROM practice_time WHERE day>=? AND day<?`, start.Format("2006-01-02"), end.Format("2006-01-02")).Scan(&ns)
+		return time.Duration(ns), err
+	}
+	var err error
+	if review.WeekPractice, err = practice(weekStart, tomorrow); err != nil {
+		return review, err
+	}
+	if review.PreviousPractice, err = practice(previousStart, weekStart); err != nil {
+		return review, err
+	}
+	var weekDuration, weekCorrect int64
+	err = s.db.QueryRow(`SELECT COUNT(*),COALESCE(SUM(duration_ms),0),COALESCE(SUM(correct),0) FROM sessions WHERE language=? AND julianday(started_at)>=julianday(?) AND julianday(started_at)<julianday(?)`, language, weekStart.UTC().Format(time.RFC3339Nano), tomorrow.UTC().Format(time.RFC3339Nano)).Scan(&review.WeekSessions, &weekDuration, &weekCorrect)
+	if err != nil {
+		return review, err
+	}
+	if weekDuration > 0 {
+		review.WeekWPM = float64(weekCorrect) * 12000 / float64(weekDuration)
+	}
+	var baselineDuration, baselineCorrect int64
+	err = s.db.QueryRow(`SELECT COUNT(*),COALESCE(SUM(duration_ms),0),COALESCE(SUM(correct),0) FROM sessions WHERE language=? AND julianday(started_at)<julianday(?)`, language, weekStart.UTC().Format(time.RFC3339Nano)).Scan(&review.BaselineSessions, &baselineDuration, &baselineCorrect)
+	if err != nil {
+		return review, err
+	}
+	if baselineDuration > 0 {
+		review.BaselineWPM = float64(baselineCorrect) * 12000 / float64(baselineDuration)
+	}
+	return review, nil
+}
+
 func (s *SQLite) Summary(f domain.HistoryFilter) (domain.HistorySummary, error) {
 	where, args := historyWhere(f)
 	var out domain.HistorySummary

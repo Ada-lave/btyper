@@ -292,3 +292,14 @@ func TestDailyGoalStatusUsesLocalCalendarDays(t *testing.T) {
 		t.Fatalf("missed day did not end streak: %+v", status)
 	}
 }
+
+func TestProgressReviewExplainsSkillRetention(t *testing.T) {
+	s, _ := newTestService(t)
+	now := time.Date(2026, 9, 23, 12, 0, 0, 0, time.UTC)
+	s.skills["rune:e"] = domain.Skill{Samples: 30, Level: 3, DueAt: now.Add(time.Hour)}
+	s.skills["rune:n"] = domain.Skill{Samples: 10, Level: 1, DueAt: now.Add(-time.Hour)}
+	review, err := s.ProgressReview(now)
+	if err != nil || review.ObservedSkills != 2 || review.StableSkills != 1 || review.DueSkills != 1 {
+		t.Fatalf("review %+v: %v", review, err)
+	}
+}
