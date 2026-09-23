@@ -170,6 +170,12 @@ other = "Target speed: {{.Value}} WPM"
 other = "Target accuracy: {{.Value}}%"
 [settings.length]
 other = "Lesson length: {{.Value}}"
+[settings.numbers]
+other = "Train numbers: {{.Value}}"
+[settings.uppercase]
+other = "Train uppercase letters: {{.Value}}"
+[settings.punctuation]
+other = "Train special characters: {{.Value}}"
 [settings.keyboard]
 other = "Virtual keyboard: {{.Value}}"
 [settings.theme]

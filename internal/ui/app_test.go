@@ -119,7 +119,7 @@ func TestThemeSettingAppliesAndPersists(t *testing.T) {
 		t.Fatal(err)
 	}
 	s := newSettingsScreen(app.ctx).(*settingsScreen)
-	s.cursor = 6
+	s.cursor = 9
 	before := app.ctx.theme.Progress(.5).Render("x")
 	screenKey(s, key('l', 0, 0))
 	if got := app.ctx.settings().ColorTheme; got != domain.ThemeOcean {
@@ -140,7 +140,7 @@ func TestInterfacePositionAppliesAndPersists(t *testing.T) {
 		t.Fatal(err)
 	}
 	s := newSettingsScreen(app.ctx).(*settingsScreen)
-	s.cursor = 7
+	s.cursor = 10
 	screenKey(s, key('l', 0, 0))
 	if got := app.ctx.settings().Position; got != domain.PositionCenterRight {
 		t.Fatalf("active position is %q", got)

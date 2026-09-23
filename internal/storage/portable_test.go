@@ -73,6 +73,21 @@ func TestBackupRoundTripAndInvalidImportRollback(t *testing.T) {
 	}
 }
 
+func TestImportLegacyBackupDefaultsOptionalTrainingCategoriesOn(t *testing.T) {
+	s := testDB(t)
+	legacy := `{"format_version":1,"settings":{"Language":"en"}}`
+	if err := s.ImportBackup(bytes.NewBufferString(legacy)); err != nil {
+		t.Fatal(err)
+	}
+	settings, err := s.LoadSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !settings.TrainNumbers || !settings.TrainUppercase || !settings.TrainPunctuation {
+		t.Fatalf("legacy backup disabled new training categories: %+v", settings)
+	}
+}
+
 func TestCSVExport(t *testing.T) {
 	s := testDB(t)
 	if err := s.SaveSession(sampleResult("csv", "en", time.Now()), nil); err != nil {

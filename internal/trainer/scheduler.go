@@ -59,7 +59,23 @@ func CandidateSkills(p domain.LanguageProfile) []domain.Skill {
 }
 
 func SelectSkill(p domain.LanguageProfile, skills map[string]domain.Skill, now time.Time) domain.Skill {
+	return SelectSkillWithOptions(p, skills, now, true, true, true)
+}
+
+// SelectSkillWithOptions schedules only the optional key categories enabled by the learner.
+func SelectSkillWithOptions(p domain.LanguageProfile, skills map[string]domain.Skill, now time.Time, numbers, uppercase, punctuation bool) domain.Skill {
 	candidates := CandidateSkills(p)
+	filtered := candidates[:0]
+	for _, candidate := range candidates {
+		if candidate.Kind == domain.SkillNumber && !numbers || candidate.Kind == domain.SkillUppercase && !uppercase || candidate.Kind == domain.SkillPunctuation && !punctuation {
+			continue
+		}
+		filtered = append(filtered, candidate)
+	}
+	return selectSkill(p, filtered, skills, now)
+}
+
+func selectSkill(p domain.LanguageProfile, candidates []domain.Skill, skills map[string]domain.Skill, now time.Time) domain.Skill {
 	// Build a reliable sample base for every rune before introducing bigrams.
 	// Six observations are enough to unlock a rune for generated words, but not
 	// enough to make pair-level timing useful or understandable to the learner.

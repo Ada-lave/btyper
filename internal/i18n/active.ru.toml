@@ -170,6 +170,12 @@ other = "Целевая скорость: {{.Value}} слов/мин"
 other = "Целевая точность: {{.Value}}%"
 [settings.length]
 other = "Длина урока: {{.Value}}"
+[settings.numbers]
+other = "Тренировать цифры: {{.Value}}"
+[settings.uppercase]
+other = "Тренировать заглавные буквы: {{.Value}}"
+[settings.punctuation]
+other = "Тренировать спецсимволы: {{.Value}}"
 [settings.keyboard]
 other = "Виртуальная клавиатура: {{.Value}}"
 [settings.theme]

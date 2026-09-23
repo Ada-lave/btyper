@@ -10,6 +10,10 @@ default database is `$XDG_DATA_HOME/btyper/btyper.db`, or
 `~/.local/share/btyper/btyper.db` when XDG_DATA_HOME is unset. Use `--data-dir`
 to choose another location. Custom text accepts UTF-8 up to 1 MiB.
 
+Settings can independently include or exclude numbers, uppercase letters, and
+special characters from the adaptive learning queue. All three categories are
+enabled by default, including for existing installations.
+
 ## Persistence and migrations
 
 The v1.0 series preserves user settings, completed sessions, skills, practice

@@ -42,13 +42,16 @@ type Settings struct {
 	Accuracy         float64
 	LessonRunes      int
 	DailyGoalMinutes int
+	TrainNumbers     bool
+	TrainUppercase   bool
+	TrainPunctuation bool
 	ShowKeyboard     bool
 	ColorTheme       ColorTheme
 	Position         InterfacePosition
 }
 
 func DefaultSettings() Settings {
-	return Settings{UILanguage: "", Language: "en", Mode: ModeAdaptive, TargetWPM: 35, Accuracy: 0.95, LessonRunes: 140, DailyGoalMinutes: 10, ShowKeyboard: true, ColorTheme: ThemeViolet, Position: PositionCenter}
+	return Settings{UILanguage: "", Language: "en", Mode: ModeAdaptive, TargetWPM: 35, Accuracy: 0.95, LessonRunes: 140, DailyGoalMinutes: 10, TrainNumbers: true, TrainUppercase: true, TrainPunctuation: true, ShowKeyboard: true, ColorTheme: ThemeViolet, Position: PositionCenter}
 }
 
 type LanguageProfile struct {

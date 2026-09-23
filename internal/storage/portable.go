@@ -2,6 +2,7 @@ package storage
 
 import (
 	"bufio"
+	"bytes"
 	"database/sql"
 	"encoding/csv"
 	"encoding/json"
@@ -179,8 +180,12 @@ func (s *SQLite) ExportBackup(w io.Writer) error {
 }
 
 func (s *SQLite) ImportBackup(r io.Reader) error {
+	data, err := io.ReadAll(io.LimitReader(r, 64<<20))
+	if err != nil {
+		return fmt.Errorf("read backup: %w", err)
+	}
 	var b Backup
-	dec := json.NewDecoder(io.LimitReader(r, 64<<20))
+	dec := json.NewDecoder(bytes.NewReader(data))
 	dec.DisallowUnknownFields()
 	if err := dec.Decode(&b); err != nil {
 		return fmt.Errorf("decode backup: %w", err)
@@ -191,6 +196,26 @@ func (s *SQLite) ImportBackup(r io.Reader) error {
 	}
 	if b.FormatVersion != BackupFormatVersion {
 		return fmt.Errorf("unsupported backup format %d", b.FormatVersion)
+	}
+	var root struct {
+		Settings json.RawMessage `json:"settings"`
+	}
+	if err := json.Unmarshal(data, &root); err != nil {
+		return fmt.Errorf("decode backup settings: %w", err)
+	}
+	var rawSettings map[string]json.RawMessage
+	if err := json.Unmarshal(root.Settings, &rawSettings); err != nil {
+		return fmt.Errorf("decode backup settings: %w", err)
+	}
+	defaults := domain.DefaultSettings()
+	if _, ok := rawSettings["TrainNumbers"]; !ok {
+		b.Settings.TrainNumbers = defaults.TrainNumbers
+	}
+	if _, ok := rawSettings["TrainUppercase"]; !ok {
+		b.Settings.TrainUppercase = defaults.TrainUppercase
+	}
+	if _, ok := rawSettings["TrainPunctuation"]; !ok {
+		b.Settings.TrainPunctuation = defaults.TrainPunctuation
 	}
 	seen := map[string]bool{}
 	for _, session := range b.Sessions {

@@ -113,7 +113,7 @@ func TestFailedSettingsKeepLanguageAndTheme(t *testing.T) {
 		t.Fatal("failed setting changed locale")
 	}
 	s := a.screen.(*settingsScreen)
-	s.cursor = 6
+	s.cursor = 9
 	_, cmd = a.Update(key('l', 0, 0))
 	drainCommand(t, a, cmd)
 	if a.ctx.settings().ColorTheme != domain.ThemeViolet {

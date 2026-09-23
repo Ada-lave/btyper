@@ -103,8 +103,10 @@ interval. Letter pairs are introduced only after every letter has accumulated
 30 observations; the lesson progress panel always names the actual letter or
 pair selected by the scheduler. Old `learn` and `improve` settings are migrated
 to `adaptive`, while their historical sessions remain available in statistics.
-After the letter foundation, adaptive practice also schedules digits, uppercase
-letters and punctuation. Custom-text practice measures these skills too.
+After the letter foundation, adaptive practice can schedule digits, uppercase
+letters and special characters. Each category can be enabled or disabled
+independently in Settings; all are enabled by default. Custom-text practice
+continues to measure the keys present in the supplied text.
 
 Choose **Drill a letter or pair** from the menu to practice any letter or
 two-letter pair in the current language. Selecting a target does not advance

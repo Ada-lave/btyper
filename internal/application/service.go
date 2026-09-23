@@ -225,7 +225,7 @@ func (s *LessonService) StartAdaptive(mode domain.Mode, now time.Time) *trainer.
 			}
 		}
 	}
-	target := trainer.SelectSkill(p, s.skills, now)
+	target := trainer.SelectSkillWithOptions(p, s.skills, now, s.settings.TrainNumbers, s.settings.TrainUppercase, s.settings.TrainPunctuation)
 	for _, r := range target.Pattern {
 		unlocked[r] = true
 	}

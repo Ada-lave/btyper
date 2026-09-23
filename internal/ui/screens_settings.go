@@ -49,13 +49,13 @@ func (s *settingsScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 	case k.Key().Code == tea.KeyEsc:
 		return Action{Kind: ActionNavigate, Route: RouteMenu}, nil
 	case isUp(k):
-		s.cursor = (s.cursor + 9) % 10
+		s.cursor = (s.cursor + 12) % 13
 	case isDown(k) || k.Key().Code == tea.KeyTab:
-		s.cursor = (s.cursor + 1) % 10
+		s.cursor = (s.cursor + 1) % 13
 	case isLeft(k):
 		return Action{}, s.change(-1)
 	case isRight(k) || k.Key().Code == tea.KeyEnter:
-		if s.cursor == 9 {
+		if s.cursor == 12 {
 			s.confirm = true
 		} else {
 			return Action{}, s.change(1)
@@ -91,12 +91,18 @@ func (s *settingsScreen) change(d int) tea.Cmd {
 	case 4:
 		v.LessonRunes = max(50, min(500, v.LessonRunes+d*10))
 	case 5:
-		v.ShowKeyboard = !v.ShowKeyboard
+		v.TrainNumbers = !v.TrainNumbers
 	case 6:
-		v.ColorTheme = nextColorTheme(v.ColorTheme, d)
+		v.TrainUppercase = !v.TrainUppercase
 	case 7:
-		v.Position = nextPosition(v.Position, d)
+		v.TrainPunctuation = !v.TrainPunctuation
 	case 8:
+		v.ShowKeyboard = !v.ShowKeyboard
+	case 9:
+		v.ColorTheme = nextColorTheme(v.ColorTheme, d)
+	case 10:
+		v.Position = nextPosition(v.Position, d)
+	case 11:
 		v.DailyGoalMinutes = max(1, min(120, v.DailyGoalMinutes+d))
 	}
 	return s.c.work(func() error { return s.c.service.SaveSettings(v) }, func(err error) tea.Cmd {
@@ -172,7 +178,27 @@ func (s *settingsScreen) View() string {
 		yesno = s.c.t(i18n.BoolYes, nil)
 	}
 	length := s.c.localizer.Plural(i18n.CountCharacters, v.LessonRunes, map[string]any{"Count": v.LessonRunes})
-	vals := []string{s.c.t(i18n.SettingsUI, map[string]any{"Value": strings.ToUpper(v.UILanguage)}), s.c.t(i18n.SettingsTraining, map[string]any{"Value": profileName}), s.c.t(i18n.SettingsSpeed, map[string]any{"Value": fmt.Sprintf("%.0f", v.TargetWPM)}), s.c.t(i18n.SettingsAccuracy, map[string]any{"Value": fmt.Sprintf("%.0f", v.Accuracy*100)}), s.c.t(i18n.SettingsLength, map[string]any{"Value": length}), s.c.t(i18n.SettingsKeyboard, map[string]any{"Value": yesno}), s.c.t(i18n.SettingsTheme, map[string]any{"Value": s.themeName(v.ColorTheme)}), s.c.t(i18n.SettingsPosition, map[string]any{"Value": s.positionName(v.Position)}), s.c.t("settings.daily_goal", map[string]any{"Value": v.DailyGoalMinutes}), s.c.t(i18n.SettingsReset, nil)}
+	boolValue := func(enabled bool) string {
+		if enabled {
+			return s.c.t(i18n.BoolYes, nil)
+		}
+		return s.c.t(i18n.BoolNo, nil)
+	}
+	vals := []string{
+		s.c.t(i18n.SettingsUI, map[string]any{"Value": strings.ToUpper(v.UILanguage)}),
+		s.c.t(i18n.SettingsTraining, map[string]any{"Value": profileName}),
+		s.c.t(i18n.SettingsSpeed, map[string]any{"Value": fmt.Sprintf("%.0f", v.TargetWPM)}),
+		s.c.t(i18n.SettingsAccuracy, map[string]any{"Value": fmt.Sprintf("%.0f", v.Accuracy*100)}),
+		s.c.t(i18n.SettingsLength, map[string]any{"Value": length}),
+		s.c.t(i18n.SettingsNumbers, map[string]any{"Value": boolValue(v.TrainNumbers)}),
+		s.c.t(i18n.SettingsUppercase, map[string]any{"Value": boolValue(v.TrainUppercase)}),
+		s.c.t(i18n.SettingsPunctuation, map[string]any{"Value": boolValue(v.TrainPunctuation)}),
+		s.c.t(i18n.SettingsKeyboard, map[string]any{"Value": yesno}),
+		s.c.t(i18n.SettingsTheme, map[string]any{"Value": s.themeName(v.ColorTheme)}),
+		s.c.t(i18n.SettingsPosition, map[string]any{"Value": s.positionName(v.Position)}),
+		s.c.t("settings.daily_goal", map[string]any{"Value": v.DailyGoalMinutes}),
+		s.c.t(i18n.SettingsReset, nil),
+	}
 	var b strings.Builder
 	b.WriteString(s.c.theme.Title.Render(s.c.t(i18n.Settings, nil)))
 	b.WriteString("\n\n")

@@ -98,6 +98,44 @@ func TestSchedulerPrioritizesOverdueObservedSkill(t *testing.T) {
 	}
 }
 
+func TestSchedulerSkipsDisabledOptionalCategories(t *testing.T) {
+	p := Profiles()["en"]
+	now := time.Date(2026, 9, 22, 12, 0, 0, 0, time.UTC)
+	skills := map[string]domain.Skill{}
+	for _, candidate := range CandidateSkills(p) {
+		skills[SkillKey(candidate.Kind, candidate.Pattern)] = domain.Skill{Language: "en", Kind: candidate.Kind, Pattern: candidate.Pattern, Samples: 30, Confidence: 1, DueAt: now.Add(time.Hour)}
+	}
+	for _, candidate := range CandidateSkills(p) {
+		if candidate.Kind != domain.SkillRune && candidate.Kind != domain.SkillBigram {
+			skill := skills[SkillKey(candidate.Kind, candidate.Pattern)]
+			skill.Samples, skill.DueAt = 0, time.Time{}
+			skills[SkillKey(candidate.Kind, candidate.Pattern)] = skill
+		}
+	}
+	got := SelectSkillWithOptions(p, skills, now, false, false, false)
+	if got.Kind == domain.SkillNumber || got.Kind == domain.SkillUppercase || got.Kind == domain.SkillPunctuation {
+		t.Fatalf("selected optional category %s:%s while all were disabled", got.Kind, got.Pattern)
+	}
+}
+
+func TestSchedulerCanKeepOneOptionalCategoryEnabled(t *testing.T) {
+	p := Profiles()["en"]
+	now := time.Date(2026, 9, 22, 12, 0, 0, 0, time.UTC)
+	skills := map[string]domain.Skill{}
+	for _, candidate := range CandidateSkills(p) {
+		skills[SkillKey(candidate.Kind, candidate.Pattern)] = domain.Skill{Language: "en", Kind: candidate.Kind, Pattern: candidate.Pattern, Samples: 1000, Confidence: 1, DueAt: now.Add(time.Hour)}
+	}
+	want := domain.Skill{Kind: domain.SkillNumber, Pattern: "7"}
+	key := SkillKey(want.Kind, want.Pattern)
+	skill := skills[key]
+	skill.Samples, skill.DueAt = 0, time.Time{}
+	skills[key] = skill
+	got := SelectSkillWithOptions(p, skills, now, true, false, false)
+	if got.Kind != want.Kind || got.Pattern != want.Pattern {
+		t.Fatalf("selected %s:%s, want enabled skill %s:%s", got.Kind, got.Pattern, want.Kind, want.Pattern)
+	}
+}
+
 func TestUpdateSkillsPromotesAndDemotesReviewLevel(t *testing.T) {
 	now := time.Date(2026, 9, 22, 12, 0, 0, 0, time.UTC)
 	settings := domain.DefaultSettings()
