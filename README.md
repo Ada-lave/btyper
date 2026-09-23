@@ -135,6 +135,8 @@ seven days of active practice. It compares this week's duration-weighted WPM
 with the personal baseline from all earlier sessions in the selected language.
 The retention summary counts observed skills at review level 3 or higher
 (interval of at least seven days) and skills currently due for review.
+Bundled EN/RU layouts, learning order, words, and frequent pairs live in
+validated JSON profiles inside the binary.
 Settings also has a daily active-practice goal (1–120 minutes, default 10).
 The menu and practice screens show a neutral in-progress or complete status
 and the current streak of completed local calendar days. An incomplete today

@@ -52,11 +52,13 @@ func DefaultSettings() Settings {
 }
 
 type LanguageProfile struct {
-	ID, NameID  string
-	UnlockOrder []rune
-	Rows        []string
-	Finger      map[rune]string
-	Words       []string
+	ID, NameID, Name string
+	UnlockOrder      []rune
+	Rows             []string
+	FingerGroups     []string
+	Finger           map[rune]string
+	Words            []string
+	FrequentPairs    []string
 }
 
 type CharacterProgress struct {

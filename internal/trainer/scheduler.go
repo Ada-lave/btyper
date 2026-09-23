@@ -2,7 +2,6 @@ package trainer
 
 import (
 	"math"
-	"sort"
 	"strings"
 	"time"
 	"unicode"
@@ -38,39 +37,14 @@ func SkillKindForPattern(pattern string) domain.SkillKind {
 	}
 }
 
-// CandidateSkills returns the portable curriculum encoded by a language
-// profile. Bigrams are ranked by their frequency in the bundled word list.
+// CandidateSkills returns the portable curriculum encoded by a language profile.
 func CandidateSkills(p domain.LanguageProfile) []domain.Skill {
-	out := make([]domain.Skill, 0, len(p.UnlockOrder)+64)
+	out := make([]domain.Skill, 0, len(p.UnlockOrder)+len(p.FrequentPairs)+64)
 	for _, r := range p.UnlockOrder {
 		out = append(out, domain.Skill{Language: p.ID, Kind: domain.SkillRune, Pattern: string(r)})
 	}
-	counts := map[string]int{}
-	for _, word := range p.Words {
-		rs := []rune(strings.ToLower(word))
-		for i := 1; i < len(rs); i++ {
-			if !unicode.IsLetter(rs[i-1]) || !unicode.IsLetter(rs[i]) {
-				continue
-			}
-			counts[string(rs[i-1:i+1])]++
-		}
-	}
-	type pair struct {
-		pattern string
-		count   int
-	}
-	pairs := make([]pair, 0, len(counts))
-	for pattern, count := range counts {
-		pairs = append(pairs, pair{pattern, count})
-	}
-	sort.Slice(pairs, func(i, j int) bool {
-		if pairs[i].count != pairs[j].count {
-			return pairs[i].count > pairs[j].count
-		}
-		return pairs[i].pattern < pairs[j].pattern
-	})
-	for _, pair := range pairs[:min(64, len(pairs))] {
-		out = append(out, domain.Skill{Language: p.ID, Kind: domain.SkillBigram, Pattern: pair.pattern})
+	for _, pair := range p.FrequentPairs {
+		out = append(out, domain.Skill{Language: p.ID, Kind: domain.SkillBigram, Pattern: pair})
 	}
 	for _, r := range "0123456789" {
 		out = append(out, domain.Skill{Language: p.ID, Kind: domain.SkillNumber, Pattern: string(r)})

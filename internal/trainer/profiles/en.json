@@ -1,0 +1,9 @@
+{
+  "id": "en",
+  "name_id": "language.english",
+  "unlock_order": "enitrlsaudcyghpmobwfvkxzqj",
+  "rows": ["qwertyuiop", "asdfghjkl", "zxcvbnm"],
+  "finger_groups": ["qaz", "wsx", "edc", "rfvtgb", "yhnujm", "ik", "ol", "p"],
+  "words": ["the", "there", "their", "learn", "letter", "line", "time", "train", "read", "write", "speed", "skill", "type", "quick", "brown", "fox", "jump", "over", "keyboard", "practice", "screen", "focus", "better", "daily", "simple", "word", "sound", "hand", "finger", "home"],
+  "frequent_pairs": ["er", "he", "in", "le", "re", "te", "th", "ai", "ar", "ea", "ee", "et", "fo", "ic", "il", "im", "me", "mp", "nd", "pe", "ra", "rd", "ti", "tt", "ac", "ad", "an", "be", "bo", "br", "ce", "ck", "cr", "ct", "cu", "da", "ed", "ei", "en", "ey", "fi", "ge", "ha", "ho", "ir", "it", "ju", "ke", "ki", "li", "ll", "ly", "ne", "ng", "oa", "oc", "om", "or", "ou", "ov", "ow", "ox", "pl", "pr"]
+}
