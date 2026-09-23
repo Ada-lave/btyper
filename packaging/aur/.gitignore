@@ -1,0 +1,5 @@
+/LICENSE
+/btyper-linux-*-v*
+/*.pkg.tar.*
+/src/
+/pkg/
