@@ -1,6 +1,6 @@
 # Maintainer: Ada-lave <https://github.com/Ada-lave>
 pkgname=btyper-bin
-pkgver=1.0.0
+pkgver=1.0.1
 pkgrel=1
 pkgdesc='Adaptive touch-typing practice in the terminal'
 arch=('x86_64' 'aarch64')
@@ -8,12 +8,12 @@ url='https://github.com/Ada-lave/btyper'
 license=('MIT')
 provides=('btyper')
 conflicts=('btyper')
-source=('LICENSE::https://raw.githubusercontent.com/Ada-lave/btyper/v1.0.0/LICENSE')
+source=('LICENSE::https://raw.githubusercontent.com/Ada-lave/btyper/v1.0.1/LICENSE')
 source_x86_64=("btyper-linux-amd64-v${pkgver}::https://github.com/Ada-lave/btyper/releases/download/v${pkgver}/btyper-linux-amd64")
 source_aarch64=("btyper-linux-arm64-v${pkgver}::https://github.com/Ada-lave/btyper/releases/download/v${pkgver}/btyper-linux-arm64")
 sha256sums=('bdabf93f2c955e364578613d481fe3ec286b7e03d295a3b1ef3a1d162e7844cd')
-sha256sums_x86_64=('08848287e18fbc4e6c2dbebb67aef45d9f8e23b7c794f92b9e842ff2b105faa0')
-sha256sums_aarch64=('60a0ff68474c8164107a77122726b0274209755637e732d7026cba92ae044fe3')
+sha256sums_x86_64=('9573a3fcab3bd8a043fa3e9f3f41b8e9b7308bebfe7d0a3610fe552138ab81f7')
+sha256sums_aarch64=('974be9cf081d126b4aa8ccba4e2e9dae44ebd14da9955c9202a6c71420f4d2a4')
 
 package() {
   local asset

@@ -19,7 +19,7 @@ curl -fsSL https://raw.githubusercontent.com/Ada-lave/btyper/main/install.sh | s
 
 Перед запуском ознакомьтесь с [`install.sh`](install.sh). Переменная
 `BTYPER_INSTALL_DIR` выбирает другой каталог, а `BTYPER_VERSION` — конкретный
-релиз, например `BTYPER_VERSION=v1.0.0`.
+релиз, например `BTYPER_VERSION=v1.0.1`.
 
 Либо соберите программу из исходного кода с версией Go из `go.mod`:
 
