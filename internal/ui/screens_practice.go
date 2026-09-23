@@ -51,7 +51,7 @@ func (s *practiceScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 			s.pauseCursor = 0
 			return Action{}, nil
 		case isCtrlKey(x, 'r'):
-			s.c.engine = trainer.NewEngine(string(e.Text), e.Result.Mode, e.Result.Language, e.Result.TargetRune, time.Time{})
+			s.c.engine = restartEngine(e)
 			s.c.status.Clear()
 			return Action{}, nil
 		case x.Key().Code == tea.KeyBackspace:
@@ -105,7 +105,7 @@ func (s *practiceScreen) updatePause(k tea.KeyPressMsg, now time.Time) (Action, 
 		s.manualPause = false
 	case 1:
 		e := s.c.engine
-		s.c.engine = trainer.NewEngine(string(e.Text), e.Result.Mode, e.Result.Language, e.Result.TargetRune, time.Time{})
+		s.c.engine = restartEngine(e)
 		s.manualPause = false
 		s.c.status.Clear()
 	case 2:
@@ -114,6 +114,13 @@ func (s *practiceScreen) updatePause(k tea.KeyPressMsg, now time.Time) (Action, 
 		return Action{Kind: ActionNavigate, Route: RouteMenu}, nil
 	}
 	return Action{}, nil
+}
+
+func restartEngine(e *trainer.Engine) *trainer.Engine {
+	if e.Result.Mode == domain.ModeAdaptive {
+		return trainer.NewAdaptiveEngine(string(e.Text), e.Result.Language, e.Result.TargetSkill, time.Time{})
+	}
+	return trainer.NewEngine(string(e.Text), e.Result.Mode, e.Result.Language, e.Result.TargetRune, time.Time{})
 }
 func (s *practiceScreen) View() string {
 	e := s.c.engine

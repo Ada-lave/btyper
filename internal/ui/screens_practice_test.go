@@ -46,3 +46,15 @@ func TestFocusDoesNotResumeManualPause(t *testing.T) {
 		t.Fatal("focus resumed a manually paused lesson")
 	}
 }
+
+func TestRestartPreservesAdaptivePairTarget(t *testing.T) {
+	e := trainer.NewAdaptiveEngine("br brown", "en", "br", time.Time{})
+	c := &Context{engine: e}
+	s := newPracticeScreen(c).(*practiceScreen)
+	s.Update(tea.KeyPressMsg(tea.Key{Code: tea.KeyEsc}))
+	s.Update(key('j', 0, 0))
+	s.Update(tea.KeyPressMsg(tea.Key{Code: tea.KeyEnter}))
+	if c.engine == e || c.engine.Result.TargetSkill != "br" || string(c.engine.Text) != "br brown" {
+		t.Fatalf("restart changed scheduled target: %+v", c.engine.Result)
+	}
+}
