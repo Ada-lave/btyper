@@ -239,7 +239,7 @@ other = "Esc · back"
 [hotkey.pause]
 other = "↑/↓ or j/k · select   Enter · apply   Esc · continue"
 [hotkey.practice]
-other = "Esc pause menu · Ctrl+R restart · Ctrl+C quit"
+other = "Esc pause menu · Ctrl+R restart · Ctrl+K keyboard · Ctrl+C quit"
 [hotkey.result]
 other = "Enter · next lesson   Esc · menu"
 [hotkey.text]

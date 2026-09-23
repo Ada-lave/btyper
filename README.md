@@ -71,7 +71,8 @@ Inside the application use arrow keys or `j`/`k` to navigate. In Settings,
 `h`/`l` also change values. These physical shortcuts work with both English
 and Russian keyboard layouts. During lessons, Esc opens a pause menu with
 continue, restart, and exit actions; Backspace clears a mistake, and Ctrl+R
-restarts the generated lesson. Custom text can be pasted into the editor or
+restarts the generated lesson. Ctrl+K toggles the virtual keyboard during a
+lesson. Custom text can be pasted into the editor or
 opened with Ctrl+O, then started with Ctrl+S.
 
 Custom text must be valid UTF-8 and at most 1 MiB. Both the CLI and file picker

@@ -47,6 +47,20 @@ func TestFocusDoesNotResumeManualPause(t *testing.T) {
 	}
 }
 
+func TestCtrlKTogglesKeyboardWithoutTyping(t *testing.T) {
+	engine := trainer.NewEngine("test", domain.ModeLearn, "en", 't', time.Time{})
+	s := newPracticeScreen(&Context{engine: engine}).(*practiceScreen)
+
+	s.Update(key('k', tea.ModCtrl, 0))
+	if !s.hideKeyboard || engine.Pos != 0 {
+		t.Fatal("Ctrl+K did not hide the keyboard without entering text")
+	}
+	s.Update(key('л', tea.ModCtrl, 0))
+	if s.hideKeyboard || engine.Pos != 0 {
+		t.Fatal("Ctrl+K with Russian layout did not restore the keyboard")
+	}
+}
+
 func TestRestartPreservesAdaptivePairTarget(t *testing.T) {
 	e := trainer.NewAdaptiveEngine("br brown", "en", "br", time.Time{})
 	c := &Context{engine: e}

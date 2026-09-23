@@ -37,7 +37,7 @@ For each release, verify with EN and RU interfaces:
 - Navigate menu, settings, lesson pause and result without a mouse using
   arrows/Enter/Esc; `j`/`k` and `h`/`l` work with both keyboard layouts.
 - Select the monochrome theme and ensure state is communicated in words or
-  symbols, not by color alone. Hide the keyboard and confirm practice remains
+  symbols, not by color alone. Hide the keyboard with Ctrl+K and confirm practice remains
   usable.
 - Resize to 60×16 and below; clipped content must be scrollable with PgUp/PgDn
   where appropriate, and practice must pause below the minimum size.

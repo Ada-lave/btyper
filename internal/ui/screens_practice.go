@@ -21,12 +21,16 @@ type practiceScreen struct {
 	keyboard    Keyboard
 	pauseCursor int
 	manualPause bool
+	hideKeyboard bool
 }
 
 func newPracticeScreen(c *Context) Screen {
 	return &practiceScreen{c: c, bar: progress.New(progress.WithDefaultBlend())}
 }
-func (s *practiceScreen) Activate() tea.Cmd { return nil }
+func (s *practiceScreen) Activate() tea.Cmd {
+	s.hideKeyboard = false
+	return nil
+}
 func (s *practiceScreen) Resize(w, h int)   { s.bar.SetWidth(max(10, min(70, max(40, w-8)-20))) }
 func (s *practiceScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 	e := s.c.engine
@@ -53,6 +57,9 @@ func (s *practiceScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 		case isCtrlKey(x, 'r'):
 			s.c.engine = restartEngine(e)
 			s.c.status.Clear()
+			return Action{}, nil
+		case isCtrlKey(x, 'k'):
+			s.hideKeyboard = !s.hideKeyboard
 			return Action{}, nil
 		case x.Key().Code == tea.KeyBackspace:
 			e.Backspace()
@@ -154,7 +161,7 @@ func (s *practiceScreen) View() string {
 		centerBlock(footer, s.c.width),
 	)
 	out := strings.Join(blocks, "\n\n")
-	if s.c.settings().ShowKeyboard && s.c.width >= 80 && s.c.height >= 24 {
+	if s.c.settings().ShowKeyboard && !s.hideKeyboard && s.c.width >= 80 && s.c.height >= 24 {
 		keyboard := centerBlock(s.keyboard.View(s.c.service.Profile(), e, s.c), s.c.width)
 		withKeyboard := out + "\n\n" + keyboard
 		if lipgloss.Height(lipgloss.NewStyle().Width(s.c.width).Render(withKeyboard)) <= s.c.height {
