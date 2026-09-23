@@ -2,7 +2,10 @@ package storage
 
 import (
 	"btyper/internal/domain"
+	"bytes"
 	"database/sql"
+	"encoding/json"
+	"fmt"
 	"path/filepath"
 	"testing"
 	"time"
@@ -216,6 +219,24 @@ INSERT INTO character_stats VALUES(1,'a',3,0,400);`)
 	if err = s.migrate(); err != nil {
 		t.Fatal("migration not repeatable", err)
 	}
+	var encoded bytes.Buffer
+	if err = s.ExportBackup(&encoded); err != nil {
+		t.Fatal("legacy export failed", err)
+	}
+	var backup Backup
+	if err = json.Unmarshal(encoded.Bytes(), &backup); err != nil {
+		t.Fatal(err)
+	}
+	if len(backup.Sessions) != 1 || backup.Sessions[0].AttemptID == "" || backup.Sessions[0].Chars['a'].LatencySamples != 0 {
+		t.Fatalf("invalid legacy backup: %+v", backup.Sessions)
+	}
+	restored := testDB(t)
+	if err = restored.ImportBackup(bytes.NewReader(encoded.Bytes())); err != nil {
+		t.Fatal("legacy restore failed", err)
+	}
+	if sessions, err := restored.History(domain.HistoryFilter{}); err != nil || len(sessions) != 1 {
+		t.Fatalf("legacy history was not restored: %v %v", sessions, err)
+	}
 }
 
 func TestMigrationFailureRollsBack(t *testing.T) {
@@ -238,5 +259,60 @@ func TestMigrationFailureRollsBack(t *testing.T) {
 	}
 	if _, err = db.Exec(`SELECT unlocked FROM progress`); err == nil {
 		t.Fatal("schema changes were not rolled back")
+	}
+}
+
+func TestMigrateFromIntermediateSchemas(t *testing.T) {
+	for _, version := range []int{2, 3} {
+		t.Run(fmt.Sprintf("v%d", version), func(t *testing.T) {
+			dir := t.TempDir()
+			db, err := sql.Open("sqlite", filepath.Join(dir, "btyper.db"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			_, err = db.Exec(`CREATE TABLE schema_migrations(version INTEGER PRIMARY KEY);` + schemaV1 + `
+ALTER TABLE progress ADD COLUMN unlocked INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE progress ADD COLUMN mastered INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE character_stats ADD COLUMN latency_samples INTEGER;
+ALTER TABLE sessions ADD COLUMN attempt_id TEXT;
+CREATE UNIQUE INDEX sessions_attempt_id ON sessions(attempt_id);
+CREATE INDEX sessions_filter ON sessions(language,mode,started_at);
+INSERT INTO schema_migrations(version) VALUES(2);
+INSERT INTO settings VALUES(1,'{"Language":"en"}');
+INSERT INTO progress(language,rune,samples,errors,latency_ms,accuracy,confidence,mastery_streak,unlocked,mastered) VALUES('en','e',30,0,200,1,1,2,1,1);
+INSERT INTO sessions(started_at,mode,language,target_rune,text,duration_ms,correct,attempts,errors,corrections,wpm,cpm,accuracy,attempt_id) VALUES('2026-09-18T12:00:00Z','learn','en','e','ee',1000,2,2,0,0,24,120,1,'old-attempt');`)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if version == 3 {
+				_, err = db.Exec(`CREATE TABLE practice_time(attempt_id TEXT NOT NULL, day TEXT NOT NULL, duration_ns INTEGER NOT NULL CHECK(duration_ns>=0), PRIMARY KEY(attempt_id,day));
+INSERT INTO practice_time VALUES('old-attempt','2026-09-18',1000000000);
+INSERT INTO schema_migrations(version) VALUES(3);`)
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
+			if err = db.Close(); err != nil {
+				t.Fatal(err)
+			}
+			s, err := Open(dir)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer s.Close()
+			var current int
+			if err = s.db.QueryRow(`SELECT MAX(version) FROM schema_migrations`).Scan(&current); err != nil || current != 4 {
+				t.Fatalf("schema version %d: %v", current, err)
+			}
+			if h, err := s.History(domain.HistoryFilter{}); err != nil || len(h) != 1 {
+				t.Fatalf("history lost: %v %v", h, err)
+			}
+			if skills, err := s.LoadSkills("en"); err != nil || skills["rune:e"].Samples != 30 {
+				t.Fatalf("rune skill lost: %v %v", skills, err)
+			}
+			if duration, err := s.PracticeTime("2026-09-18"); err != nil || duration != time.Second {
+				t.Fatalf("practice time lost: %v %v", duration, err)
+			}
+		})
 	}
 }

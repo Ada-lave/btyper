@@ -2,6 +2,7 @@ package storage
 
 import (
 	"bufio"
+	"database/sql"
 	"encoding/csv"
 	"encoding/json"
 	"errors"
@@ -91,13 +92,22 @@ func (s *SQLite) ExportBackup(w io.Writer) error {
 		return err
 	}
 	var sessionIDs []int64
+	usedAttempts := map[string]bool{}
+	var legacySessions []int
 	for rows.Next() {
 		var r domain.SessionResult
 		var id, ms int64
 		var stamp, mode, target string
-		if err = rows.Scan(&id, &r.AttemptID, &stamp, &mode, &r.Language, &target, &r.TargetSkill, &r.Text, &ms, &r.Correct, &r.Attempts, &r.Errors, &r.Corrections, &r.WPM, &r.CPM, &r.Accuracy); err != nil {
+		var attempt sql.NullString
+		if err = rows.Scan(&id, &attempt, &stamp, &mode, &r.Language, &target, &r.TargetSkill, &r.Text, &ms, &r.Correct, &r.Attempts, &r.Errors, &r.Corrections, &r.WPM, &r.CPM, &r.Accuracy); err != nil {
 			rows.Close()
 			return err
+		}
+		r.AttemptID = attempt.String
+		if r.AttemptID == "" {
+			legacySessions = append(legacySessions, len(b.Sessions))
+		} else {
+			usedAttempts[r.AttemptID] = true
 		}
 		r.StartedAt, err = time.Parse(time.RFC3339Nano, stamp)
 		if err != nil {
@@ -114,6 +124,14 @@ func (s *SQLite) ExportBackup(w io.Writer) error {
 	if err = rows.Close(); err != nil {
 		return err
 	}
+	for _, index := range legacySessions {
+		candidate := fmt.Sprintf("legacy-session-%d", sessionIDs[index])
+		for usedAttempts[candidate] {
+			candidate += "-legacy"
+		}
+		b.Sessions[index].AttemptID = candidate
+		usedAttempts[candidate] = true
+	}
 	for i, id := range sessionIDs {
 		stats, statErr := s.db.Query(`SELECT rune,samples,errors,latency_ms,latency_samples FROM character_stats WHERE session_id=?`, id)
 		if statErr != nil {
@@ -122,10 +140,12 @@ func (s *SQLite) ExportBackup(w io.Writer) error {
 		for stats.Next() {
 			var key string
 			var c domain.CharacterStat
-			if err = stats.Scan(&key, &c.Samples, &c.Errors, &c.LatencyMS, &c.LatencySamples); err != nil {
+			var latencySamples sql.NullInt64
+			if err = stats.Scan(&key, &c.Samples, &c.Errors, &c.LatencyMS, &latencySamples); err != nil {
 				stats.Close()
 				return err
 			}
+			c.LatencySamples = int(latencySamples.Int64)
 			rs := []rune(key)
 			if len(rs) == 1 {
 				c.Rune = rs[0]

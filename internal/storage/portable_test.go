@@ -2,6 +2,7 @@ package storage
 
 import (
 	"bytes"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
@@ -46,6 +47,26 @@ func TestBackupRoundTripAndInvalidImportRollback(t *testing.T) {
 	h, err = dst.History(domain.HistoryFilter{})
 	if err != nil || len(h) != 1 {
 		t.Fatal("invalid import changed data", h, err)
+	}
+	var backup Backup
+	if err := json.Unmarshal(encoded.Bytes(), &backup); err != nil {
+		t.Fatal(err)
+	}
+	backup.Progress = append(backup.Progress, backup.Progress[0])
+	malformed, err := json.Marshal(backup)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := dst.ImportBackup(bytes.NewReader(malformed)); err == nil {
+		t.Fatal("accepted duplicate progress after deleting existing rows")
+	}
+	h, err = dst.History(domain.HistoryFilter{})
+	if err != nil || len(h) != 1 {
+		t.Fatal("failed import did not roll back existing history", h, err)
+	}
+	got, err = dst.LoadSkills("en")
+	if err != nil || got["bigram:ee"].Level != 2 {
+		t.Fatal("failed import did not roll back skills", got, err)
 	}
 }
 

@@ -138,6 +138,15 @@ transaction. Before replacement, btyper writes a timestamped safety backup to
 the active data directory. CSV export creates `sessions.csv`,
 `practice_time.csv`, and `skills.csv`.
 
+If a lesson result cannot be saved, leave the result screen open, fix the
+storage problem (for example, free disk space or restore write access), then
+press Enter to retry. Esc discards that unsaved result. A failed import keeps
+the current dataset; the error prints the path of its pre-import safety backup.
+To recover from a bad import, close btyper and run
+`btyper import --input <safety-backup-path>`. To recover a damaged SQLite
+database, close btyper and restore a copy of the entire data directory,
+including any `-wal` and `-shm` files. Do not copy a live SQLite database.
+
 ## Data and upgrades
 
 Schema upgrades run transactionally at startup. Existing settings and session
