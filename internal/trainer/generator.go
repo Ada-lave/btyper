@@ -9,7 +9,10 @@ import (
 	"btyper/internal/domain"
 )
 
-type Generator struct{ Rand *rand.Rand }
+type Generator struct {
+	Rand  *rand.Rand
+	model map[string]map[rune]int
+}
 
 func NewGenerator(seed int64) *Generator { return &Generator{Rand: rand.New(rand.NewSource(seed))} }
 
@@ -72,23 +75,49 @@ func (g *Generator) AdaptiveLesson(profile domain.LanguageProfile, unlocked map[
 	}
 	base := g.Lesson(profile, unlocked, 0, weak, limit, domain.ModeAdaptive)
 	words := strings.Fields(base)
+	used := make(map[string]int)
+	for _, word := range words {
+		used[word]++
+	}
+	allowed := make([]rune, 0, len(unlocked))
+	for _, r := range profile.UnlockOrder {
+		if unlocked[r] {
+			allowed = append(allowed, r)
+		}
+	}
+	for _, r := range rs {
+		if !contains(allowed, r) {
+			allowed = append(allowed, r)
+		}
+	}
 	for i := 0; i < len(words); i += 5 {
 		for _, offset := range []int{0, 2} {
 			at := i + offset
 			if at >= len(words) {
 				continue
 			}
-			if len(focused) > 0 {
-				words[at] = focused[g.Rand.Intn(len(focused))]
-			} else {
-				words[at] = target.Pattern + target.Pattern
+			used[words[at]]--
+			word := g.leastUsed(focused, used, words[:at], false)
+			if word == "" {
+				for attempt := 0; attempt < 12; attempt++ {
+					letters := []rune(g.syntheticWord(profile, allowed, 0, weak))
+					pos := g.Rand.Intn(len(letters) - 1)
+					copy(letters[pos:pos+2], rs)
+					word = string(letters)
+					if used[word] == 0 {
+						break
+					}
+				}
 			}
+			words[at] = word
+			used[word]++
 		}
 	}
 	return strings.Join(words, " ")
 }
 
 func (g *Generator) Lesson(profile domain.LanguageProfile, unlocked map[rune]bool, target rune, weak map[rune]float64, limit int, mode domain.Mode) string {
+	g.model = nil
 	allowed := make([]rune, 0)
 	for _, r := range profile.UnlockOrder {
 		if unlocked[r] {
@@ -121,7 +150,7 @@ func (g *Generator) Lesson(profile domain.LanguageProfile, unlocked map[rune]boo
 		}
 		word := ""
 		if len(pool) > 0 && g.Rand.Intn(100) < realWordPercent {
-			word = g.leastUsed(pool, used, out, mode != domain.ModeLearn)
+			word = g.leastUsed(pool, used, out, false)
 		}
 		if word == "" {
 			forced := rune(0)
@@ -283,22 +312,26 @@ func isRecent(word string, recent []string, window int) bool {
 // list. It falls back to frequency-weighted letters when the current prefix
 // has no continuation in the restricted alphabet.
 func (g *Generator) nextRune(words []string, allowed, prefix []rune, weak map[rune]float64) rune {
-	weights := map[rune]float64{}
-	for _, word := range words {
-		rs := []rune(word)
-		for i, candidate := range rs {
-			if !contains(allowed, candidate) {
-				continue
+	if g.model == nil {
+		g.model = make(map[string]map[rune]int)
+		for _, word := range words {
+			rs := []rune(word)
+			for i, candidate := range rs {
+				for length := 0; length <= min(2, i); length++ {
+					key := string(rs[i-length : i])
+					if g.model[key] == nil {
+						g.model[key] = make(map[rune]int)
+					}
+					g.model[key][candidate]++
+				}
 			}
-			matched := len(prefix) == 0
-			if len(prefix) >= 2 && i >= 2 {
-				matched = rs[i-2] == prefix[len(prefix)-2] && rs[i-1] == prefix[len(prefix)-1]
-			} else if len(prefix) >= 1 && i >= 1 {
-				matched = rs[i-1] == prefix[len(prefix)-1]
-			}
-			if matched {
-				weights[candidate] += 1 + (1-weak[candidate])*2
-			}
+		}
+	}
+	key := string(prefix[max(0, len(prefix)-2):])
+	weights := make(map[rune]float64, len(allowed))
+	for _, candidate := range allowed {
+		if count := g.model[key][candidate]; count > 0 {
+			weights[candidate] = float64(count) * (1 + (1-weak[candidate])*2)
 		}
 	}
 	if len(weights) == 0 {

@@ -322,3 +322,7 @@ other = "←/→ page {{.Page}}/{{.Pages}}"
 other = "WPM = correct characters / 5 / active minutes. Accuracy = correct attempts / all attempts. Pauses are excluded; correction time is included. Letters are mastered after two target lessons at 100% confidence and stay open."
 [view.scroll]
 other = "PgUp/PgDn · scroll"
+[cli.dictionary_lang]
+other = "dictionary language: en, ru, or all (default)"
+[cli.dictionary_downloaded]
+other = "Dictionary {{.Language}} downloaded: {{.Count}} words. It will be used on the next launch."

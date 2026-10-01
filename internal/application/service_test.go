@@ -20,6 +20,33 @@ type failingStore struct {
 	saves              int
 }
 
+func TestServiceLoadsOptionalDictionaries(t *testing.T) {
+	dir := t.TempDir()
+	db, err := storage.Open(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = db.Close() }()
+	if err := os.MkdirAll(filepath.Join(dir, "dictionaries"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	for language, word := range map[string]string{"en": "elephant", "ru": "бегемот"} {
+		if err := os.WriteFile(filepath.Join(dir, "dictionaries", language+".txt"), []byte(word+" 1\n"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	service, err := NewLessonService(db, domain.DefaultSettings())
+	if err != nil {
+		t.Fatal(err)
+	}
+	for language, word := range map[string]string{"en": "elephant", "ru": "бегемот"} {
+		profile := service.Profiles()[language]
+		if profile.Words[0] != word || len(profile.Words) != len(trainer.Profiles()[language].Words)+1 {
+			t.Fatalf("%s: downloaded words not merged: %v", language, profile.Words)
+		}
+	}
+}
+
 func (s *failingStore) SaveSettings(v domain.Settings) error {
 	if s.failSave {
 		return errors.New("write failed")

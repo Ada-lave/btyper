@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"flag"
 	"fmt"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"btyper/internal/application"
+	"btyper/internal/dictionary"
 	"btyper/internal/domain"
 	"btyper/internal/i18n"
 	"btyper/internal/storage"
@@ -35,6 +37,12 @@ func main() {
 	}
 	if len(os.Args) > 1 && os.Args[1] == "profile" {
 		if err := runProfileCommand(os.Args[2:]); err != nil {
+			fatal(loc, err)
+		}
+		return
+	}
+	if len(os.Args) > 1 && os.Args[1] == "dictionary" {
+		if err := runDictionaryCommand(os.Args[2:], loc); err != nil {
 			fatal(loc, err)
 		}
 		return
@@ -110,6 +118,42 @@ func main() {
 	if _, err := tea.NewProgram(model).Run(); err != nil {
 		fatal(loc, err)
 	}
+}
+
+func runDictionaryCommand(args []string, loc *i18n.Localizer) error {
+	if len(args) == 0 || args[0] != "download" {
+		return errors.New("usage: btyper dictionary download [--lang en|ru|all] [--data-dir DIR]")
+	}
+	fs := flag.NewFlagSet("btyper dictionary download", flag.ContinueOnError)
+	language := fs.String("lang", "all", loc.Text(i18n.MessageID("cli.dictionary_lang"), nil))
+	dataDir := fs.String("data-dir", "", loc.Text(i18n.CLIDataDir, nil))
+	if err := fs.Parse(args[1:]); err != nil {
+		return err
+	}
+	if fs.NArg() != 0 {
+		return errors.New("unexpected dictionary command arguments")
+	}
+	languages := []string{*language}
+	if *language == "all" {
+		languages = []string{"en", "ru"}
+	} else if _, err := dictionary.Source(*language); err != nil {
+		return err
+	}
+	store, err := storage.Open(*dataDir)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = store.Close() }()
+	for _, language := range languages {
+		count, err := dictionary.Download(context.Background(), nil, store.DataDir(), language)
+		if err != nil {
+			return fmt.Errorf("%s: %w", language, err)
+		}
+		if _, err := fmt.Fprintln(os.Stdout, loc.Text(i18n.MessageID("cli.dictionary_downloaded"), map[string]any{"Language": language, "Count": count})); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func runProfileCommand(args []string) error {

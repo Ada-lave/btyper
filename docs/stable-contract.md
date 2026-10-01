@@ -14,6 +14,11 @@ Settings can independently include or exclude numbers, uppercase letters, and
 special characters from the adaptive learning queue. All three categories are
 enabled by default, including for existing installations.
 
+`btyper dictionary download --lang en|ru|all` optionally downloads larger
+vocabularies. They are loaded locally on subsequent launches; training requires
+no network. Dictionary files are separate from progress backups and use the
+source's CC BY-SA 4.0 content license. See [dictionaries](dictionaries.md).
+
 ## Persistence and migrations
 
 The v1.0 series preserves user settings, completed sessions, skills, practice

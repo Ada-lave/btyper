@@ -37,6 +37,18 @@ syntax check. Use `just coverage` to report package coverage.
 
 ## Run
 
+Download larger Russian and English vocabularies once:
+
+```sh
+btyper dictionary download
+# Or only one language:
+btyper dictionary download --lang ru
+```
+
+The next launch automatically uses these local dictionaries, including offline.
+Use `--data-dir DIR` after `download` if you also use it for training.
+See [dictionary sources and storage](docs/dictionaries.md).
+
 ```sh
 just run
 ```

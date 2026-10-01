@@ -2,6 +2,7 @@ package application
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"maps"
 	"math"
@@ -13,6 +14,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"btyper/internal/dictionary"
 	"btyper/internal/domain"
 	"btyper/internal/trainer"
 	"golang.org/x/text/unicode/norm"
@@ -115,6 +117,29 @@ func NewLessonService(store domain.Store, settings domain.Settings) (*LessonServ
 	}
 	if err := trainer.ValidateProfiles(profiles); err != nil {
 		return nil, err
+	}
+	if provider, ok := store.(interface{ DataDir() string }); ok {
+		for _, language := range []string{"en", "ru"} {
+			words, err := dictionary.Load(provider.DataDir(), language)
+			if err != nil {
+				return nil, fmt.Errorf("dictionary %s: %w", language, err)
+			}
+			if len(words) > 0 {
+				profile := profiles[language]
+				seen := make(map[string]bool, len(words))
+				for _, word := range words {
+					seen[word] = true
+				}
+				for _, word := range profile.Words {
+					if !seen[word] {
+						words = append(words, word)
+						seen[word] = true
+					}
+				}
+				profile.Words = words
+				profiles[language] = profile
+			}
+		}
 	}
 	if _, ok := profiles[settings.Language]; !ok {
 		settings.Language = "en"

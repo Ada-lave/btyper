@@ -63,6 +63,45 @@ func TestLessonIsDeterministicForSeed(t *testing.T) {
 	}
 }
 
+func TestAdaptiveLessonsVaryWithSmallVocabulary(t *testing.T) {
+	for _, language := range []string{"en", "ru"} {
+		profile := Profiles()[language]
+		unlocked := InitialUnlocked(profile)
+		for _, pattern := range []string{string(profile.UnlockOrder[0]), string(profile.UnlockOrder[:2])} {
+			kind := domain.SkillRune
+			if utf8.RuneCountInString(pattern) == 2 {
+				kind = domain.SkillBigram
+			}
+			target := domain.Skill{Language: language, Kind: kind, Pattern: pattern}
+			lessons := map[string]bool{}
+			for seed := int64(0); seed < 20; seed++ {
+				lesson := NewGenerator(seed).AdaptiveLesson(profile, unlocked, target, nil, 140)
+				if lessons[lesson] {
+					t.Fatalf("%s %q: different seeds produced the same lesson", language, pattern)
+				}
+				lessons[lesson] = true
+				words := strings.Fields(lesson)
+				unique := map[string]bool{}
+				focused := 0
+				for _, word := range words {
+					unique[word] = true
+					if strings.Contains(word, pattern) {
+						focused++
+					}
+					for _, r := range word {
+						if !unlocked[r] {
+							t.Fatalf("%s: locked rune %q in %q", language, r, word)
+						}
+					}
+				}
+				if float64(len(unique))/float64(len(words)) < .95 || focused < 2 {
+					t.Fatalf("%s %q: insufficient variety or focus: %q", language, pattern, lesson)
+				}
+			}
+		}
+	}
+}
+
 func TestSyntheticLearningWordsAlternateLetterClasses(t *testing.T) {
 	for _, language := range []string{"en", "ru"} {
 		profile := Profiles()[language]
@@ -76,6 +115,23 @@ func TestSyntheticLearningWordsAlternateLetterClasses(t *testing.T) {
 					t.Fatalf("%s: %q does not alternate vowels and consonants", language, string(word))
 				}
 			}
+		}
+	}
+}
+
+func TestGeneratorRebuildsModelForAnotherLanguage(t *testing.T) {
+	g := NewGenerator(42)
+	for _, language := range []string{"en", "ru", "en"} {
+		profile := Profiles()[language]
+		unlocked := InitialUnlocked(profile)
+		lesson := g.Lesson(profile, unlocked, profile.UnlockOrder[0], nil, 140, domain.ModeLearn)
+		for _, r := range lesson {
+			if r != ' ' && !unlocked[r] {
+				t.Fatalf("%s: unexpected rune %q", language, r)
+			}
+		}
+		if g.model[""][profile.UnlockOrder[0]] == 0 {
+			t.Fatalf("%s: model still uses previous language", language)
 		}
 	}
 }

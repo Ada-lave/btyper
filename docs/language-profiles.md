@@ -4,6 +4,10 @@ btyper uses portable JSON profiles for the keyboard layout, learning order,
 vowels, vocabulary, and frequent letter pairs. Profiles are local files; no
 account or network service is involved.
 
+Built-in English and Russian profiles can additionally use optional
+[downloaded dictionaries](dictionaries.md). Imported profiles retain their own
+`words`; optional dictionaries do not alter profile exports.
+
 Start from a built-in profile:
 
 ```sh
