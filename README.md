@@ -4,6 +4,8 @@
 
 Adaptive touch-typing practice in your terminal, inspired by Keybr's learning loop.
 
+![btyper typing practice demo](output.gif)
+
 ## Install and verify
 
 See the [installation guide](docs/install.md) for the supported installer.
