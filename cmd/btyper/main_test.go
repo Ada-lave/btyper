@@ -2,13 +2,38 @@ package main
 
 import (
 	"bytes"
+	"flag"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"btyper/internal/domain"
+	"btyper/internal/i18n"
 	"btyper/internal/trainer"
 )
+
+func TestUsageListsCommandsAndFlagsInBothLanguages(t *testing.T) {
+	for _, language := range []string{"en", "ru"} {
+		loc, err := i18n.New(language)
+		if err != nil {
+			t.Fatal(err)
+		}
+		fs := flag.NewFlagSet("btyper", flag.ContinueOnError)
+		var output bytes.Buffer
+		fs.SetOutput(&output)
+		fs.String("data-dir", "", loc.Text(i18n.CLIDataDir, nil))
+		fs.Usage = func() { printUsage(fs, loc) }
+		if err := fs.Parse([]string{"-h"}); err != flag.ErrHelp {
+			t.Fatalf("help returned %v", err)
+		}
+		for _, command := range []string{"dictionary download", "profile import", "profile export", "profile list", "\n  export ", "\n  import ", "-data-dir", "btyper dictionary download -h"} {
+			if !strings.Contains(output.String(), command) {
+				t.Fatalf("%s: help omits %q: %s", language, command, output.String())
+			}
+		}
+	}
+}
 
 func TestApplyLocaleDefaults(t *testing.T) {
 	tests := []struct {

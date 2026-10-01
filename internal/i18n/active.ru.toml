@@ -334,3 +334,22 @@ other = "PgUp/PgDn · прокрутка"
 other = "язык словаря: en, ru или all (по умолчанию)"
 [cli.dictionary_downloaded]
 other = "Словарь {{.Language}} скачан: {{.Count}} слов. Он будет использован при следующем запуске."
+[cli.usage]
+other = """
+Использование:
+  btyper [параметры]
+  btyper <команда> [параметры]
+
+Команды:
+  dictionary download  Скачать расширенные словари (--lang en|ru|all)
+  profile import       Импортировать языковой профиль (--input ФАЙЛ)
+  profile export       Экспортировать профиль (--id ID --output ФАЙЛ)
+  profile list         Показать доступные языковые профили
+  export               Экспортировать резервную копию или CSV (--format backup|csv)
+  import               Импортировать резервную копию (--input ФАЙЛ)
+
+Параметры команды: btyper <команда> -h, например:
+  btyper dictionary download -h
+
+Параметры:
+"""

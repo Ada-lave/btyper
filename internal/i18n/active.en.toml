@@ -326,3 +326,22 @@ other = "PgUp/PgDn · scroll"
 other = "dictionary language: en, ru, or all (default)"
 [cli.dictionary_downloaded]
 other = "Dictionary {{.Language}} downloaded: {{.Count}} words. It will be used on the next launch."
+[cli.usage]
+other = """
+Usage:
+  btyper [options]
+  btyper <command> [options]
+
+Commands:
+  dictionary download  Download larger vocabularies (--lang en|ru|all)
+  profile import       Import a language profile (--input FILE)
+  profile export       Export a language profile (--id ID --output FILE)
+  profile list         List available language profiles
+  export               Export a backup or CSV (--format backup|csv)
+  import               Import a backup (--input FILE)
+
+Run btyper <command> -h for command options, for example:
+  btyper dictionary download -h
+
+Options:
+"""

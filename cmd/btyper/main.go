@@ -30,19 +30,19 @@ func main() {
 		os.Exit(1)
 	}
 	if len(os.Args) > 1 && (os.Args[1] == "export" || os.Args[1] == "import") {
-		if err := runDataCommand(os.Args[1], os.Args[2:]); err != nil {
+		if err := runDataCommand(os.Args[1], os.Args[2:]); err != nil && !errors.Is(err, flag.ErrHelp) {
 			fatal(loc, err)
 		}
 		return
 	}
 	if len(os.Args) > 1 && os.Args[1] == "profile" {
-		if err := runProfileCommand(os.Args[2:]); err != nil {
+		if err := runProfileCommand(os.Args[2:]); err != nil && !errors.Is(err, flag.ErrHelp) {
 			fatal(loc, err)
 		}
 		return
 	}
 	if len(os.Args) > 1 && os.Args[1] == "dictionary" {
-		if err := runDictionaryCommand(os.Args[2:], loc); err != nil {
+		if err := runDictionaryCommand(os.Args[2:], loc); err != nil && !errors.Is(err, flag.ErrHelp) {
 			fatal(loc, err)
 		}
 		return
@@ -52,6 +52,7 @@ func main() {
 	textPath := flag.String("text", "", loc.Text(i18n.CLIText, nil))
 	dataDir := flag.String("data-dir", "", loc.Text(i18n.CLIDataDir, nil))
 	showVersion := flag.Bool("version", false, loc.Text(i18n.CLIVersion, nil))
+	flag.Usage = func() { printUsage(flag.CommandLine, loc) }
 	flag.Parse()
 	if *showVersion {
 		fmt.Println("btyper", version)
@@ -118,6 +119,11 @@ func main() {
 	if _, err := tea.NewProgram(model).Run(); err != nil {
 		fatal(loc, err)
 	}
+}
+
+func printUsage(fs *flag.FlagSet, loc *i18n.Localizer) {
+	_, _ = fmt.Fprintln(fs.Output(), loc.Text(i18n.MessageID("cli.usage"), nil))
+	fs.PrintDefaults()
 }
 
 func runDictionaryCommand(args []string, loc *i18n.Localizer) error {
