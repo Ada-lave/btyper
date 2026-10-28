@@ -9,6 +9,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -367,5 +368,28 @@ func TestImportedProfileCanBeSelectedAfterRestart(t *testing.T) {
 	s, err := NewLessonService(db, loaded)
 	if err != nil || s.Profile().ID != "en_alt" || s.StartAdaptive(domain.ModeAdaptive, time.Now()).Result.Language != "en_alt" {
 		t.Fatalf("imported profile cannot be used after restart: %v", err)
+	}
+}
+
+func TestBtypeSavesResultWithoutChangingLearning(t *testing.T) {
+	s, _ := newTestService(t)
+	now := time.Now()
+	beforeProgress, beforeSkills := s.Progress(), s.Skills()
+	e := s.StartBtype(now)
+	if e.Result.Mode != domain.ModeBtype || len(e.Text) == 0 || e.Result.TargetSkill != "" {
+		t.Fatalf("unexpected test: %+v", e.Result)
+	}
+	for i, r := range e.Text {
+		e.Input(r, now.Add(time.Duration(i)*time.Millisecond))
+	}
+	if _, err := s.Complete(e, now.Add(time.Second)); err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(beforeProgress, s.Progress()) || !reflect.DeepEqual(beforeSkills, s.Skills()) {
+		t.Fatal("test changed learning progress")
+	}
+	history, err := s.History(domain.HistoryFilter{Mode: domain.ModeBtype})
+	if err != nil || len(history) != 1 {
+		t.Fatalf("history: %v, %v", history, err)
 	}
 }

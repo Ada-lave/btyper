@@ -169,3 +169,5 @@ location, including any SQLite `-wal` and `-shm` files. Restore with btyper clos
 Settings → Reset removes progress, history and daily practice time for both
 languages; it preserves preferences. Older binaries must not be used to write
 an upgraded database.
+
+Choose **Btype** in the main menu for a typing test using random words in the selected language. The lesson length setting controls its length. Results appear in history without changing learning progress.

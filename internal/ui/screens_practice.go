@@ -200,6 +200,10 @@ func (s *resultScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 	}
 	switch {
 	case k.Key().Code == tea.KeyEnter || isPlainKey(k, 'n'):
+		if s.c.result.Mode == domain.ModeBtype {
+			s.c.engine = s.c.service.StartBtype(time.Now())
+			return Action{Kind: ActionNavigate, Route: RoutePractice}, nil
+		}
 		if s.c.result.Mode == domain.ModeText {
 			if s.c.service.HasMoreCustomText() {
 				s.c.engine, _ = s.c.service.NextCustomLesson()
@@ -258,6 +262,9 @@ func saveResult(c *Context, now time.Time) tea.Cmd {
 }
 
 func lessonPurpose(c *Context, e *trainer.Engine) string {
+	if e.Result.Mode == domain.ModeBtype {
+		return c.t("lesson.btype", nil)
+	}
 	if e.Result.Mode == domain.ModeText {
 		return c.t("lesson.custom", nil)
 	}
@@ -281,6 +288,9 @@ func lessonPurpose(c *Context, e *trainer.Engine) string {
 
 func resultFeedback(c *Context) string {
 	r := c.result
+	if r.Mode == domain.ModeBtype {
+		return ""
+	}
 	var keys []rune
 	p := c.service.Progress()
 	for _, key := range c.service.Profile().UnlockOrder {

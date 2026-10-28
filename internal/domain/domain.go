@@ -8,6 +8,7 @@ type InterfacePosition string
 
 const (
 	ModeAdaptive Mode = "adaptive"
+	ModeBtype    Mode = "btype"
 	// ModeLearn and ModeImprove are retained for reading historical sessions.
 	ModeLearn   Mode = "learn"
 	ModeImprove Mode = "improve"

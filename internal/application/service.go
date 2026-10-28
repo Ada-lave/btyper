@@ -235,6 +235,14 @@ func normalizePosition(position domain.InterfacePosition) domain.InterfacePositi
 	}
 }
 
+func (s *LessonService) StartBtype(now time.Time) *trainer.Engine {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	p := s.profiles[s.settings.Language]
+	text := trainer.NewGenerator(now.UnixNano()).TestText(p, s.settings.LessonRunes)
+	return trainer.NewEngine(text, domain.ModeBtype, p.ID, 0, time.Time{})
+}
+
 func (s *LessonService) StartAdaptive(mode domain.Mode, now time.Time) *trainer.Engine {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -335,6 +343,13 @@ func (s *LessonService) Complete(engine *trainer.Engine, now time.Time) (domain.
 	}
 	r := engine.Finish(now)
 	if s.completed[r.AttemptID] {
+		return r, nil
+	}
+	if r.Mode == domain.ModeBtype {
+		if err := s.store.SaveSession(r, nil); err != nil {
+			return r, err
+		}
+		s.completed[r.AttemptID] = true
 		return r, nil
 	}
 	progress := trainer.UpdateProgress(s.progress, r, s.settings)
