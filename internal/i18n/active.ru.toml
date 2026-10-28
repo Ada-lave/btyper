@@ -353,3 +353,6 @@ other = """
 
 Параметры:
 """
+
+[settings.continue_after_error]
+other = "Продолжать после ошибки: {{.Value}}"

@@ -12,6 +12,8 @@ import (
 
 type Engine struct {
 	Text                                  []rune
+	ContinueAfterError                    bool
+	Mistakes                              map[int]rune
 	Pos                                   int
 	Pending                               rune
 	StartedAt, LastAccepted, PauseStarted time.Time
@@ -67,11 +69,22 @@ func (e *Engine) Input(r rune, now time.Time) bool {
 		skill.Samples++
 	}
 	if r != expected {
-		e.Pending = r
 		e.Result.Errors++
 		stat.Errors++
 		for _, skill := range skills {
 			skill.Errors++
+		}
+		if e.ContinueAfterError {
+			if e.Mistakes == nil {
+				e.Mistakes = map[int]rune{}
+			}
+			e.Mistakes[e.Pos] = r
+			e.Pos++
+			if e.Done() {
+				e.closeActive(now)
+			}
+		} else {
+			e.Pending = r
 		}
 		return false
 	}
@@ -82,6 +95,14 @@ func (e *Engine) Input(r rune, now time.Time) bool {
 func (e *Engine) Backspace() {
 	if e.Pending != 0 {
 		e.Pending = 0
+		e.Result.Corrections++
+	} else if e.ContinueAfterError && e.Pos > 0 && !e.Done() && !e.IsPaused() {
+		e.Pos--
+		if _, wrong := e.Mistakes[e.Pos]; wrong {
+			delete(e.Mistakes, e.Pos)
+		} else {
+			e.Result.Correct--
+		}
 		e.Result.Corrections++
 	}
 }

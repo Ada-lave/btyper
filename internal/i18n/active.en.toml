@@ -345,3 +345,6 @@ Run btyper <command> -h for command options, for example:
 
 Options:
 """
+
+[settings.continue_after_error]
+other = "Continue after an error: {{.Value}}"
