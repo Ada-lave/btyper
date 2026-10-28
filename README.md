@@ -138,3 +138,5 @@ See the [release checklist](docs/release-checklist.md) for publishing releases.
 
 btyper code is licensed under [MIT](LICENSE). Optional downloaded dictionaries
 have their own [CC BY-SA 4.0 content license](docs/dictionaries.md).
+
+Btype provides random-word typing tests. Settings can allow continuing after errors. Release builds show update notifications; use `btyper update` on Linux or macOS.

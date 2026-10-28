@@ -88,7 +88,7 @@ func Install(ctx context.Context, client *http.Client, current, executable, goos
 	if err != nil {
 		return "", err
 	}
-	defer os.Remove(temp.Name())
+	defer func() { _ = os.Remove(temp.Name()) }()
 	if _, err = temp.Write(binary); err == nil {
 		err = temp.Chmod(info.Mode().Perm())
 	}
@@ -116,7 +116,7 @@ func download(ctx context.Context, client *http.Client, url string, max int64) (
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("download: HTTP %d", resp.StatusCode)
 	}
