@@ -18,6 +18,7 @@ import (
 	"btyper/internal/storage"
 	"btyper/internal/trainer"
 	"btyper/internal/ui"
+	"btyper/internal/update"
 	tea "charm.land/bubbletea/v2"
 )
 
@@ -28,6 +29,30 @@ func main() {
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "btyper:", err)
 		os.Exit(1)
+	}
+	if len(os.Args) > 1 && os.Args[1] == "update" {
+		if len(os.Args) == 3 && (os.Args[2] == "-h" || os.Args[2] == "--help") {
+			fmt.Println("Usage: btyper update")
+			return
+		}
+		if len(os.Args) != 2 {
+			fatal(loc, errors.New("usage: btyper update"))
+		}
+		exe, err := os.Executable()
+		if err != nil {
+			fatal(loc, err)
+		}
+		goos, arch := update.CurrentPlatform()
+		installed, err := update.Install(context.Background(), nil, version, exe, goos, arch)
+		if err != nil {
+			fatal(loc, err)
+		}
+		if installed == "" {
+			fmt.Println(loc.Text("update.current", nil))
+		} else {
+			fmt.Println(loc.Text("update.installed", map[string]any{"Version": installed}))
+		}
+		return
 	}
 	if len(os.Args) > 1 && (os.Args[1] == "export" || os.Args[1] == "import") {
 		if err := runDataCommand(os.Args[1], os.Args[2:]); err != nil && !errors.Is(err, flag.ErrHelp) {
@@ -105,6 +130,7 @@ func main() {
 	if err != nil {
 		fatal(loc, err)
 	}
+	model.SetVersion(version)
 	if initialText != "" {
 		if err := model.StartCustomText(initialText); err != nil {
 			fatal(loc, err)

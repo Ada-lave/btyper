@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -10,6 +11,7 @@ import (
 	"btyper/internal/domain"
 	"btyper/internal/i18n"
 	"btyper/internal/trainer"
+	"btyper/internal/update"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 )
@@ -47,6 +49,7 @@ type Screen interface {
 	View() string
 	Resize(width, height int)
 }
+type updateMsg string
 type tickMsg time.Time
 type navigateMsg struct{ route Route }
 
@@ -71,6 +74,7 @@ type Context struct {
 	lastDailySave      time.Time
 	dailyInFlight      bool
 	queuedWork         tea.Cmd
+	updateVersion      string
 }
 
 func dayStart(now time.Time) time.Time {
@@ -180,6 +184,7 @@ type App struct {
 	ctx                           *Context
 	route                         Route
 	screen                        Screen
+	version                       string
 	terminalWidth, terminalHeight int
 	scroll                        int
 }
@@ -228,8 +233,11 @@ func New(store domain.Store, initial domain.Settings) (*App, error) {
 	return a, nil
 }
 
+// SetVersion enables the background update check for release builds.
+func (a *App) SetVersion(version string) { a.version = version }
+
 func (a *App) Init() tea.Cmd {
-	return tea.Batch(tea.RequestBackgroundColor, tick(), a.screen.Activate())
+	return tea.Batch(tea.RequestBackgroundColor, tick(), a.screen.Activate(), func() tea.Msg { return updateMsg(update.Check(context.Background(), nil, a.version)) })
 }
 func tick() tea.Cmd {
 	return tea.Tick(100*time.Millisecond, func(t time.Time) tea.Msg { return tickMsg(t) })
@@ -239,6 +247,9 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		a.ctx.captureTime(time.Now())
 	}
 	switch x := msg.(type) {
+	case updateMsg:
+		a.ctx.updateVersion = string(x)
+		return a, nil
 	case dailySavedMsg:
 		a.ctx.dailyInFlight = false
 		if x.err != nil {

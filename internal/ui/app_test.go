@@ -4,6 +4,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -189,3 +190,18 @@ func TestTrainingLanguagePersistsAcrossRestart(t *testing.T) {
 }
 
 var _ domain.Store = (*testStore)(nil)
+
+func TestUpdateNotificationAppearsOnlyInMenu(t *testing.T) {
+	app, err := New(&testStore{}, domain.DefaultSettings())
+	if err != nil {
+		t.Fatal(err)
+	}
+	app.Update(updateMsg("v9.0.0"))
+	if !strings.Contains(app.screen.View(), "v9.0.0") {
+		t.Fatal("update missing from menu")
+	}
+	app.navigate(RouteSettings, nil)
+	if strings.Contains(app.screen.View(), "v9.0.0") {
+		t.Fatal("update shown outside menu")
+	}
+}

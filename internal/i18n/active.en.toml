@@ -333,6 +333,7 @@ Usage:
   btyper <command> [options]
 
 Commands:
+  update               Download and install the latest stable release
   dictionary download  Download larger vocabularies (--lang en|ru|all)
   profile import       Import a language profile (--input FILE)
   profile export       Export a language profile (--id ID --output FILE)
@@ -345,3 +346,11 @@ Run btyper <command> -h for command options, for example:
 
 Options:
 """
+
+[update.available]
+other = "Update available: {{.Version}} · {{.URL}}"
+
+[update.current]
+other = "btyper is up to date."
+[update.installed]
+other = "Updated btyper to {{.Version}}."

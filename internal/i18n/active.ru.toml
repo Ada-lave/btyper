@@ -341,6 +341,7 @@ other = """
   btyper <команда> [параметры]
 
 Команды:
+  update               Скачать и установить последнюю стабильную версию
   dictionary download  Скачать расширенные словари (--lang en|ru|all)
   profile import       Импортировать языковой профиль (--input ФАЙЛ)
   profile export       Экспортировать профиль (--id ID --output ФАЙЛ)
@@ -353,3 +354,11 @@ other = """
 
 Параметры:
 """
+
+[update.available]
+other = "Доступна новая версия: {{.Version}} · {{.URL}}"
+
+[update.current]
+other = "Установлена актуальная версия btyper."
+[update.installed]
+other = "btyper обновлён до версии {{.Version}}."

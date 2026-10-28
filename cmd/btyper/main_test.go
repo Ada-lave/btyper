@@ -27,7 +27,7 @@ func TestUsageListsCommandsAndFlagsInBothLanguages(t *testing.T) {
 		if err := fs.Parse([]string{"-h"}); err != flag.ErrHelp {
 			t.Fatalf("help returned %v", err)
 		}
-		for _, command := range []string{"dictionary download", "profile import", "profile export", "profile list", "\n  export ", "\n  import ", "-data-dir", "btyper dictionary download -h"} {
+		for _, command := range []string{"\n  update ", "dictionary download", "profile import", "profile export", "profile list", "\n  export ", "\n  import ", "-data-dir", "btyper dictionary download -h"} {
 			if !strings.Contains(output.String(), command) {
 				t.Fatalf("%s: help omits %q: %s", language, command, output.String())
 			}

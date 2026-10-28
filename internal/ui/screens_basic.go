@@ -6,6 +6,7 @@ import (
 
 	"btyper/internal/domain"
 	"btyper/internal/i18n"
+	"btyper/internal/update"
 	"charm.land/bubbles/v2/list"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
@@ -89,7 +90,13 @@ func (s *menuScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 	}
 	return Action{}, cmd
 }
-func (s *menuScreen) View() string { return s.menu.View() + "\n" + s.c.todayView(false) }
+func (s *menuScreen) View() string {
+	out := s.menu.View() + "\n" + s.c.todayView(false)
+	if s.c.updateVersion != "" {
+		out += "\n" + s.c.theme.Muted.Render(s.c.t("update.available", map[string]any{"Version": s.c.updateVersion, "URL": update.ReleasesURL}))
+	}
+	return out
+}
 
 type helpScreen struct{ c *Context }
 
