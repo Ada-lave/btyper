@@ -173,3 +173,4 @@ an upgraded database.
 Release builds check GitHub for a newer stable release in the background at startup. If one is available, the main menu shows its version and release page. Development builds do not check for updates.
 
 Run `btyper update` to download and install the latest stable release over the current executable on Linux or macOS. The command verifies the release SHA-256 checksum before replacement. The executable directory must be writable. On Windows, update using the release download or your package manager; development builds cannot self-update.
+Choose **Btype** in the main menu for a typing test using random words in the selected language. The lesson length setting controls its length. Results appear in history without changing learning progress.

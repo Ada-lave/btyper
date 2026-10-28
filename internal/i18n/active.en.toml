@@ -356,3 +356,12 @@ other = "btyper is up to date."
 other = "Updated btyper to {{.Version}}."
 [settings.continue_after_error]
 other = "Continue after an error: {{.Value}}"
+
+[menu.btype]
+other = "Btype"
+[menu.btype_desc]
+other = "Typing speed test with random words"
+[mode.btype]
+other = "Btype"
+[lesson.btype]
+other = "Type the words to measure your speed and accuracy"

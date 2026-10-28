@@ -364,3 +364,12 @@ other = "Установлена актуальная версия btyper."
 other = "btyper обновлён до версии {{.Version}}."
 [settings.continue_after_error]
 other = "Продолжать после ошибки: {{.Value}}"
+
+[menu.btype]
+other = "Btype"
+[menu.btype_desc]
+other = "Тест скорости печати на случайных словах"
+[mode.btype]
+other = "Btype"
+[lesson.btype]
+other = "Напечатайте слова, чтобы измерить скорость и точность"

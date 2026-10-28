@@ -16,6 +16,22 @@ type Generator struct {
 
 func NewGenerator(seed int64) *Generator { return &Generator{Rand: rand.New(rand.NewSource(seed))} }
 
+// TestText selects ordinary profile words without learning targets or progress weights.
+func (g *Generator) TestText(profile domain.LanguageProfile, limit int) string {
+	if len(profile.Words) == 0 {
+		return ""
+	}
+	var words []string
+	length := 0
+	for length < limit {
+		word := profile.Words[g.Rand.Intn(len(profile.Words))]
+
+		words = append(words, word)
+		length += utf8.RuneCountInString(word) + 1
+	}
+	return strings.Join(words, " ")
+}
+
 func (g *Generator) AdaptiveLesson(profile domain.LanguageProfile, unlocked map[rune]bool, target domain.Skill, weak map[rune]float64, limit int) string {
 	rs := []rune(target.Pattern)
 	if target.Kind == domain.SkillNumber || target.Kind == domain.SkillUppercase || target.Kind == domain.SkillPunctuation {

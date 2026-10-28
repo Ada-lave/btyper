@@ -35,7 +35,7 @@ type menuScreen struct {
 func newMenuScreen(c *Context) Screen { s := &menuScreen{c: c}; s.rebuild(); return s }
 func (s *menuScreen) rebuild() {
 	c := s.c
-	items := []list.Item{menuItem{RoutePractice, domain.ModeAdaptive, c.t(i18n.Learn, nil), c.t(i18n.LearnDesc, nil)}, menuItem{RouteDrill, domain.ModeDrill, c.t("menu.drill", nil), c.t("menu.drill_desc", nil)}, menuItem{RouteText, domain.ModeText, c.t(i18n.CustomText, nil), c.t(i18n.TextDesc, nil)}, menuItem{RouteStatistics, "", c.t(i18n.History, nil), c.t(i18n.HistoryDesc, nil)}, menuItem{RouteSettings, "", c.t(i18n.Settings, nil), c.t(i18n.SettingsDesc, nil)}, menuItem{RouteHelp, "", c.t(i18n.Help, nil), c.t(i18n.HelpDesc, nil)}, menuItem{-1, "", c.t(i18n.Quit, nil), c.t(i18n.QuitDesc, nil)}}
+	items := []list.Item{menuItem{RoutePractice, domain.ModeBtype, c.t("menu.btype", nil), c.t("menu.btype_desc", nil)}, menuItem{RoutePractice, domain.ModeAdaptive, c.t(i18n.Learn, nil), c.t(i18n.LearnDesc, nil)}, menuItem{RouteDrill, domain.ModeDrill, c.t("menu.drill", nil), c.t("menu.drill_desc", nil)}, menuItem{RouteText, domain.ModeText, c.t(i18n.CustomText, nil), c.t(i18n.TextDesc, nil)}, menuItem{RouteStatistics, "", c.t(i18n.History, nil), c.t(i18n.HistoryDesc, nil)}, menuItem{RouteSettings, "", c.t(i18n.Settings, nil), c.t(i18n.SettingsDesc, nil)}, menuItem{RouteHelp, "", c.t(i18n.Help, nil), c.t(i18n.HelpDesc, nil)}, menuItem{-1, "", c.t(i18n.Quit, nil), c.t(i18n.QuitDesc, nil)}}
 	delegate := list.NewDefaultDelegate()
 	delegate.Styles.NormalTitle = c.theme.Text.PaddingLeft(2)
 	delegate.Styles.NormalDesc = c.theme.Muted.PaddingLeft(2)
@@ -72,6 +72,11 @@ func (s *menuScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 		}
 		if item.route < 0 {
 			return Action{Kind: ActionQuit}, cmd
+		}
+		if item.mode == domain.ModeBtype {
+			s.c.engine = s.c.service.StartBtype(time.Now())
+			s.c.status.Clear()
+			return Action{Kind: ActionNavigate, Route: RoutePractice}, cmd
 		}
 		if item.mode == domain.ModeAdaptive {
 			settings := s.c.settings()
