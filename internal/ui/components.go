@@ -46,6 +46,8 @@ func (LessonRenderer) View(e *trainer.Engine, t Theme, width int) string {
 	for i := start; i < end; i++ {
 		r := e.Text[i]
 		switch {
+		case i < e.Pos && e.Mistakes[i] != 0:
+			b.WriteString(t.Error.Render(string(e.Mistakes[i])))
 		case i < e.Pos:
 			b.WriteString(t.Success.Render(string(r)))
 		case i == e.Pos && e.Pending != 0:

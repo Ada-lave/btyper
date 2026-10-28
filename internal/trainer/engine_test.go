@@ -109,3 +109,38 @@ func TestMasteryRequiresTwoLessonsAndDoesNotMutateInput(t *testing.T) {
 		t.Fatal("regression removed mastery")
 	}
 }
+
+func TestContinueAfterError(t *testing.T) {
+	e := NewEngine("ab", domain.ModeText, "en", 0, time.Time{})
+	e.ContinueAfterError = true
+	now := time.Now()
+	e.Input('x', now)
+	if e.Pos != 1 || e.Pending != 0 || e.Result.Errors != 1 || e.Mistakes[0] != 'x' {
+		t.Fatalf("unexpected state after error: %+v", e)
+	}
+	e.Input('b', now.Add(time.Second))
+	if !e.Done() || e.Result.Correct != 1 || e.Result.Attempts != 2 {
+		t.Fatalf("unexpected result: %+v", e.Result)
+	}
+}
+
+func TestContinueAfterErrorBackspace(t *testing.T) {
+	e := NewEngine("abcd", domain.ModeText, "en", 0, time.Time{})
+	e.ContinueAfterError = true
+	now := time.Now()
+	e.Input('x', now)
+	e.Input('b', now.Add(time.Second))
+	e.Backspace()
+	if e.Pos != 1 || e.Result.Correct != 0 {
+		t.Fatalf("backspace over correct character: %+v", e)
+	}
+	e.Backspace()
+	if e.Pos != 0 || len(e.Mistakes) != 0 || e.Result.Errors != 1 || e.Result.Corrections != 2 {
+		t.Fatalf("backspace over error: %+v", e)
+	}
+	e.Backspace()
+	e.Input('a', now.Add(2*time.Second))
+	if e.Pos != 1 || e.Result.Correct != 1 || e.Result.Attempts != 3 {
+		t.Fatalf("retyping: %+v", e)
+	}
+}

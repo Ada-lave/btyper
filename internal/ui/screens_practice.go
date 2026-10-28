@@ -75,6 +75,7 @@ func (s *practiceScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 			}
 			return Action{}, nil
 		}
+		e.ContinueAfterError = s.c.settings().ContinueAfterError
 		e.Input(rs[0], now)
 		if e.Done() {
 			if e.Result.TargetSkill != "" {

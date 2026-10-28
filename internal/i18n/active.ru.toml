@@ -362,3 +362,5 @@ other = "Доступна новая версия: {{.Version}} · {{.URL}}"
 other = "Установлена актуальная версия btyper."
 [update.installed]
 other = "btyper обновлён до версии {{.Version}}."
+[settings.continue_after_error]
+other = "Продолжать после ошибки: {{.Value}}"

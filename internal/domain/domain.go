@@ -35,19 +35,20 @@ const (
 )
 
 type Settings struct {
-	UILanguage       string
-	Language         string
-	Mode             Mode
-	TargetWPM        float64
-	Accuracy         float64
-	LessonRunes      int
-	DailyGoalMinutes int
-	TrainNumbers     bool
-	TrainUppercase   bool
-	TrainPunctuation bool
-	ShowKeyboard     bool
-	ColorTheme       ColorTheme
-	Position         InterfacePosition
+	UILanguage         string
+	Language           string
+	Mode               Mode
+	TargetWPM          float64
+	Accuracy           float64
+	LessonRunes        int
+	DailyGoalMinutes   int
+	TrainNumbers       bool
+	TrainUppercase     bool
+	TrainPunctuation   bool
+	ShowKeyboard       bool
+	ContinueAfterError bool
+	ColorTheme         ColorTheme
+	Position           InterfacePosition
 }
 
 func DefaultSettings() Settings {

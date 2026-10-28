@@ -354,3 +354,5 @@ other = "Update available: {{.Version}} · {{.URL}}"
 other = "btyper is up to date."
 [update.installed]
 other = "Updated btyper to {{.Version}}."
+[settings.continue_after_error]
+other = "Continue after an error: {{.Value}}"

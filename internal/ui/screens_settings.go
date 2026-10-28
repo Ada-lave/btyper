@@ -49,13 +49,13 @@ func (s *settingsScreen) Update(msg tea.Msg) (Action, tea.Cmd) {
 	case k.Key().Code == tea.KeyEsc:
 		return Action{Kind: ActionNavigate, Route: RouteMenu}, nil
 	case isUp(k):
-		s.cursor = (s.cursor + 12) % 13
+		s.cursor = (s.cursor + 13) % 14
 	case isDown(k) || k.Key().Code == tea.KeyTab:
-		s.cursor = (s.cursor + 1) % 13
+		s.cursor = (s.cursor + 1) % 14
 	case isLeft(k):
 		return Action{}, s.change(-1)
 	case isRight(k) || k.Key().Code == tea.KeyEnter:
-		if s.cursor == 12 {
+		if s.cursor == 13 {
 			s.confirm = true
 		} else {
 			return Action{}, s.change(1)
@@ -104,6 +104,8 @@ func (s *settingsScreen) change(d int) tea.Cmd {
 		v.Position = nextPosition(v.Position, d)
 	case 11:
 		v.DailyGoalMinutes = max(1, min(120, v.DailyGoalMinutes+d))
+	case 12:
+		v.ContinueAfterError = !v.ContinueAfterError
 	}
 	return s.c.work(func() error { return s.c.service.SaveSettings(v) }, func(err error) tea.Cmd {
 		if err != nil {
@@ -197,6 +199,7 @@ func (s *settingsScreen) View() string {
 		s.c.t(i18n.SettingsTheme, map[string]any{"Value": s.themeName(v.ColorTheme)}),
 		s.c.t(i18n.SettingsPosition, map[string]any{"Value": s.positionName(v.Position)}),
 		s.c.t("settings.daily_goal", map[string]any{"Value": v.DailyGoalMinutes}),
+		s.c.t("settings.continue_after_error", map[string]any{"Value": boolValue(v.ContinueAfterError)}),
 		s.c.t(i18n.SettingsReset, nil),
 	}
 	var b strings.Builder
